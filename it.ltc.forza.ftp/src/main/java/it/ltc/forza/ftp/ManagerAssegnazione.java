@@ -21,6 +21,8 @@ import it.ltc.database.dao.Dao;
 import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.ColliCarico;
 import it.ltc.database.model.legacy.ColliPack;
+import it.ltc.database.model.legacy.MagaMov;
+import it.ltc.database.model.legacy.MagaSd;
 import it.ltc.database.model.legacy.RighiOrdine;
 import it.ltc.database.model.legacy.Righiubicpre;
 import it.ltc.database.model.legacy.Scorte;
@@ -367,7 +369,6 @@ public class ManagerAssegnazione extends Dao {
 				if (riga.getQtadaubicare() == 0) {
 					break;
 				}
-				
 			}
 		}
 	}
@@ -657,6 +658,10 @@ public class ManagerAssegnazione extends Dao {
 						}
 					} break;
 				}
+				//Aggiorno i saldi di magazzino
+				MagaSd saldo = aggiornaSaldoAttuale(assegnazione.getRiga(), em);
+				//Inserisco il movimento di magazzino
+				elaboraMovimento(saldo, assegnazione.getRiga(), em);
 			}
 			transaction.commit();
 			esito = true;
@@ -669,6 +674,46 @@ public class ManagerAssegnazione extends Dao {
 			em.close();
 		}
 		return esito;
+	}
+	
+	private MagaSd aggiornaSaldoAttuale(RighiOrdine riga, EntityManager em) {
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<MagaSd> criteria = cb.createQuery(MagaSd.class);
+		Root<MagaSd> member = criteria.from(MagaSd.class);
+		Predicate condizioneArticolo = cb.equal(member.get("idUniArticolo"), riga.getIdUnicoArt());
+		Predicate condizioneMagazzino = cb.equal(member.get("codMaga"), riga.getMagazzino());
+		criteria.select(member).where(cb.and(condizioneArticolo, condizioneMagazzino));
+		List<MagaSd> list = em.createQuery(criteria).setMaxResults(2).getResultList();
+		MagaSd saldo = list.size() == 1 ? list.get(0) : null;
+		if (saldo == null)
+			throw new RuntimeException("Non è stato trovato il saldo di magazzino per l'articolo: " + riga.getIdUnicoArt());
+		saldo.setDisponibile(saldo.getDisponibile() - riga.getQtaSpedizione());
+		saldo.setImpegnato(saldo.getImpegnato() + riga.getQtaSpedizione());
+		em.merge(saldo);
+		return saldo;
+	}
+	
+	private void elaboraMovimento(MagaSd saldo, RighiOrdine riga, EntityManager em) {
+		MagaMov movimento = new MagaMov();
+		movimento.setCausale("IOS");
+		movimento.setIncTotali("NO");
+		movimento.setQuantita(riga.getQtaSpedizione());
+		movimento.setCodMaga(riga.getMagazzino());
+		movimento.setEsistenzamov(saldo.getEsistenza());
+		movimento.setDisponibilemov(saldo.getDisponibile());
+		movimento.setImpegnatomov(saldo.getImpegnato());
+		movimento.setSegno("+");
+		movimento.setSegnoEsi("N");
+		movimento.setSegnoDis("-");
+		movimento.setSegnoImp("+");
+		movimento.setTipo("IP");
+		movimento.setUtente("SERVIZIO SCADENZE");
+		movimento.setIdUniArticolo(saldo.getIdUniArticolo());
+		movimento.setDocCat("S");
+		movimento.setTipo("OR");
+		movimento.setDocNr(riga.getNrLista());
+		movimento.setDocNote("Impegnato perchè scaduto.");
+		em.persist(movimento);
 	}
 	
 	private void aggiornaValoriRigaOrdine(RighiOrdine entity, RighiOrdine riga) {
@@ -709,6 +754,9 @@ public class ManagerAssegnazione extends Dao {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmssSSS");
 		String sessioneLavoro = sdf.format(now);
 		//Valorizzazione
+		testata.setNrOrdine(sessioneLavoro);
+		testata.setRifOrdineCli("Prodotti scaduti: " + sessioneLavoro);
+		testata.setCodiceClienteCorriere("ABC");
 		testata.setCodCliente("GLS");
 		testata.setCodCorriere("GLS");
 		testata.setCorriere("GLS");
@@ -739,7 +787,7 @@ public class ManagerAssegnazione extends Dao {
 		} catch (Exception e) {
 			logger.error(e);
 			testata = null;
-			if (t.isActive())
+			if (t != null && t.isActive())
 				t.rollback();
 		} finally {
 			em.close();
@@ -811,7 +859,7 @@ public class ManagerAssegnazione extends Dao {
 		} catch (Exception e) {
 			logger.error(e);
 			esito = false;
-			if (t.isActive())
+			if (t!= null && t.isActive())
 				t.rollback();
 		} finally {
 			em.close();

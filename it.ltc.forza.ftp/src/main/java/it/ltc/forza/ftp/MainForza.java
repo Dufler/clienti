@@ -18,6 +18,7 @@ import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.forza.ftp.model.LinnworksInvenctoryLine;
 import it.ltc.forza.ftp.model.LinnworksOrderLine;
 import it.ltc.forza.ftp.model.LinnworksOrderStatus;
+import it.ltc.forza.ftp.model.ProdottoInScadenza;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.utility.csv.FileCSV;
 import it.ltc.utility.ftp.FTP;
@@ -46,8 +47,10 @@ public class MainForza {
 	public static String nomeFileInvenctory;
 	public static String persistenceUnit;
 	public static int giorniScandenza;
+	public static int giorniScandenzaFutura;
 	
 	private static SimpleDateFormat sdfRenamer;
+	private static SimpleDateFormat sdf;
 	private static FTP ftpClient;
 	private static MailMan mailMan;
 	
@@ -62,34 +65,32 @@ public class MainForza {
 			//Esportazione dello stato degli ordini
 			esportazione();
 			//Controllo delle scadenze
+			checkScadenzeFuture();
 			checkScadenze();
 		} catch (Exception e) {
 			String message = "Errore imprevisto durante la sincronizzazione dati per Forza Industries.\r\n" + e.getMessage();
 			String subject = "Alert - Sincronizzazione Forza Industries";
 			sendEmail(message, subject, destinatariIT);
+			logger.error(message);
 		}
 		logger.info("Termine procedura.");
 	}
-
-//	private static void checkScadenze() {
-//		boolean check = checkSoloUnaVoltaAlGiorno();
-//		if (check) {
-//			//Controllo tutti i colli, i prodotti contenuti e le relative scadenze.
-//			ManagerScadenze managerScadenze = new ManagerScadenze(persistenceUnit);
-//			List<ProdottoInScadenza> scadenze = managerScadenze.getProdottiInScadenza(giorniScandenza);
-//			if (!scadenze.isEmpty()) {
-//				String messaggio = "I seguenti prodotti sono prossimi alla scadenza:\r\n";
-//				for (ProdottoInScadenza prodotto : scadenze)
-//					messaggio += prodotto.toString() + "\r\n";
-//				logger.info(messaggio);
-//				sendEmail(messaggio, subjectAlertScadenze, destinatariAlert);
-//			} else {
-//				logger.info("Nessun prodotto in scadenza.");
-//			}
-//		} else {
-//			logger.error("Riepilogo scadenze già inviato.");
-//		}
-//	}
+	
+	private static void checkScadenzeFuture() {
+		//Controllo tutti i colli, i prodotti contenuti e le relative scadenze.
+		ManagerScadenze managerScadenze = new ManagerScadenze(persistenceUnit);
+		List<ProdottoInScadenza> scadenze = managerScadenze.getAvvisoProdottiInScadenza(giorniScandenzaFutura);
+		if (scadenze != null && !scadenze.isEmpty()) {
+			String messaggio = "Sono stati trovati prodotti prossimi alla scadenza: ";
+			for (ProdottoInScadenza prodotto : scadenze) {
+				messaggio += prodotto.getQuantità() + " X " + prodotto.getSku() + " (" + sdf.format(prodotto.getDataScadenza()) + ")\r\n";
+			}
+			logger.info(messaggio);
+			sendEmail(messaggio, subjectAlertScadenze, destinatariIT);
+		} else {
+			logger.info("Nessun prodotto in scadenza.");
+		}
+	}
 	
 	private static void checkScadenze() {
 		//Controllo tutti i colli, i prodotti contenuti e le relative scadenze.
@@ -101,19 +102,10 @@ public class MainForza {
 			String messaggio = "Sono stati trovati prodotti prossimi alla scadenza ed è stato creato un apposito ordine per prelevarli.\r\nNumero di lista: " + testata.getNrLista() + "\r\nTotale dei pezzi: " + testata.getQtaTotaleSpedire();
 			logger.info(messaggio);
 			sendEmail(messaggio, subjectAlertScadenze, destinatariIT);
-			//sendEmail(messaggio, subjectAlertScadenze, destinatariAlert);
 		} else {
 			logger.info("Nessun prodotto in scadenza.");
 		}
 	}
-
-//	private static boolean checkSoloUnaVoltaAlGiorno() {
-//		GregorianCalendar now = new GregorianCalendar();
-//		int hour = now.get(Calendar.HOUR_OF_DAY);
-//		int minutes = now.get(Calendar.MINUTE);
-//		boolean check = hour < 8 && minutes < 30;
-//		return check;
-//	}
 
 	private static void esportazione() {
 		//Invio l'aggiornamento sullo stato degli ordini.
@@ -374,8 +366,10 @@ public class MainForza {
 		nomeFileOrders = config.getNomeFileOrders();
 		persistenceUnit = config.getPersistenceUnit();
 		giorniScandenza = config.getAvvisoGiorniScadenza();
+		giorniScandenzaFutura = config.getAvvisoGiorniScadenzaFutura();
 		
 		sdfRenamer = new SimpleDateFormat("yyyyMMddHHmmss");
+		sdf = new SimpleDateFormat("dd/MM/yyyy");
 		
 	}
 

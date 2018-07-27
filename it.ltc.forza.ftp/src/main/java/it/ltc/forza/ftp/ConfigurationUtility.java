@@ -47,6 +47,7 @@ public class ConfigurationUtility {
 	private final String magazzinoDefault;
 	private final String nomeFileInvectory;
 	private final int avvisoGiorniScadenza;
+	private final int avvisoGiorniScadenzaFutura;
 
 	private ConfigurationUtility() {
 		try {
@@ -76,6 +77,7 @@ public class ConfigurationUtility {
 			nomeFileInvectory = configuration.get("file_name_invectory");
 			magazzinoDefault = configuration.get("magazzino_default");
 			avvisoGiorniScadenza = Integer.parseInt(configuration.get("avviso_giorni_scadenza"));
+			avvisoGiorniScadenzaFutura = Integer.parseInt(configuration.get("avviso_giorni_scadenza_futura"));
 		} catch (Exception e) {
 			String errorMessage = "Impossibile caricare i files di configurazione.";
 			throw new RuntimeException(errorMessage);
@@ -236,6 +238,10 @@ public class ConfigurationUtility {
 
 	public int getAvvisoGiorniScadenza() {
 		return avvisoGiorniScadenza;
+	}
+
+	public int getAvvisoGiorniScadenzaFutura() {
+		return avvisoGiorniScadenzaFutura;
 	}
 
 }
