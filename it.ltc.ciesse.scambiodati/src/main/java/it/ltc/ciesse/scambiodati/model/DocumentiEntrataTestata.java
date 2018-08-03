@@ -18,7 +18,7 @@ public class DocumentiEntrataTestata {
 	
 	public static final String CONDIZIONE_ELIMINA = "ELIMINA";
 	public static final String PATTERN_DATA = "dd/MM/yyyy HH:mm:ss";
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+	private static final SimpleDateFormat sdf = new SimpleDateFormat(PATTERN_DATA);
 	
 	public static List<PakiTesta> parsaTestate(List<String> righe) throws ParseException {
 		FornitoreDao daoFornitore = new FornitoreDao(Import.persistenceUnit);

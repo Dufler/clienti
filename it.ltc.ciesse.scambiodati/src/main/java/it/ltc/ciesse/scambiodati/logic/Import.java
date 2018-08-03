@@ -53,9 +53,9 @@ public class Import {
 	
 	public static final String persistenceUnit = "legacy-test";
 	
-	public static final String PATH_CARTELLA_IMPORT = "C:\\Users\\Damiano\\Documents\\LTC\\CiEsse piumini\\documentazione\\test\\";
-	public static final String PATH_CARTELLA_IMPORT_STORICO = "C:\\Users\\Damiano\\Documents\\LTC\\CiEsse piumini\\documentazione\\test\\storico\\";
-	public static final String PATH_CARTELLA_IMPORT_ERRORI = "C:\\Users\\Damiano\\Documents\\LTC\\CiEsse piumini\\documentazione\\test\\errori\\";
+	public static final String PATH_CARTELLA_IMPORT = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\IN";
+	public static final String PATH_CARTELLA_IMPORT_STORICO = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\IN\\storico\\";
+	public static final String PATH_CARTELLA_IMPORT_ERRORI = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\IN\\errori\\";
 	
 	private static Import instance;
 
@@ -87,21 +87,25 @@ public class Import {
 		for (File file : files) {
 			if (file.isFile()) {
 				String fileName = file.getName();
-				String fileType = fileName.split("_")[0];
-				switch (fileType) {
-					case "Nazioni" : importaNazioni(file); break;
-					case "Stagioni" : importaStagioni(file); break;
-					case "ClasseTaglie" : importaTaglie(file); break;
-					case "Colori" : importaColori(file); break;
-					case "Articoli" : importaArticoli(file); break;
-					case "Clienti" : importaDestinatari(file); break;
-					case "Fornitori" : importaFornitori(file); break;
-					case "Vettori" : importaVettori(file); break;
-					case "DocumentiEntrata" : importaTestateCarichi(file); break;
-					case "RigheDocumentiEntrata" : importaRigheCarichi(file); break;
-					case "OrdiniClienti" : importaTestateOrdini(file); break;
-					case "???" : importaRigheOrdini(file); break;
-					default : importaFileNonConforme(file); break;
+				if (fileName.endsWith("chk")) {
+					spostaFileNelloStorico(file);
+				} else {
+					String fileType = fileName.split("_")[0];
+					switch (fileType) {
+						case "Nazioni" : importaNazioni(file); break;
+						case "Stagioni" : importaStagioni(file); break;
+						case "ClasseTaglie" : importaTaglie(file); break;
+						case "Colori" : importaColori(file); break;
+						case "Articoli" : importaArticoli(file); break;
+						case "Clienti" : importaDestinatari(file); break;
+						case "Fornitori" : importaFornitori(file); break;
+						case "Vettori" : importaVettori(file); break;
+						case "DocumentiEntrata" : importaTestateCarichi(file); break;
+						case "RigheDocumentiEntrata" : importaRigheCarichi(file); break;
+						case "OrdiniClienti" : importaTestateOrdini(file); break;
+						case "???" : importaRigheOrdini(file); break;
+						default : importaFileNonConforme(file); break;
+					}
 				}
 			}
 		}

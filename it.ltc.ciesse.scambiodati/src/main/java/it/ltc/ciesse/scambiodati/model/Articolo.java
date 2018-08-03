@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import it.ltc.ciesse.scambiodati.logic.Import;
 import it.ltc.database.dao.legacy.ColoriDao;
 import it.ltc.database.dao.legacy.NumerateDao;
@@ -16,6 +18,8 @@ import it.ltc.database.model.legacy.Numerata;
 import it.ltc.utility.miscellanea.string.StringParser;
 
 public class Articolo {
+	
+	private static final Logger logger = Logger.getLogger(Articolo.class);
 	
 	private static final SimpleDateFormat idUnivocoGenerator = new SimpleDateFormat("yyMMddHHmmssSSS");
 	
@@ -40,8 +44,13 @@ public class Articolo {
 					throw new RuntimeException("Impossibile trovare la taglia della numerata: '" + taglia + "'");
 				String codiceColore = parser.getStringa(83, 95);
 				Colori colore = trovaColore(codiceColore);
-				if (colore == null) 
-					throw new RuntimeException("Impossibile trovare il colore: '" + codiceColore + "'");
+				String descrizioneColore = colore != null ? colore.getDescrizione() : codiceColore;
+				if (descrizioneColore != null && descrizioneColore.length() > 40)
+					descrizioneColore = descrizioneColore.substring(0, 40);
+				if (colore == null) {
+					//throw new RuntimeException("Impossibile trovare il colore: '" + codiceColore + "'");
+					logger.warn("Impossibile trovare il colore: '" + codiceColore + "'");
+				}
 				String descrizione = parser.getStringa(95, 155);
 				String descrizioneAlternativa = parser.getStringa(155, 185);
 				String unitaMisura = parser.getStringa(185, 195);
@@ -71,7 +80,7 @@ public class Articolo {
 						articolo.setCategoria(categoriaMerceologica);
 						articolo.setCatMercGruppo(categoriaMerceologica);
 						articolo.setCodArtOld(codice);
-						articolo.setColore(colore.getDescrizione());
+						articolo.setColore(descrizioneColore);
 						articolo.setDescrizione(descrizione);
 						articolo.setDescAggiuntiva(descrizioneAlternativa);
 						articolo.setLinea(linea);
