@@ -6,8 +6,10 @@ import java.util.List;
 
 import it.ltc.ciesse.scambiodati.logic.Import;
 import it.ltc.database.dao.legacy.ArticoliDao;
+import it.ltc.database.dao.legacy.MagazzinoDao;
 import it.ltc.database.dao.legacy.TestataOrdiniDao;
 import it.ltc.database.model.legacy.Articoli;
+import it.ltc.database.model.legacy.Magazzini;
 import it.ltc.database.model.legacy.RighiOrdine;
 import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.utility.miscellanea.string.StringParser;
@@ -19,11 +21,12 @@ public class OrdiniRighe {
 	
 	public static List<RighiOrdine> parsaRigheOrdine(List<String> righe) {
 		TestataOrdiniDao daoTestate = new TestataOrdiniDao(Import.persistenceUnit);
+		MagazzinoDao daoMagazzini = new MagazzinoDao(Import.persistenceUnit);
 		ArticoliDao daoArticoli = new ArticoliDao(Import.persistenceUnit);
 		List<RighiOrdine> righeOrdine = new LinkedList<>();
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);
-		StringParser parser = new StringParser(lines, 615);
+		StringParser parser = new StringParser(lines, 991);
 		do {
 			int operazione = parser.getIntero(0, 1);
 			String riferimento = parser.getStringa(1, 21);
@@ -31,45 +34,51 @@ public class OrdiniRighe {
 			if (testata == null)
 				throw new RuntimeException("Nessun ordine trovato con questo riferimento. (" + riferimento + ")");
 			int numeroRiga = parser.getIntero(21, 31);
-			String magazzino = parser.getStringa(133, 143);
+			String codificaMagazzino = parser.getStringa(140, 150);
+			Magazzini magazzino = daoMagazzini.trovaDaCodificaCliente(codificaMagazzino);
+			if (magazzino == null)
+				throw new RuntimeException("Nessun magazzino trovato con questo riferimento. (" + codificaMagazzino + ")");
 			//String stagione = parser.getStringa(143, 193); //Non mappato
-			String riferimentoCliente = parser.getStringa(213, 243);
-			String diversificazione = parser.getStringa(243, 283);
+			String riferimentoCliente = parser.getStringa(216, 245);
+			String diversificazione = parser.getStringa(245, 285);
 			if (diversificazione != null && diversificazione.length() > 30) {
 				diversificazione = diversificazione.substring(0, 30);
 			}
-			String codiceArticolo = parser.getStringa(1044, 1054); //Da verificare
-			int indexTaglia = 283;
+			String codiceArticolo = parser.getStringa(1088, 1098); //Da verificare
+			int indexTaglia = 285;
 			int counter = 1;
 			int lunghezzaCampo = 10;
-			while (indexTaglia < indexTaglia + lunghezzaCampo * 40) {
+			while (counter < 40) {
 				if (operazione == 1 || operazione == 2) {
 					int quantità = parser.getIntero(indexTaglia + (counter - 1) * lunghezzaCampo, indexTaglia + (counter) * lunghezzaCampo);
-					String skuEffettivo = codiceArticolo + "_" + counter;
-					Articoli articolo = daoArticoli.trovaDaSKU(skuEffettivo);
-					if (articolo == null)
-						throw new RuntimeException("Nessun articolo corrispondente trovato. (" + skuEffettivo + ")");
-					RighiOrdine riga = new RighiOrdine();
-					riga.setBarraEAN(articolo.getBarraEAN());
-					riga.setBarraUPC(articolo.getBarraUPC());
-					riga.setCodBarre(articolo.getCodBarre());
-					riga.setCodiceArticolo(articolo.getCodArtStr());
-					riga.setColore(articolo.getColore());
-					riga.setDataOrdine(testata.getDataOrdine());
-					riga.setDescrizione(articolo.getDescrizione());
-					riga.setIdDestina(testata.getIdDestina());
-					riga.setIdTestataOrdine(testata.getIdTestaCorr());
-					riga.setIdUnicoArt(articolo.getIdUniArticolo());
-					riga.setMagazzino(magazzino);
-					riga.setPONumber(riferimentoCliente);
-					riga.setNoteCliente(diversificazione);
-					riga.setNrLista(testata.getNrLista());
-					riga.setNrOrdine(testata.getNrOrdine());
-					riga.setNrRigo(numeroRiga);
-					riga.setQtaSpedizione(quantità);
-					riga.setTaglia(articolo.getTaglia());
-					riga.setTipoord(testata.getTipoOrdine());
-					righeOrdine.add(riga);
+					if (quantità > 0) {
+						String skuEffettivo = codiceArticolo + "_" + counter;
+						Articoli articolo = daoArticoli.trovaDaSKU(skuEffettivo);
+						if (articolo == null)
+							throw new RuntimeException("Nessun articolo corrispondente trovato. (" + skuEffettivo + ")");
+						RighiOrdine riga = new RighiOrdine();
+						riga.setBarraEAN(articolo.getBarraEAN());
+						riga.setBarraUPC(articolo.getBarraUPC());
+						riga.setCodBarre(articolo.getCodBarre());
+						riga.setCodiceArticolo(articolo.getCodArtStr());
+						riga.setColore(articolo.getColore());
+						riga.setDataOrdine(testata.getDataOrdine());
+						riga.setDescrizione(articolo.getDescrizione());
+						riga.setIdDestina(testata.getIdDestina());
+						riga.setIdTestataOrdine(testata.getIdTestaSped());
+						riga.setIdUnicoArt(articolo.getIdUniArticolo());
+						riga.setMagazzino(magazzino.getCodiceMag());
+						riga.setPONumber(riferimentoCliente);
+						riga.setNoteCliente(diversificazione);
+						riga.setNrLista(testata.getNrLista());
+						riga.setRagstampe1(testata.getNrLista());
+						riga.setNrOrdine(testata.getNrOrdine());
+						riga.setNrRigo(numeroRiga);
+						riga.setQtaSpedizione(quantità);
+						riga.setTaglia(articolo.getTaglia());
+						riga.setTipoord(testata.getTipoOrdine());
+						righeOrdine.add(riga);
+					}					
 				} else if (operazione == 3) {
 					RighiOrdine riga = new RighiOrdine();
 					riga.setNrLista(testata.getNrLista());

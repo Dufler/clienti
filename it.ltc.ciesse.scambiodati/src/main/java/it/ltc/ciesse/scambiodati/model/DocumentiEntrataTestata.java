@@ -43,6 +43,7 @@ public class DocumentiEntrataTestata {
 				if (f == null) throw new RuntimeException("Il fornitore dichiarato non esiste. (" + fornitore + ")");
 				testata.setCodFornitore(f.getCodiceFornitore());
 				testata.setIdFornitore(f.getIdFornitore());
+				testata.setRagSocFor(f.getRagSoc());
 				testata.setDataPaki(new Timestamp(dataDocumento.getTime()));
 				testata.setNrPaki(codice);
 				testata.setDataArrivo(new Timestamp(dataBolla.getTime()));
@@ -71,22 +72,39 @@ public class DocumentiEntrataTestata {
 		return testate;
 	}
 	
-	public static List<String> esportaTestate(List<PakiTesta> testate) {
+	public static String esportaTestata(PakiTesta testata) {
 		StringUtility utility = new StringUtility(" ", " ", false, false);
-		List<String> righe = new LinkedList<>();
-		for (PakiTesta testata : testate) {
-			StringBuilder riga = new StringBuilder();
-			riga.append("2"); //Gli dico sempre di andare in update.
-			riga.append(utility.getFormattedString(testata.getNrPaki(), 20));
-			riga.append(sdf.format(testata.getDataPaki()));
-			riga.append(utility.getFormattedString(testata.getNrDocInterno(), 20));
-			riga.append(sdf.format(testata.getDataArrivo()));
-			riga.append(utility.getFormattedString(testata.getCodFornitore(), 20));
-			riga.append(testata.getTipoDoc().equals("RESO") ? "1" : "0");
-			//FIXME - In teoria mancano le info sul reso che vengono salvate nelle note. Non so se può comportare un problema.
-			righe.add(riga.toString());
-		}		
-		return righe;
+		StringBuilder riga = new StringBuilder();
+		riga.append("2"); //Gli dico sempre di andare in update.
+		riga.append(utility.getFormattedString(testata.getNrPaki(), 20));
+		riga.append(sdf.format(testata.getDataPaki()));
+		riga.append(utility.getFormattedString(testata.getNrDocInterno(), 20));
+		riga.append(sdf.format(testata.getDataArrivo()));
+		riga.append(utility.getFormattedString(testata.getCodFornitore(), 20));
+		riga.append(testata.getTipoDoc().equals("RESO") ? "1" : "0");
+		//In teoria mancano le info sul reso che vengono salvate nelle note. Non so se può comportare un problema.
+		while (riga.length() < 219) {
+			riga.append(" ");
+		}
+		return riga.toString();
 	}
+	
+//	public static List<String> esportaTestate(List<PakiTesta> testate) {
+//		StringUtility utility = new StringUtility(" ", " ", false, false);
+//		List<String> righe = new LinkedList<>();
+//		for (PakiTesta testata : testate) {
+//			StringBuilder riga = new StringBuilder();
+//			riga.append("2"); //Gli dico sempre di andare in update.
+//			riga.append(utility.getFormattedString(testata.getNrPaki(), 20));
+//			riga.append(sdf.format(testata.getDataPaki()));
+//			riga.append(utility.getFormattedString(testata.getNrDocInterno(), 20));
+//			riga.append(sdf.format(testata.getDataArrivo()));
+//			riga.append(utility.getFormattedString(testata.getCodFornitore(), 20));
+//			riga.append(testata.getTipoDoc().equals("RESO") ? "1" : "0");
+//			//FIXME - In teoria mancano le info sul reso che vengono salvate nelle note. Non so se può comportare un problema.
+//			righe.add(riga.toString());
+//		}		
+//		return righe;
+//	}
 
 }

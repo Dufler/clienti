@@ -4,22 +4,20 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
-import it.ltc.database.dao.legacy.RighiImballoDao;
 import it.ltc.database.model.legacy.RighiImballo;
 import it.ltc.utility.miscellanea.string.StringUtility;
 
 public class ContenutoColli {
 	
-	private static final RighiImballoDao daoImballato = new RighiImballoDao(Import.persistenceUnit);
+	//private static final RighiImballoDao daoImballato = new RighiImballoDao(Import.persistenceUnit);
 	
-	public static List<String> esportaImballatoDaLista(String numeroLista) {
+	public static List<String> esportaImballatoDaLista(List<RighiImballo> imballati, String riferimentoOrdine) {
 		StringUtility utility = new StringUtility(" ", " ", false, false);
 		List<String> righe = new LinkedList<>();
-		List<RighiImballo> imballati = daoImballato.trovaDaNumeroLista(numeroLista);
+		//List<RighiImballo> imballati = daoImballato.trovaDaNumeroLista(numeroLista);
 		HashMap<String, RighiImballo[]> mappaListe = new HashMap<>(); //meglio array!
 		for (RighiImballo imballato : imballati) {
-			String[] datiArticolo = imballato.getIdUniArticolo().split("_");
+			String[] datiArticolo = imballato.getCodiceArticolo().split("_");
 			String idUnivoco = datiArticolo[0];
 			int index = Integer.parseInt(datiArticolo[1]);
 			if (!mappaListe.containsKey(idUnivoco)) {
@@ -35,7 +33,7 @@ public class ContenutoColli {
 				if (imballato == null) {
 					continue;
 				} else {
-					riga.append(utility.getFormattedString(imballato.getNrRifCliente(), 20)); //TODO: Verificare se viene riportato correttamente il valore come nel campo rifordcli della testata ordini collegata.
+					riga.append(utility.getFormattedString(riferimentoOrdine, 20));
 					riga.append(utility.getFormattedString(imballato.getNrRigoOrdine(), 10));
 					riga.append(utility.getFormattedString(imballato.getKeyColloSpe(), 15));
 					riga.append(utility.getFormattedString(imballato.getCodiceArticolo(), 50));

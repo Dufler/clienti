@@ -30,7 +30,11 @@ public class OrdiniTestata {
 			String riferimento = parser.getStringa(1, 21);
 			String cliente = parser.getStringa(21, 41);
 			Date dataDocumento = parser.getDataSoloGiorno(41, 60);
+			if (dataDocumento == null)
+				dataDocumento = new Date();
 			Date dataConsegna = parser.getDataSoloGiorno(60, 79);
+			if (dataConsegna == null)
+				dataConsegna = new Date();
 			//String tipoEvasione = parser.getStringa(79, 80); //Non mappato
 			//String condizionePagamaneto = parser.getStringa(80, 84); //Non mappato
 			String vettore = parser.getStringa(88, 108);
@@ -52,8 +56,10 @@ public class OrdiniTestata {
 				testata.setNote(note);
 				testata.setNrDoc(riferimento);
 				testata.setRifOrdineCli(riferimento);
+				testata.setNrOrdine(riferimento);
 				testata.setTipoDoc("ORDINE");
 				testata.setTipoOrdine(tipo);
+				testata.setStato("IMPO");
 				testate.add(testata);
 			} else if (operazione == 3) { //Lo posso cancellare solo se non abbiamo cominciato a lavorarlo.
 				TestataOrdini testata = new TestataOrdini();

@@ -2,15 +2,18 @@ package it.ltc.ciesse.scambiodati.logic;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
 import it.ltc.ciesse.scambiodati.model.Articolo;
+import it.ltc.ciesse.scambiodati.model.Assortimenti;
 import it.ltc.ciesse.scambiodati.model.ClasseTaglie;
 import it.ltc.ciesse.scambiodati.model.ClientiDestinatari;
+import it.ltc.ciesse.scambiodati.model.Colli;
 import it.ltc.ciesse.scambiodati.model.Colore;
+import it.ltc.ciesse.scambiodati.model.DDTSpedizione;
 import it.ltc.ciesse.scambiodati.model.DocumentiEntrataRighe;
 import it.ltc.ciesse.scambiodati.model.DocumentiEntrataTestata;
 import it.ltc.ciesse.scambiodati.model.Fornitore;
@@ -21,6 +24,7 @@ import it.ltc.ciesse.scambiodati.model.Stagione;
 import it.ltc.ciesse.scambiodati.model.Vettori;
 import it.ltc.database.dao.legacy.ArtibarDao;
 import it.ltc.database.dao.legacy.ArticoliDao;
+import it.ltc.database.dao.legacy.ColliPrelevaDao;
 import it.ltc.database.dao.legacy.ColoriDao;
 import it.ltc.database.dao.legacy.CorrieriDao;
 import it.ltc.database.dao.legacy.DestinatariDao;
@@ -31,9 +35,12 @@ import it.ltc.database.dao.legacy.PakiArticoloDao;
 import it.ltc.database.dao.legacy.PakiTestaDao;
 import it.ltc.database.dao.legacy.RighiOrdineDao;
 import it.ltc.database.dao.legacy.StagioniDao;
+import it.ltc.database.dao.legacy.TempCorrDao;
 import it.ltc.database.dao.legacy.TestataOrdiniDao;
+import it.ltc.database.dao.legacy.bundle.CasseKitDao;
 import it.ltc.database.model.legacy.ArtiBar;
 import it.ltc.database.model.legacy.Articoli;
+import it.ltc.database.model.legacy.ColliPreleva;
 import it.ltc.database.model.legacy.Colori;
 import it.ltc.database.model.legacy.Corrieri;
 import it.ltc.database.model.legacy.Destinatari;
@@ -44,7 +51,9 @@ import it.ltc.database.model.legacy.PakiArticolo;
 import it.ltc.database.model.legacy.PakiTesta;
 import it.ltc.database.model.legacy.RighiOrdine;
 import it.ltc.database.model.legacy.Stagioni;
+import it.ltc.database.model.legacy.TempCorr;
 import it.ltc.database.model.legacy.TestataOrdini;
+import it.ltc.database.model.legacy.bundle.CasseKIT;
 import it.ltc.utility.miscellanea.file.FileUtility;
 
 public class Import {
@@ -82,28 +91,38 @@ public class Import {
 	public void importaDati() {
 		File folder = new File(PATH_CARTELLA_IMPORT);
 		File[] files = folder.listFiles();
-		Arrays.sort(files, new Ordinatore());
-		//Per ogni file contenuto nella cartella avvio una modalità diversa in base alla sua tipologia.
+		List<File> filesDaImportare = new LinkedList<>();
 		for (File file : files) {
+			if (file.isFile()) {
+				filesDaImportare.add(file);
+			}
+		}
+		filesDaImportare.sort(new Ordinatore());
+		//Arrays.sort(files, new Ordinatore());
+		//Per ogni file contenuto nella cartella avvio una modalità diversa in base alla sua tipologia.
+		for (File file : filesDaImportare) {
 			if (file.isFile()) {
 				String fileName = file.getName();
 				if (fileName.endsWith("chk")) {
 					spostaFileNelloStorico(file);
 				} else {
-					String fileType = fileName.split("_")[0];
+					String fileType = fileName.split("_|\\d")[0];
 					switch (fileType) {
 						case "Nazioni" : importaNazioni(file); break;
 						case "Stagioni" : importaStagioni(file); break;
 						case "ClasseTaglie" : importaTaglie(file); break;
 						case "Colori" : importaColori(file); break;
 						case "Articoli" : importaArticoli(file); break;
+						case "Assortimenti" : importaAssortimenti(file); break;
 						case "Clienti" : importaDestinatari(file); break;
 						case "Fornitori" : importaFornitori(file); break;
 						case "Vettori" : importaVettori(file); break;
 						case "DocumentiEntrata" : importaTestateCarichi(file); break;
 						case "RigheDocumentiEntrata" : importaRigheCarichi(file); break;
 						case "OrdiniClienti" : importaTestateOrdini(file); break;
-						case "???" : importaRigheOrdini(file); break;
+						case "RigheOrdiniClienti" : importaRigheOrdini(file); break;
+						case "Colli" : importaColliDaSpedire(file); break;
+						case "DDTSpedizione" : importaDatiSpedizioni(file); break;
 						default : importaFileNonConforme(file); break;
 					}
 				}
@@ -202,6 +221,34 @@ public class Import {
 			logger.error(e);
 			spostaFileConErrori(fileColori);
 		}		
+	}
+	
+	private void importaAssortimenti(File fileAssortimenti) {
+		try {
+			ArrayList<String> lines = FileUtility.readLines(fileAssortimenti);
+			List<CasseKIT> kits = Assortimenti.parsaKitArticoli(lines);
+			CasseKitDao daoKit = new CasseKitDao(persistenceUnit);
+			for (CasseKIT kit : kits) {
+				CasseKIT entity = daoKit.trovaDaSkuBundleEProdotto(kit.getSkuBundle(), kit.getSkuProdotto());
+				if (entity == null) {
+					entity = daoKit.inserisci(kit);
+					if (entity == null) {
+						throw new RuntimeException("Impossibile inserire il kit: " + kit.toString());
+					}
+				} else {
+					kit.setId(entity.getId());
+					entity = daoKit.aggiorna(kit);
+					if (entity == null) {
+						throw new RuntimeException("Impossibile aggiornare il kit: " + kit.toString());
+					}
+				}
+			}
+			//Sposto il file nella cartella di storico
+			spostaFileNelloStorico(fileAssortimenti);
+		} catch (Exception e) {
+			logger.error(e);
+			spostaFileConErrori(fileAssortimenti);
+		}
 	}
 	
 	private void importaArticoli(File fileArticoli) {
@@ -510,6 +557,60 @@ public class Import {
 		} catch (Exception e) {
 			logger.error(e);
 			spostaFileConErrori(fileRigheOrdini);
+		}
+	}
+	
+	private void importaColliDaSpedire(File fileColli) {
+		try {
+			ColliPrelevaDao daoColli = new ColliPrelevaDao(persistenceUnit);
+			ArrayList<String> lines = FileUtility.readLines(fileColli);
+			List<ColliPreleva> colli = Colli.importaColli(lines);
+			for (ColliPreleva collo : colli) {
+				//Verifico se è già presente oppure no
+				ColliPreleva entity = daoColli.trovaDaNumeroCollo(collo.getKeyColloPre());
+				if (entity == null) {
+					entity = daoColli.inserisci(collo);
+					if (entity == null) 
+						throw new RuntimeException("Impossibile inserire il collo da prelevare: " + collo.getKeyColloPre());
+				} else {
+					collo.setIdColliPreleva(entity.getIdColliPreleva());
+					entity = daoColli.aggiorna(collo);
+					if (entity == null) 
+						throw new RuntimeException("Impossibile aggiornare il collo da prelevare: " + collo.getKeyColloPre());
+				}				
+			}
+			//Sposto il file nella cartella di storico
+			spostaFileNelloStorico(fileColli);
+		} catch (Exception e) {
+			logger.error(e);
+			spostaFileConErrori(fileColli);
+		}
+	}
+	
+	private void importaDatiSpedizioni(File fileSpedizioni) {
+		try {
+			TempCorrDao daoSpedizioni = new TempCorrDao(persistenceUnit);
+			ArrayList<String> lines = FileUtility.readLines(fileSpedizioni);
+			List<TempCorr> spedizioni = DDTSpedizione.parsaDDT(lines);
+			for (TempCorr spedizione : spedizioni) {
+				//Verifico se è già presente oppure no
+				TempCorr entity = daoSpedizioni.trovaDaNumeroLista(spedizione.getNrLista());
+				if (entity == null) {
+					entity = daoSpedizioni.inserisci(spedizione);
+					if (entity == null) 
+						throw new RuntimeException("Impossibile inserire i dati sulla spedizione con numero di lista: " + spedizione.getNrLista());
+				} else {
+					spedizione.setIdTempCor(entity.getIdTempCor());
+					entity = daoSpedizioni.aggiorna(spedizione);
+					if (entity == null) 
+						throw new RuntimeException("Impossibile aggiornare i dati sulla spedizione con numero di lista: " + spedizione.getNrLista());
+				}
+			}
+			//Sposto il file nella cartella di storico
+			spostaFileNelloStorico(fileSpedizioni);
+		} catch (Exception e) {
+			logger.error(e);
+			spostaFileConErrori(fileSpedizioni);
 		}
 	}
 

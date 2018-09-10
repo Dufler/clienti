@@ -6,8 +6,6 @@ import java.util.Comparator;
 public class Ordinatore implements Comparator<File> {
 	
 	private enum Nomi {
-		Assortimenti,
-		Barcode,
 		TipiColli,
 		UnitaMisura,
 		ModalitaDiPagamento,
@@ -18,12 +16,17 @@ public class Ordinatore implements Comparator<File> {
 		ClasseTaglie,
 		Colori,
 		Articoli,
+		Assortimenti,
+		Barcode,
 		Fornitori,
 		Clienti,
 		Vettori,
 		DocumentiEntrata,
 		RigheDocumentiEntrata,
-		OrdiniClienti
+		OrdiniClienti,
+		RigheOrdiniClienti,
+		Colli,
+		DDTSpedizione
 	}
 
 	@Override
@@ -31,14 +34,14 @@ public class Ordinatore implements Comparator<File> {
 		int compare;
 		try {
 			String fileName1 = o1.getName();
-			String fileType1 = fileName1.split("_")[0];
+			String fileType1 = fileName1.split("_|\\d")[0];
 			Nomi file1 = Nomi.valueOf(fileType1);
 			String fileName2 = o2.getName();
-			String fileType2 = fileName2.split("_")[0];
+			String fileType2 = fileName2.split("_|\\d")[0];
 			Nomi file2 = Nomi.valueOf(fileType2);
 			compare = file1.compareTo(file2);
 		} catch (Exception e) {
-			compare = 0;
+			compare = -1;
 		}
 		return compare;
 	}

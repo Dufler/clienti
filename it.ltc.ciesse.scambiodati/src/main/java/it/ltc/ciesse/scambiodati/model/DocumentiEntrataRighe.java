@@ -36,9 +36,9 @@ public class DocumentiEntrataRighe {
 				if (testata == null) 
 					throw new RuntimeException("La testata non esiste, riferimento: '" + riferimentoTestata + "'");
 				int numeroRiga = parser.getIntero(21, 31);
-				String modello = parser.getStringa(31, 82);
-				String sku = parser.getStringa(990, 1000);
-				String magazzino = parser.getStringa(82, 92);
+				String modello = parser.getStringa(31, 83);
+				String sku = parser.getStringa(989, 1000);
+				String magazzino = parser.getStringa(83, 92);
 				String stagione = parser.getStringa(91, 141);
 				int indexQta = 183;
 				int counter = 1;
@@ -107,7 +107,7 @@ public class DocumentiEntrataRighe {
 		for (PakiArticolo riga : righe) {
 			String[] datiArticolo = riga.getCodArtStr().split("_");
 			String idUnivoco = datiArticolo[0];
-			int index = Integer.parseInt(datiArticolo[1]);
+			int index = Integer.parseInt(datiArticolo[1]) - 1;
 			if (!mappaListe.containsKey(idUnivoco)) {
 				mappaListe.put(idUnivoco, new PakiArticolo[40]);
 			}
@@ -126,7 +126,7 @@ public class DocumentiEntrataRighe {
 					datiGenarali.append("2"); //Fisso l'operazione a update
 					datiGenarali.append(utility.getFormattedString(riga.getNrOrdineFor(), 20));
 					datiGenarali.append(utility.getFormattedString(Integer.toString(riga.getRigaPacki()), 10));
-					datiGenarali.append(utility.getFormattedString(riga.getBarcodeCollo(), 50)); //E' salvato in questo campo.
+					datiGenarali.append(utility.getFormattedString(riga.getBarcodeCollo(), 52)); //E' salvato in questo campo.
 					datiGenarali.append(utility.getFormattedString(riga.getMagazzino(), 10));
 					datiGenarali.append(utility.getFormattedString(riga.getStagcarico(), 50));
 					datiGenarali.append(utility.getFormattedString("", 10)); //bagno - non mappato e non richiesto
@@ -143,8 +143,16 @@ public class DocumentiEntrataRighe {
 				riscontrato.append(utility.getFormattedString(riscontrata, 10));
 			}
 			//Assemblo la riga e la aggiungo al documento
-			String rigaDocumento = datiGenarali.toString() + dichiarato.toString() + riscontrato.toString() + idUnivoco;
-			righeDocumento.add(rigaDocumento.toString());
+			StringBuilder finale = new StringBuilder();
+			finale.append(datiGenarali.toString());
+			finale.append(dichiarato.toString());
+			finale.append(riscontrato.toString());
+			finale.append(utility.getFormattedString(idUnivoco, 11, " ", true));
+			//Aggiungo spazio in fondo se necessario
+			while (finale.length() < 1001) {
+				finale.append(" ");
+			}
+			righeDocumento.add(finale.toString());
 		}
 		return righeDocumento;
 	}

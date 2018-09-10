@@ -58,8 +58,8 @@ public class Articolo {
 				if (unitaMisura != null && unitaMisura.length() > 10) {
 					unitaMisura.substring(0, 10);
 				}
-				String idUnivoco = parser.getStringa(257, 267);
-				int pezziPerConfezione = parser.getIntero(267, 277);
+				int idUnivoco = parser.getIntero(256, 265);
+				int pezziPerConfezione = 1; //parser.getIntero(267, 277); l'ho tolto perchè l'imballo non lo gestisce bene.
 				String linea = parser.getStringa(1501, 1551);
 				String categoriaMerceologica = parser.getStringa(1551, 1601);
 				String stagione = parser.getStringa(1601, 1611);
@@ -73,7 +73,7 @@ public class Articolo {
 						Articoli articolo = new Articoli();
 						articolo.setIdUniArticolo(getIDUnivoco());
 						articolo.setCodArtStr(idUnivoco + "_" + counter);
-						articolo.setModello(idUnivoco);
+						articolo.setModello(Integer.toString(idUnivoco));
 						articolo.setBarraEAN(barcode);
 						articolo.setBarraUPC(barcode);
 						articolo.setCodBarre(barcode);

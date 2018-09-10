@@ -6,6 +6,10 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.database.dao.legacy.ArtibarDao;
+import it.ltc.database.dao.legacy.ArticoliDao;
+import it.ltc.database.model.legacy.ArtiBar;
+import it.ltc.database.model.legacy.Articoli;
 import it.ltc.forza.ftp.model.AnagraficaProdotti;
 import it.ltc.utility.csv.FileCSV;
 
@@ -22,7 +26,10 @@ public class MainImportazioneDati {
 	
 	private static final Logger logger = Logger.getLogger("Forza Products Importation");
 	
-	private static final String filePath = "C:/Users/Damiano/Documents/LTC/clienti/forza/privalia.csv";
+	private static final String filePath = "C:/Users/Damiano/Documents/LTC/forza/anagrafiche.csv";
+	
+	private static final ArticoliDao daoArticoli = new ArticoliDao("legacy-forza");
+	private static final ArtibarDao daoBarcode = new ArtibarDao("legacy-forza");
 
 	public static void main(String[] args) throws Exception {
 		logger.info("Avvio procedura.");
@@ -41,49 +48,52 @@ public class MainImportazioneDati {
 		nuoveAnagrafiche.sort(null);
 		for (AnagraficaProdotti prodotto : nuoveAnagrafiche) {
 			//Legacy - SQLServer
-			boolean salvatoSQLServer = salvaProdottoSQLServer(prodotto);
-			if (salvatoSQLServer)
-				prodottiSQLServer += 1;
-			else
-				logger.error("Impossibile salvare su SQL Server il prodotto: " + prodotto);
+			salvaProdottoSQLServer(prodotto);
+			prodottiSQLServer += 1;
 		}
 		//Report
 		logger.info("Report inserimento SQL Server: " + prodottiSQLServer + " nuovi prodotti.");
 		logger.info("Termine procedura.");
 	}
 	
-	private static boolean salvaProdottoSQLServer(AnagraficaProdotti prodotto) {
-//		//Genero le info richieste
-//		boolean bundle = prodotto.getComposizione().equals(AnagraficaProdotti.Composizione.B.name());
-//		Integer umPos = bundle ? 2 : 1; 
-//		String idUniArticolo = prodotto.getSku();
-//		while (idUniArticolo.length() < 15) {
-//			idUniArticolo += "0";
-//		}
-//		//Passo alla valorizzazione e inserimento dell'articolo
-//		Articoli articolo = new Articoli();
-//		articolo.setBarcode(prodotto.getBarcode());
-//		articolo.setCodiceArticolo(prodotto.getSku());
-//		articolo.setColore("-");
-//		articolo.setDescrizione(prodotto.getDescrizione());
-//		articolo.setIdUnivocoArticolo(idUniArticolo);
-//		articolo.setNumerata("-");
-//		articolo.setStagione("-");
-//		articolo.setUmPos(umPos);
-//		articolo.setTaglia("UNI");
-//		articolo.setCatMercDett("FORZA");
-//		articolo.setCatMercGruppo("FORZA");
-//		articolo.setLinea("FORZA");
-//		boolean insertArticolo = managerArticoli.insert(articolo);
-//		//Passo alla valorizzazione e inserimento del barcode
-//		ArtiBar barcode = new ArtiBar();
-//		barcode.setBarcodeEAN(prodotto.getBarcode());
-//		barcode.setBarcodeUPC(prodotto.getBarcode());
-//		barcode.setCodiceArticolo(prodotto.getSku());
-//		barcode.setIdUniArticolo(idUniArticolo);
-//		boolean insertBarcode = managerBarcode.insert(barcode);
-//		return insertArticolo && insertBarcode;
-		return false; //FIXME - Invece che scrivere la procedura qui sarebbe meglio reimplementare il controller sul progetto it.ltc.model.persistence
+	private static void salvaProdottoSQLServer(AnagraficaProdotti prodotto) {
+		//Genero le info richieste
+		boolean bundle = prodotto.getComposizione().equals(AnagraficaProdotti.Composizione.B.name());
+		int umPos = bundle ? 2 : 1; 
+		String idUniArticolo = prodotto.getSku();
+		while (idUniArticolo.length() < 15) {
+			idUniArticolo += "0";
+		}
+		//Passo alla valorizzazione e inserimento dell'articolo
+		Articoli articolo = new Articoli();
+		articolo.setBarraEAN(prodotto.getBarcode());
+		articolo.setBarraUPC(prodotto.getBarcode());
+		articolo.setCodBarre(prodotto.getBarcode());
+		articolo.setCodArtStr(prodotto.getSku());
+		articolo.setColore("-");
+		articolo.setDescrizione(prodotto.getDescrizione());
+		articolo.setIdUniArticolo(idUniArticolo);
+		articolo.setStagione("-");
+		articolo.setTaglia("UNI");
+		articolo.setCatMercDett("FORZA");
+		articolo.setCatMercGruppo("FORZA");
+		articolo.setLinea("FORZA");
+		articolo.setUmPos(umPos);
+		articolo.setCategoria("FORZA");
+		articolo.setModello(prodotto.getSku());
+		articolo = daoArticoli.inserisci(articolo);
+		if (articolo == null)
+			throw new RuntimeException("Impossibile inserire l'articolo " + prodotto.getSku());
+		//Passo alla valorizzazione e inserimento del barcode
+		ArtiBar barcode = new ArtiBar();
+		barcode.setBarraEAN(prodotto.getBarcode());
+		barcode.setBarraUPC(prodotto.getBarcode());
+		barcode.setCodiceArticolo(prodotto.getSku());
+		barcode.setIdUniArticolo(idUniArticolo);
+		barcode = daoBarcode.inserisci(barcode);
+		if (barcode == null)
+			throw new RuntimeException("Impossibile inserire il barcode per l'articolo " + prodotto.getSku());
+		//FIXME - Invece che scrivere la procedura qui sarebbe meglio reimplementare il controller sul progetto it.ltc.model.persistence
 	}
 
 }
