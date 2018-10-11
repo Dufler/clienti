@@ -10,6 +10,8 @@ import it.ltc.ciesse.scambiodati.logic.Import;
 import it.ltc.database.dao.legacy.DestinatariDao;
 import it.ltc.database.model.legacy.Destinatari;
 import it.ltc.database.model.legacy.TestataOrdini;
+import it.ltc.model.interfaces.indirizzo.MIndirizzo;
+import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.utility.miscellanea.string.StringParser;
 import it.ltc.utility.miscellanea.string.StringUtility;
 
@@ -19,7 +21,72 @@ public class OrdiniTestata {
 	public static final String PATTERN_DATA = "dd/MM/yyyy HH:mm:ss";
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
-	public static List<TestataOrdini> parsaOrdini(List<String> righe) {
+	public static List<MOrdine> parsaOrdini(List<String> righe) {
+		//DestinatariDao daoDestinatari = new DestinatariDao(Import.persistenceUnit);
+		List<MOrdine> ordini = new LinkedList<>();
+		String[] lines = new String[righe.size()];
+		lines = righe.toArray(lines);
+		StringParser parser = new StringParser(lines, 615, PATTERN_DATA, PATTERN_DATA);
+		do {
+			int operazione = parser.getIntero(0, 1);
+			String riferimento = parser.getStringa(1, 21);
+			String cliente = parser.getStringa(21, 41);
+			Date dataDocumento = parser.getDataSoloGiorno(41, 60);
+			if (dataDocumento == null)
+				dataDocumento = new Date();
+			Date dataConsegna = parser.getDataSoloGiorno(60, 79);
+			if (dataConsegna == null)
+				dataConsegna = new Date();
+			//String tipoEvasione = parser.getStringa(79, 80); //Non mappato
+			//String condizionePagamaneto = parser.getStringa(80, 84); //Non mappato
+			String vettore = parser.getStringa(88, 108);
+			String note = parser.getStringa(164, 214);
+			String tipo = parser.getStringa(614, 615);
+			//solo inserimento, se chiedono cancellazione o aggiornamento lancio un'eccezione.
+			if (operazione == 1) {
+				MIndirizzo destinatario = new MIndirizzo();
+				destinatario.setCodice(cliente);
+				MOrdine ordine = new MOrdine();
+				ordine.setAssicurazione(null);
+				ordine.setCodiceCorriere(vettore);
+				ordine.setContrassegno(null);
+				ordine.setCorriere(vettore);
+				ordine.setDataConsegna(dataConsegna);
+				ordine.setDataOrdine(dataDocumento);
+				ordine.setDestinatario(destinatario);
+				ordine.setMittente(getMittente());
+				ordine.setNote(note);
+				ordine.setParticolarita(null);
+				ordine.setPriorita(1);
+				ordine.setRiferimentoDocumento(riferimento);
+				ordine.setRiferimentoOrdine(riferimento);
+				ordine.setServizioCorriere("DEF");
+				ordine.setTipo(tipo);
+				ordine.setTipoIdentificazioneProdotti("CHIAVE");
+				ordine.setValoreDoganale(0.0);
+				ordine.setDataDocumento(new Date());
+				ordine.setTipoDocumento("ORDINE");
+				ordini.add(ordine);
+			}
+		} while (parser.prossimaLinea());	
+		return ordini;
+	}
+	
+	private static MIndirizzo getMittente() {
+		MIndirizzo mittente = new MIndirizzo();
+		mittente.setCap("61033");
+		mittente.setCodice("DEFAULT");
+		mittente.setEmail("support@ltc-logistics.it");
+		mittente.setIndirizzo("Via Fermignano, 1");
+		mittente.setLocalita("Fermignano");
+		mittente.setNazione("ITA");
+		mittente.setProvincia("PU");
+		mittente.setRagionesociale("CiEsse");
+		mittente.setTelefono("");
+		return mittente;
+	}
+	
+	public static List<TestataOrdini> parsaTestate(List<String> righe) {
 		DestinatariDao daoDestinatari = new DestinatariDao(Import.persistenceUnit);
 		List<TestataOrdini> testate = new LinkedList<>();
 		String[] lines = new String[righe.size()];
@@ -41,7 +108,7 @@ public class OrdiniTestata {
 			String note = parser.getStringa(164, 214);
 			String tipo = parser.getStringa(614, 615);
 			//Inserimento o aggiornamento.
-			if (operazione == 1 || operazione == 2) {
+			if (operazione == 1 /*|| operazione == 2*/) {
 				//Check sul destinatario
 				Destinatari destinatario = daoDestinatari.trovaDaCodice(cliente);
 				if (destinatario == null)
@@ -61,11 +128,14 @@ public class OrdiniTestata {
 				testata.setTipoOrdine(tipo);
 				testata.setStato("IMPO");
 				testate.add(testata);
-			} else if (operazione == 3) { //Lo posso cancellare solo se non abbiamo cominciato a lavorarlo.
+			} /*else if (operazione == 3) { //Lo posso cancellare solo se non abbiamo cominciato a lavorarlo.
 				TestataOrdini testata = new TestataOrdini();
 				testata.setRifOrdineCli(riferimento);
 				testata.setTipoDoc(CANCELLAZIONE);
 				testate.add(testata);
+			}*/
+			else {
+				throw new RuntimeException("Operazione non consentita sulle righe d'ordine. (update/delete)");
 			}
 		} while (parser.prossimaLinea());	
 		return testate;

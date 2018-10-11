@@ -38,6 +38,7 @@ public class ClientiDestinatari {
 				destinatario.setIndirizzo(indirizzo);
 				destinatario.setLocalita(localita);
 				destinatario.setCodIso(iso);
+				destinatario.setCodNaz(iso);
 				destinatario.setNazione(nazione);
 				destinatario.setProvincia(provincia);
 				destinatario.setRagSoc1(ragioneSociale); //TODO verificare lunghezze massime per tutti i campi.

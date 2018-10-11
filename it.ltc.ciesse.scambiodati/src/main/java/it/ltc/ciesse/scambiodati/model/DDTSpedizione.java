@@ -41,6 +41,7 @@ public class DDTSpedizione {
 			String tipoContrassegno = parser.getStringa(144, 149);
 			String divisaContrassegno = parser.getStringa(149, 152);
 			String note = parser.getStringa(155, 190);
+			System.out.println("");
 			//Recupero i colli e l'ordine collegato.
 			List<ColliPreleva> colli = daoColli.trovaDaRiferimentoCliente(numeroDDT);
 			if (colli.isEmpty())

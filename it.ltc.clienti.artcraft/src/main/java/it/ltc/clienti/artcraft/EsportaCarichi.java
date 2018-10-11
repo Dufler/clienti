@@ -1,4 +1,4 @@
-package it.ltc.clienti.date;
+package it.ltc.clienti.artcraft;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -21,8 +21,8 @@ public class EsportaCarichi {
 	
 	private static final Logger logger = Logger.getLogger(EsportaCarichi.class);
 	
-	public static final String persistenceUnit = "legacy-date";
-	public static final String PATH_CARTELLA_EXPORT = "\\\\192.168.0.10\\e$\\Applicativi\\Date1\\Out\\";
+//	public static final String persistenceUnit = "legacy-artcraft-pg";
+//	public static final String PATH_CARTELLA_EXPORT = "\\\\192.168.0.10\\e$\\\\Artcrpgges\\\\Out\\"; //FIXME: VERIFICA!
 	
 	private static EsportaCarichi instance;
 	
@@ -32,15 +32,20 @@ public class EsportaCarichi {
 	private Date now;
 	private final HashMap<String, Articoli> mappaArticoli;
 	
+	private final String persistenceUnit;
+	private final String pathCartellaExport;
+	
 	private final ArticoliDao daoArticoli;
 	private final PakiTestaDao daoCarichi;
 	private final PakiArticoloDao daoRighe;
 
 	private EsportaCarichi() {
 		su = new StringUtility();
-		sdfToday = new SimpleDateFormat("yyyyMMdd");
+		sdfToday = new SimpleDateFormat("ddMMyyyy");
 		sdfNow = new SimpleDateFormat("yyyyMMddHHmmss");
 		mappaArticoli = new HashMap<>();
+		persistenceUnit = ConfigurationUtility.getInstance().getPersistenceUnit();
+		pathCartellaExport = ConfigurationUtility.getInstance().getExportFolderPath();
 		daoArticoli = new ArticoliDao(persistenceUnit);
 		daoCarichi = new PakiTestaDao(persistenceUnit);
 		daoRighe = new PakiArticoloDao(persistenceUnit);
@@ -65,7 +70,7 @@ public class EsportaCarichi {
 			//per ogni carico trovato recupero le righe collegate
 			List<PakiArticolo> righeCarico = daoRighe.trovaRigheDaCarico(carico.getIdTestaPaki());
 			//genero le righe corrispondenti
-			HashMap<String, RigaCaricoDate> infoCarico = recuperaInfoCarico(righeCarico);
+			HashMap<String, RigaCaricoArtcraft> infoCarico = recuperaInfoCarico(righeCarico);
 			//Scrivo il file e lo deposito nella cartella out
 			List<String> righeFile = generaRigheFileCarico(carico, infoCarico);
 			//se tutto è andato bene aggiorno la testata
@@ -91,50 +96,56 @@ public class EsportaCarichi {
 		return mappaArticoli.get(idUnivoco);
 	}
 	
-	private HashMap<String, RigaCaricoDate> recuperaInfoCarico(List<PakiArticolo> righe) {
-		HashMap<String, RigaCaricoDate> mappaInfoCarico = new HashMap<>();
+	private HashMap<String, RigaCaricoArtcraft> recuperaInfoCarico(List<PakiArticolo> righe) {
+		HashMap<String, RigaCaricoArtcraft> mappaInfoCarico = new HashMap<>();
 		for (PakiArticolo riga : righe) {
 			String idUnivoco = riga.getCodUnicoArt();
-			if (!mappaInfoCarico.containsKey(idUnivoco)) {
+			String magazzino = riga.getMagazzino();
+			String key = idUnivoco + "§" + magazzino;
+			if (!mappaInfoCarico.containsKey(key)) {
 				Articoli articolo = trovaArticolo(idUnivoco);
 				String codiceArticolo = articolo != null ? articolo.getCodArtStr() : "X"; //Anche qui il vecchio fa proprio così :/
 				String barcode = articolo != null ? articolo.getBarraEAN() : "0000000000000"; //Il vecchio fa proprio così
+				boolean cassa = articolo != null ? "CASSE".equals(articolo.getUm()) : false;
+				String barcodeProdotto = cassa ? "" : barcode;
+				String barcodeCassa = cassa ? barcode : "";
 				String numerata = articolo != null ? articolo.getNumerata() : "001";
-				RigaCaricoDate info = new RigaCaricoDate(idUnivoco, codiceArticolo, barcode, numerata);
-				mappaInfoCarico.put(idUnivoco, info);
+				int posizione = articolo.getUmPos();
+				String ordineFornitore = riga.getNrOrdineFor();
+				RigaCaricoArtcraft info = new RigaCaricoArtcraft(codiceArticolo, numerata, posizione, magazzino, barcodeProdotto, barcodeCassa, ordineFornitore);
+				mappaInfoCarico.put(key, info);
 			}
-			RigaCaricoDate info = mappaInfoCarico.get(idUnivoco);
+			RigaCaricoArtcraft info = mappaInfoCarico.get(key);
 			info.setTotaleDichiarato(info.getTotaleDichiarato() + riga.getQtaPaki());
 			info.setTotaleRiscontrato(info.getTotaleRiscontrato() + riga.getQtaVerificata());
 		}
 		return mappaInfoCarico;
 	}
 	
-	private List<String> generaRigheFileCarico(PakiTesta carico, HashMap<String, RigaCaricoDate> righe) {
+	private List<String> generaRigheFileCarico(PakiTesta carico, HashMap<String, RigaCaricoArtcraft> righe) {
 		List<String> righeFile = new LinkedList<String>();
-		Date dataInizio = carico.getDataInizio() != null ? carico.getDataInizio() : now;
-		String fornitore = carico.getRagSocFor() != null ? carico.getRagSocFor() : "D.A.T.E.";
-		for (RigaCaricoDate riga : righe.values()) {
+		Date dataCarico = carico.getDataPaki() != null ? carico.getDataPaki() : now;
+		String codiceFornitore = carico.getCodFornitore() != null ? carico.getCodFornitore() : "21870";
+		String fornitore = carico.getRagSocFor() != null ? carico.getRagSocFor() : "CROCS EUROPE B.V.";
+		for (RigaCaricoArtcraft riga : righe.values()) {
 			StringBuilder line = new StringBuilder();
-			line.append("IC"); //strTipoDo, fisso cominciano tutte così.
-			line.append("          "); //strCodLog, fisso.
-			line.append(su.getFormattedString(carico.getNrPaki(), 16)); //strNrDoc, 16 caratteri
-			line.append(sdfToday.format(now)); //strDataDoc, sembra che prenda la data attuale
-			line.append(sdfToday.format(dataInizio)); //strdatreg, il campo dataInizio sul pakitesta
-			line.append("000000000"); //strCodFor, è stato messo fisso... :/
+			line.append(su.getFormattedString(carico.getNrPaki(), 20)); //strNrDoc, 16 caratteri
+			line.append(sdfToday.format(dataCarico)); //strDataDoc, se non c'è prende la data attuale.
+			line.append(su.getFormattedString(codiceFornitore, 20)); //strCodFor
 			line.append(su.getFormattedString(fornitore, 35)); //strRagSoc
-			line.append("                              "); //strnonave, viene messa fissa
-			line.append("0000000000000000"); //strdtpdta, viene messa fissa
-			line.append(su.getFormattedString("", 115)); //115 spazi... :/
-			line.append(riga.getBarcode()); //strbarra
-			line.append(su.getFormattedString(riga.getCodiceArticolo(), 56)); //strCodArticolo
-			line.append(su.getFormattedString(riga.getNumerata(), 7)); //strnumerata
-			line.append("0000000000"); //strsezord
-			line.append(su.getFormattedString(riga.getTotaleDichiarato(), 6));
-			line.append(su.getFormattedString(riga.getTotaleRiscontrato(), 6));
-			line.append(su.getFormattedString(riga.getTotaleDichiarato(), 6)); //li mette due volte, in teoria va a guardare la numerata ma sembra che faccia la stessa identica cosa sia per "001" che per "002"
-			line.append(su.getFormattedString(riga.getTotaleRiscontrato(), 6));
-			line.append(su.getFormattedString("", 227)); //227 spazi... :/
+			line.append("000000"); //strNrCollo, viene messa fissa
+			line.append(su.getFormattedString(riga.getCodiceArticolo(), 40)); //strCodArticolo
+			line.append(su.getFormattedString(riga.getNumerata(), 10)); //strnumerata
+			line.append(su.getFormattedString(riga.getPosizione(), 2)); //strPosizione
+			line.append("                    "); //spazio vuoto
+			line.append(su.getFormattedString(riga.getTotaleDichiarato(), 5));
+			line.append(su.getFormattedString(riga.getTotaleRiscontrato(), 5));
+			line.append("0"); //ci mette uno 0
+			line.append(su.getFormattedString(riga.getMagazzino(), 3)); //rstamagazzino, quanti caratteri? //FIXME: Il codice sul vecchio è probabilmente sbagliato in fase di importazione. Ho trovato su un file d'esempio il magazzino RE-01 che non esiste nella tabella magazzini.
+			line.append(su.getFormattedString(carico.getTipodocumento(), 10)); //strTipodocumento
+			line.append(su.getFormattedString(riga.getBarcodeCassa(), 40)); //strCasse
+			line.append(su.getFormattedString(riga.getOrdineFornitore(), 20)); //strNrOrdineFor
+			line.append(su.getFormattedString(riga.getBarcodeProdotto(), 40)); //strBarra
 			righeFile.add(line.toString());
 		}
 		return righeFile;
@@ -142,7 +153,7 @@ public class EsportaCarichi {
 	
 	private boolean scriviFileCarico(List<String> righe) {
 		String nomeFile = "TR07_" + sdfNow.format(now) + ".TXT";
-		String pathDocumento = PATH_CARTELLA_EXPORT + nomeFile;
+		String pathDocumento = pathCartellaExport + nomeFile;
 		boolean exportDocumento = FileUtility.writeFile(pathDocumento, righe);
 		if (!exportDocumento)
 			logger.error("Impossibile esportare il documento di carico: " + nomeFile);

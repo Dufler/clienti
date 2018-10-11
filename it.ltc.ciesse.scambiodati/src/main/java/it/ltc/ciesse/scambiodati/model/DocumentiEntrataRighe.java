@@ -108,14 +108,17 @@ public class DocumentiEntrataRighe {
 			String[] datiArticolo = riga.getCodArtStr().split("_");
 			String idUnivoco = datiArticolo[0];
 			int index = Integer.parseInt(datiArticolo[1]) - 1;
-			if (!mappaListe.containsKey(idUnivoco)) {
-				mappaListe.put(idUnivoco, new PakiArticolo[40]);
+			String key = idUnivoco + "§" + riga.getMagazzinoltc();
+			if (!mappaListe.containsKey(key)) {
+				mappaListe.put(key, new PakiArticolo[40]);
 			}
-			mappaListe.get(idUnivoco)[index] = riga;
+			mappaListe.get(key)[index] = riga;
 		}
 		//Per ogni sotto lista faccio una riga.
-		for (String idUnivoco : mappaListe.keySet()) {
-			PakiArticolo[] array = mappaListe.get(idUnivoco);
+		for (String key : mappaListe.keySet()) {
+			String[] dati = key.split("§");
+			String idUnivoco = dati[0];
+			PakiArticolo[] array = mappaListe.get(key);
 			//Compongo la stringa di 4 parti: 1 - dati generali, 2 dichiarato, 3 riscontrato, 4 id univoco
 			StringBuilder datiGenarali = new StringBuilder();
 			StringBuilder dichiarato = new StringBuilder();
@@ -147,7 +150,7 @@ public class DocumentiEntrataRighe {
 			finale.append(datiGenarali.toString());
 			finale.append(dichiarato.toString());
 			finale.append(riscontrato.toString());
-			finale.append(utility.getFormattedString(idUnivoco, 11, " ", true));
+			finale.append(utility.getFormattedString(idUnivoco, 10, " ", true));
 			//Aggiungo spazio in fondo se necessario
 			while (finale.length() < 1001) {
 				finale.append(" ");

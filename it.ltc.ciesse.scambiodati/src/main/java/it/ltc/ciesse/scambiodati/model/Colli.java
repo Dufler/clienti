@@ -50,23 +50,29 @@ public class Colli {
 		StringParser parser = new StringParser(lines, 228, PATTERN_DATA, PATTERN_DATA);
 		do {
 			String numeroCollo = parser.getStringa(1, 16);
+			while (numeroCollo.charAt(0) == '0')
+				numeroCollo = numeroCollo.substring(1, numeroCollo.length());
 			ColliImballo colloImballato = daoColli.trovaDaNumeroCollo(numeroCollo);
 			if (colloImballato == null)
 				throw new RuntimeException("Nessun collo trovato con n° '" + numeroCollo + "'");
 			Date dataDocumento = parser.getDataSoloGiorno(70, 89);
 			if (dataDocumento == null)
 				dataDocumento = new Date();
-			String vettore = parser.getStringa(138, 158);
+			String vettore = parser.getStringa(137, 157);
 			if (vettore.length() > 25)
 				vettore = vettore.substring(0, 25);
-			String ddt = parser.getStringa(208, 228);
-			ColliPreleva collo = new ColliPreleva();
+//			String riferimentoOrdine = parser.getStringa(157, 207);
+//			if (riferimentoOrdine != null && riferimentoOrdine.length() > 20)
+//				riferimentoOrdine = riferimentoOrdine.substring(0, 20);
+			String ddt = parser.getStringa(207, 228);
+			ColliPreleva collo = new ColliPreleva();		
 			collo.setBarcodeCorriere(colloImballato.getBarCodeImb());
 			collo.setCodiceCorriere(vettore);
 			collo.setDataDistinta(new Timestamp(dataDocumento.getTime()));
 			collo.setKeyColloPre(numeroCollo);
 			collo.setNrColloCliente(0);
 			collo.setNrLista(colloImballato.getNrLista());
+			//collo.setPoNumber(riferimentoOrdine);
 			collo.setPoNumber(ddt);
 			collo.setVet1(vettore);
 			colli.add(collo);

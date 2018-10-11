@@ -28,7 +28,7 @@ public class DocumentiEntrataTestata {
 		StringParser parser = new StringParser(lines, 219, PATTERN_DATA, PATTERN_DATA);
 		do {
 			int operazione = parser.getIntero(0, 1);
-			if (operazione == 1 || operazione == 2) {
+			if (operazione == 1 /*|| operazione == 2*/) {
 				PakiTesta testata = new PakiTesta();
 				String codice = parser.getStringa(1, 21);
 				//String data = parser.getStringa(21, 40);
@@ -62,11 +62,14 @@ public class DocumentiEntrataTestata {
 					testata.setTipodocumento("CARICO");
 				}
 				testate.add(testata);
-			} else if (operazione == 3) {
+			} /*else if (operazione == 3) {
 				PakiTesta testata = new PakiTesta();
 				String codice = parser.getStringa(1, 21);
 				testata.setNrPaki(codice);
 				testata.setFlussoDichiarato(CONDIZIONE_ELIMINA);
+			}*/
+			else {
+				throw new RuntimeException("Operazione non consentita sulle righe d'ordine. (update/delete)");
 			}
 		} while (parser.prossimaLinea());		
 		return testate;

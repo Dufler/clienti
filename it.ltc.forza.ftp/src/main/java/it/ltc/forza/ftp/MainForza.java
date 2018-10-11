@@ -253,7 +253,7 @@ public class MainForza {
 	private static String getOrderDescription(MOrdine ordine) {
 		String orderDescription = "";
 		if (ordine != null) {
-			orderDescription += ordine.getRiferimentoordine();
+			orderDescription += ordine.getRiferimentoOrdine();
 			if (ordine.getDestinatario() != null)
 				orderDescription += " per " + ordine.getDestinatario().getRagionesociale();
 			String note = ordine.getNote();

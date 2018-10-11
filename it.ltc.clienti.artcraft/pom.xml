@@ -1,19 +1,17 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>it.ltc.artcraft.ftp</groupId>
-	<artifactId>it.ltc.artcraft.ftp</artifactId>
-	<version>1.0</version>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>it.ltc.clienti</groupId>
+  <artifactId>artcraft</artifactId>
+  <version>1.0</version>
+  
+  <properties>
+	<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<maven.compiler.source>1.8</maven.compiler.source>
+	<maven.compiler.target>1.8</maven.compiler.target>
+</properties>
 
-	<properties>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-	</properties>
-
-	<build>
+<build>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -37,13 +35,13 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>it.ltc.artcraft.ftp.MainArtcraftFTP</mainClass>
+							<mainClass>it.ltc.clienti.artcraft.MainArtcraft</mainClass>
 						</manifest>
 						<manifestEntries>
 							<Class-Path>.</Class-Path>
 						</manifestEntries>
 					</archive>
-					<finalName>FTPArtcraft</finalName>
+					<finalName>${project.name}</finalName>
 				</configuration>
 			</plugin>
 			 <plugin>
@@ -68,21 +66,15 @@
                 </plugin>
 		</plugins>
 	</build>
-
 	<dependencies>
 		<dependency>
-			<groupId>it.ltc.utility.ftp</groupId>
-			<artifactId>it.ltc.utility.ftp</artifactId>
+			<groupId>it.ltc.database.dao</groupId>
+			<artifactId>legacy</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>it.ltc.utility.configuration</groupId>
 			<artifactId>it.ltc.utility.configuration</artifactId>
-			<version>1.0</version>
-		</dependency>
-		<dependency>
-			<groupId>it.ltc.utility</groupId>
-			<artifactId>mail</artifactId>
 			<version>1.0</version>
 		</dependency>
 	</dependencies>

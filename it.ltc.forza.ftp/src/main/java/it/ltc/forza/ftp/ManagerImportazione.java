@@ -16,9 +16,7 @@ import javax.persistence.criteria.Root;
 
 import org.apache.log4j.Logger;
 
-import it.ltc.database.dao.Dao;
 import it.ltc.database.model.centrale.Cap;
-import it.ltc.database.model.centrale.Commessa;
 import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.database.model.legacy.bundle.CasseKIT;
@@ -30,7 +28,7 @@ import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.ordine.ProdottoOrdinato;
 import it.ltc.model.persistence.ordine.ControllerOrdiniSQLServer;
 
-public class ManagerImportazione extends Dao {
+public class ManagerImportazione extends ControllerOrdiniSQLServer {
 	
 	private static final Logger logger = Logger.getLogger("ManagerImportazione");
 	
@@ -39,12 +37,10 @@ public class ManagerImportazione extends Dao {
 	private static final String tipoidentificazioneprodotti = "CHIAVE";
 	private static final String bundle = "BUNDLE";
 	
-	private final SimpleDateFormat sdf;
+	//private final SimpleDateFormat sdf;
 	private final SimpleDateFormat sdfRenamer;
 	
-	private final ControllerOrdiniSQLServer sqlserverController;
-	
-	private final Commessa forza;
+	//private final Commessa forza;
 	private final String corriere;
 	private final String codicecorriere;
 	private final String servizioCorriere;
@@ -56,7 +52,7 @@ public class ManagerImportazione extends Dao {
 	
 	public ManagerImportazione(String persistenceUnit) {
 		super(persistenceUnit);
-		sdf = new SimpleDateFormat("dd/MM/yyyy");
+		//sdf = new SimpleDateFormat("dd/MM/yyyy");
 		sdfRenamer = new SimpleDateFormat("yyyyMMddHHmmss");
 		//Configurazione
 		ConfigurationUtility config = ConfigurationUtility.getInstance();
@@ -66,8 +62,7 @@ public class ManagerImportazione extends Dao {
 		servizioCorriere = config.getServizioCorriere();
 		mittente = config.getMittente();
 		statiErrore = config.getStatiErrore();
-		forza = config.getCommessaDefault();
-		sqlserverController = ControllerOrdiniSQLServer.getInstance(forza);
+		//forza = config.getCommessaDefault();
 	}
 	
 	/**
@@ -107,10 +102,10 @@ public class ManagerImportazione extends Dao {
 		ordine.setContrassegno(null);
 		ordine.setParticolarita(null);
 		ordine.setCorriere(corriere);
-		ordine.setCodicecorriere(codicecorriere);
-		ordine.setServiziocorriere(servizioCorriere);
-		ordine.setDataconsegna(null);
-		ordine.setDataordine(sdf.format(riga.getReceivedDate()));
+		ordine.setCodiceCorriere(codicecorriere);
+		ordine.setServizioCorriere(servizioCorriere);
+		ordine.setDataConsegna(null);
+		ordine.setDataOrdine(riga.getReceivedDate());
 		ordine.setDestinatario(getDestinatario(riga));
 		ordine.setMittente(mittente);
 		String note = riga.getNote();
@@ -118,13 +113,13 @@ public class ManagerImportazione extends Dao {
 			note = note.substring(0, 250);
 		ordine.setNote(note);
 		ordine.setPriorita(1);
-		ordine.setRiferimentodocumentofiscale(riga.getOrderId());
-		ordine.setRiferimentoordine(riga.getOrderId());
+		ordine.setRiferimentoDocumento(riga.getOrderId());
+		ordine.setRiferimentoOrdine(riga.getOrderId());
 		ordine.setStato(statoDefault);
 		ordine.setTipo(tipoDefault);
-		ordine.setTipoidentificazioneprodotti(tipoidentificazioneprodotti);
-		ordine.setValoredoganale(riga.getCostoTotale());
-		ordine.setProdotti(getProdotti(righe));
+		ordine.setTipoIdentificazioneProdotti(tipoidentificazioneprodotti);
+		ordine.setValoreDoganale(riga.getCostoTotale());
+		ordine.getProdotti().addAll(getProdotti(righe));
 		return ordine;
 	}
 	
@@ -137,9 +132,9 @@ public class ManagerImportazione extends Dao {
 		boolean success;
 		try {
 			//mysqlController.valida(ordine);
-			sqlserverController.valida(ordine);
+			valida(ordine);
 			//mysqlController.inserisci(ordine);
-			sqlserverController.inserisci(ordine);
+			inserisci(ordine);
 			success = true;
 		} catch (ModelValidationException | ModelPersistenceException e) {
 			success = false;
@@ -157,7 +152,7 @@ public class ManagerImportazione extends Dao {
 		Integer anno = today.get(Calendar.YEAR);
 		testata.setAnnodoc(anno);
 		testata.setAnnoOrdine(anno);
-		testata.setCodiceClienteCorriere(ordine.getCodicecorriere());
+		testata.setCodiceClienteCorriere(ordine.getCodiceCorriere());
 		testata.setCodCorriere(ordine.getCorriere());
 		testata.setCorriere(ordine.getCorriere());
 		testata.setDataConsegna(timeStamp);
@@ -166,9 +161,9 @@ public class ManagerImportazione extends Dao {
 		testata.setIdDestina(1);
 		testata.setNrLista(sdfRenamer.format(today.getTime()));
 		testata.setNote(ordine.getNote());
-		testata.setNrOrdine(ordine.getRiferimentoordine());
-		testata.setValoreDoganale(ordine.getValoredoganale());
-		testata.setRifOrdineCli(sdfRenamer.format(today.getTime()) + "_" + ordine.getRiferimentoordine());
+		testata.setNrOrdine(ordine.getRiferimentoOrdine());
+		testata.setValoreDoganale(ordine.getValoreDoganale());
+		testata.setRifOrdineCli(sdfRenamer.format(today.getTime()) + "_" + ordine.getRiferimentoOrdine());
 		testata.setStato("INSE");
 		System.out.println(testata);
 		boolean insert;
@@ -227,7 +222,8 @@ public class ManagerImportazione extends Dao {
 						ProdottoOrdinato prodotto = new ProdottoOrdinato();
 						prodotto.setChiave(skuSingleUnit);
 						prodotto.setQuantita(bundleOrdinati * mappaProdotti.get(skuSingleUnit));
-						prodotto.setMagazzino(magazzinoDefault);
+						prodotto.setMagazzinoCliente(magazzinoDefault);
+						prodotto.setMagazzinoLTC(magazzinoDefault);
 						lista.add(prodotto);
 					}
 				}
@@ -235,7 +231,8 @@ public class ManagerImportazione extends Dao {
 				ProdottoOrdinato prodotto = new ProdottoOrdinato();
 				prodotto.setChiave(sku);
 				prodotto.setQuantita(riga.getQuantita());
-				prodotto.setMagazzino(magazzinoDefault);
+				prodotto.setMagazzinoCliente(magazzinoDefault);
+				prodotto.setMagazzinoLTC(magazzinoDefault);
 				lista.add(prodotto);
 			}
 		}
@@ -244,7 +241,7 @@ public class ManagerImportazione extends Dao {
 	
 	private boolean isBundle(String sku) {
 		boolean isBundle = false;
-		Articoli articolo = sqlserverController.ottieniArticoloDaSKU(sku);
+		Articoli articolo = mappaArticoliPerIDUnivoco.get(mappaIdentificazioneArticoli.get(sku)); //Da testare.
 		if (articolo != null) {
 			String tipoCassa = articolo.getTipoCassa() != null ? articolo.getTipoCassa() : "";
 			isBundle = tipoCassa.equals(bundle);

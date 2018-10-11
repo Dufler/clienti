@@ -2,6 +2,7 @@ package it.ltc.ciesse.scambiodati.logic;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -10,12 +11,18 @@ import it.ltc.ciesse.scambiodati.model.Colli;
 import it.ltc.ciesse.scambiodati.model.ContenutoColli;
 import it.ltc.ciesse.scambiodati.model.DocumentiEntrataRighe;
 import it.ltc.ciesse.scambiodati.model.DocumentiEntrataTestata;
+import it.ltc.ciesse.scambiodati.model.Giacenza;
+import it.ltc.ciesse.scambiodati.model.Movimenti;
 import it.ltc.database.dao.legacy.ColliImballoDao;
+import it.ltc.database.dao.legacy.MagaMovDao;
+import it.ltc.database.dao.legacy.MagaSdDao;
 import it.ltc.database.dao.legacy.PakiArticoloDao;
 import it.ltc.database.dao.legacy.PakiTestaDao;
 import it.ltc.database.dao.legacy.RighiImballoDao;
 import it.ltc.database.dao.legacy.TestataOrdiniDao;
 import it.ltc.database.model.legacy.ColliImballo;
+import it.ltc.database.model.legacy.MagaMov;
+import it.ltc.database.model.legacy.MagaSd;
 import it.ltc.database.model.legacy.PakiArticolo;
 import it.ltc.database.model.legacy.PakiTesta;
 import it.ltc.database.model.legacy.RighiImballo;
@@ -29,6 +36,7 @@ public class Export {
 	public static final String persistenceUnit = "legacy-test";
 	
 	public static final String PATH_CARTELLA_EXPORT = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\OUT\\";
+	public static final String PATH_CARTELLA_STORICO = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\OUT\\storico\\";
 	
 	private static Export instance;
 
@@ -50,6 +58,11 @@ public class Export {
 		esportaOrdini();
 	}
 	
+	public void esportaMovimentiEGiacenza() {
+		esportaMovimenti();
+		esportaGiacenza();
+	}
+	
 	private void generaFileCheck(Date now) {
 		String nomeFileCheck = sdf.format(now) + ".chk";
 		String contenutoFileCheck = "\r\n";
@@ -57,6 +70,64 @@ public class Export {
 		boolean exportFileCheck = FileUtility.writeFile(pathFileCheck, contenutoFileCheck);
 		if (!exportFileCheck)
 			logger.error("Impossibile esportare il file di controllo: " + nomeFileCheck);
+	}
+	
+	private void esportaGiacenza() {
+		MagaSdDao daoSaldi = new MagaSdDao(persistenceUnit);
+		List<MagaSd> saldi = daoSaldi.trovaTutti();
+		List<String> righeDocumento = Giacenza.esportaSaldi(saldi);
+		generaFileGiacenza(righeDocumento);
+	}
+	
+	private boolean generaFileGiacenza(List<String> righeDocumento) {
+		Date now = new Date();
+		String nomeFileDocumento = "Giacenza_" + sdf.format(now) + ".txt";
+		String pathDocumento = PATH_CARTELLA_EXPORT + nomeFileDocumento;
+		boolean exportDocumento = FileUtility.writeFile(pathDocumento, righeDocumento);
+		if (!exportDocumento)
+			logger.error("Impossibile esportare il documento della giacenza: " + nomeFileDocumento);
+		generaFileCheck(now);
+		return exportDocumento;
+	}
+	
+	private void esportaMovimenti() {
+		MagaMovDao daoMovimenti = new MagaMovDao(persistenceUnit);
+		List<MagaMov> movimentiScarico = daoMovimenti.trovaMovimentiNonComunicatiPerCausale("TRU");
+		List<String> righeScarico = Movimenti.esportaMovimenti(movimentiScarico);
+		List<MagaMov> movimentiCarico = daoMovimenti.trovaMovimentiNonComunicatiPerCausale("TRI");
+		List<String> righeCarico = Movimenti.esportaMovimenti(movimentiCarico);
+		List<String> righeDocumento = new LinkedList<>();
+		righeDocumento.addAll(righeScarico);
+		righeDocumento.addAll(righeCarico);
+		boolean esportaMovimenti = righeDocumento.isEmpty() ? false : generaFileMovimenti(righeDocumento);
+		if (esportaMovimenti) {
+			//Aggiorno il campo "TRASMESSO" a "SI"
+			for (MagaMov movimento : movimentiScarico) {
+				movimento.setTrasmesso("SI");
+				MagaMov entity = daoMovimenti.aggiorna(movimento);
+				if (entity == null) {
+					logger.error("Impossibile aggiornare lo stato di trasmissione del movimento ID: " + movimento.getIdMagaMov());
+				}
+			}
+			for (MagaMov movimento : movimentiCarico) {
+				movimento.setTrasmesso("SI");
+				MagaMov entity = daoMovimenti.aggiorna(movimento);
+				if (entity == null) {
+					logger.error("Impossibile aggiornare lo stato di trasmissione del movimento ID: " + movimento.getIdMagaMov());
+				}
+			}
+		}
+	}
+	
+	private boolean generaFileMovimenti(List<String> righeDocumento) {
+		Date now = new Date();
+		String nomeFileDocumento = "Movimenti_" + sdf.format(now) + ".txt";
+		String pathDocumento = PATH_CARTELLA_EXPORT + nomeFileDocumento;
+		boolean exportDocumento = FileUtility.writeFile(pathDocumento, righeDocumento);
+		if (!exportDocumento)
+			logger.error("Impossibile esportare il documento dei movimenti: " + nomeFileDocumento);
+		generaFileCheck(now);
+		return exportDocumento;
 	}
 	
 	private void esportaCarichi() {
@@ -95,6 +166,11 @@ public class Export {
 		if (!exportDocumentoRighe)
 			logger.error("Impossibile esportare il documento righe di carico: " + nomeFileDocumentoRighe);
 		generaFileCheck(now);
+		//Faccio delle copie da mettere nello storico dato che quei coioni di CiEsse non ce le mettono.
+		String pathDocumentoTestateStorico = PATH_CARTELLA_STORICO + nomeFileDocumentoTestate;
+		FileUtility.writeFile(pathDocumentoTestateStorico, righeDocumentoTestate);
+		String pathDocumentoRigheStorico = PATH_CARTELLA_STORICO + nomeFileDocumentoRighe;
+		FileUtility.writeFile(pathDocumentoRigheStorico, righeDocumento);
 		return exportDocumentoTestate && exportDocumentoRighe;
 	}
 	
@@ -136,6 +212,11 @@ public class Export {
 		if (!exportDocumentoRighe)
 			logger.error("Impossibile esportare il documento righe di carico: " + nomeFileDocumentoContenutoColli);
 		generaFileCheck(now);
+		//Faccio delle copie da mettere nello storico dato che quei coioni di CiEsse non ce le mettono.
+		String pathDocumentoColliStorico = PATH_CARTELLA_STORICO + nomeFileDocumentoColli;
+		FileUtility.writeFile(pathDocumentoColliStorico, righeDocumentoColli);
+		String pathDocumentoContenutoColliStorico = PATH_CARTELLA_STORICO + nomeFileDocumentoContenutoColli;
+		FileUtility.writeFile(pathDocumentoContenutoColliStorico, righeDocumentoContenutoColli);
 		return exportDocumentoTestate && exportDocumentoRighe;
 	}
 
