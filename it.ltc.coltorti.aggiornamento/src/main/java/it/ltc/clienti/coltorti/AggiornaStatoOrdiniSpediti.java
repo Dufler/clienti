@@ -1,4 +1,4 @@
-package aggiornacoltorti;
+package it.ltc.clienti.coltorti;
 
 import java.util.HashMap;
 import java.util.List;
@@ -14,16 +14,23 @@ import it.ltc.database.model.legacy.TestataOrdini;
 
 public class AggiornaStatoOrdiniSpediti {
 	
-	public static final String persistenceUnit = "legacy-coltorti";
-	
 	private static final Logger logger = Logger.getLogger(AggiornaStatoOrdiniSpediti.class);
+	
+	private final String persistenceUnit;
+	
+	private final TestataOrdiniDao daoTestate;
+	private final ColliImballoDao daoImballati;
+	private final ColliPrelevaDao daoSpedititi;
+	
+	public AggiornaStatoOrdiniSpediti() {
+		persistenceUnit = ConfigurationUtility.getInstance().getPersistenceUnit();
+		daoTestate = new TestataOrdiniDao(persistenceUnit);
+		daoImballati = new ColliImballoDao(persistenceUnit);
+		daoSpedititi = new ColliPrelevaDao(persistenceUnit);
+	}
 
-	public static void main(String[] args) {
-		logger.info("Avvio procedura aggiornamento stato ordini.");
-		TestataOrdiniDao daoTestate = new TestataOrdiniDao(persistenceUnit);
-		ColliImballoDao daoImballati = new ColliImballoDao(persistenceUnit);
-		ColliPrelevaDao daoSpedititi = new ColliPrelevaDao(persistenceUnit);
-		logger.info("Setup terminato, avvio la ricerca.");
+	public void aggiorna() {
+		logger.info("Avvio procedura aggiornamento stato ordini."); 
 		//Trovo tutti gli ordini per cui abbiamo i documenti di spedizione pronti
 		List<TestataOrdini> inspedizione = daoTestate.trovaDaStato("INSP");
 		logger.info("Stanno per essere controllati " + inspedizione.size() + " ordini.");

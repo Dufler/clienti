@@ -73,5 +73,15 @@
 			<artifactId>legacy</artifactId>
 			<version>1.0</version>
 		</dependency>
+		<dependency>
+			<groupId>it.ltc.model.persistence</groupId>
+			<artifactId>it.ltc.model.persistence</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>miscellanea</artifactId>
+			<version>1.0</version>
+		</dependency>
 	</dependencies>
 </project>

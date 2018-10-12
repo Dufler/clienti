@@ -2,8 +2,8 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>it.ltc.coltorti</groupId>
-	<artifactId>aggiornamento</artifactId>
+	<groupId>it.ltc.clienti</groupId>
+	<artifactId>coltorti</artifactId>
 	<version>1.0</version>
 
 	<properties>
@@ -37,7 +37,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>aggiornacoltorti.AggiornaStatoOrdiniSpediti</mainClass>
+							<mainClass>it.ltc.clienti.coltorti.UtilityColtortiMain</mainClass>
 						</manifest>
 						<manifestEntries>
 							<Class-Path>.</Class-Path>
@@ -83,6 +83,11 @@
 		<dependency>
 			<groupId>it.ltc.utility.csv</groupId>
 			<artifactId>it.ltc.utility.csv</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>it.ltc.utility.configuration</groupId>
+			<artifactId>it.ltc.utility.configuration</artifactId>
 			<version>1.0</version>
 		</dependency>
 	</dependencies>

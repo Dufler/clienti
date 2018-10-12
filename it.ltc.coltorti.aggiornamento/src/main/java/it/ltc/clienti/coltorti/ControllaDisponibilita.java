@@ -1,9 +1,14 @@
-package aggiornacoltorti;
+package it.ltc.clienti.coltorti;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.log4j.Logger;
 
 import it.ltc.database.dao.legacy.MagaSdDao;
 import it.ltc.database.dao.legacy.PakiArticoloDao;
@@ -16,47 +21,54 @@ import it.ltc.database.model.legacy.PakiTesta;
 import it.ltc.database.model.legacy.RighiOrdine;
 import it.ltc.database.model.legacy.TestataOrdini;
 
-public class AggiornaDisponibilitaMain {
+public class ControllaDisponibilita {
 	
-	public static final String persistenceUnit = "legacy-coltorti";
+	private static final Logger logger = Logger.getLogger(ControllaDisponibilita.class);
 	
-	private static HashMap<String, Integer> mappaDisponibile;
-	private static HashMap<String, Integer> mappaImpegnato;
-	private static HashMap<String, Integer> mappaEsistenza;
+	public final String persistenceUnit;
 	
-	private static void aggiungiDisponibile(String idUniArticolo, int quantità) {
+	private final HashMap<String, Integer> mappaDisponibile;
+	private final HashMap<String, Integer> mappaImpegnato;
+	private final HashMap<String, Integer> mappaEsistenza;
+	
+	private final PakiTestaDao daoCarichi;
+	private final PakiArticoloDao daoRigheCarichi;
+	
+	public ControllaDisponibilita() {
+		persistenceUnit = ConfigurationUtility.getInstance().getPersistenceUnit();
+		mappaDisponibile = new HashMap<>();
+		mappaImpegnato = new HashMap<>();
+		mappaEsistenza = new HashMap<>();
+		daoCarichi = new PakiTestaDao(persistenceUnit);
+		daoRigheCarichi = new PakiArticoloDao(persistenceUnit);
+	}
+	
+	private void aggiungiDisponibile(String idUniArticolo, int quantità) {
 		int disponibile = mappaDisponibile.containsKey(idUniArticolo) ? mappaDisponibile.get(idUniArticolo) : 0;
 		disponibile += quantità;
 		mappaDisponibile.put(idUniArticolo, disponibile);
 	}
 	
-	private static void aggiungiEsistenza(String idUniArticolo, int quantità) {
+	private void aggiungiEsistenza(String idUniArticolo, int quantità) {
 		int esistenza = mappaEsistenza.containsKey(idUniArticolo) ? mappaEsistenza.get(idUniArticolo) : 0;
 		esistenza += quantità;
 		mappaEsistenza.put(idUniArticolo, esistenza);
 	}
 	
-	private static void aggiungiImpegnato(String idUniArticolo, int quantità) {
+	private void aggiungiImpegnato(String idUniArticolo, int quantità) {
 		int impegnato = mappaImpegnato.containsKey(idUniArticolo) ? mappaImpegnato.get(idUniArticolo) : 0;
 		impegnato += quantità;
 		mappaImpegnato.put(idUniArticolo, impegnato);
 	}
 
-	public static void main(String[] args) {
-		mappaDisponibile = new HashMap<>();
-		mappaImpegnato = new HashMap<>();
-		mappaEsistenza = new HashMap<>();
+	public void controlla(String outputFilePath) {
 		//Prendo tutti i carichi con stato chiuso, considero i prodotti all'interno e li sommo ai disponibili e esistenza.
-		PakiTestaDao daoCarichi = new PakiTestaDao(persistenceUnit);
-		PakiArticoloDao daoRigheCarichi = new PakiArticoloDao(persistenceUnit);
 		List<PakiTesta> carichi = daoCarichi.trovaDaStato("CHIUSO");
 		for (PakiTesta carico : carichi) {
 			List<PakiArticolo> righe = daoRigheCarichi.trovaRigheDaCarico(carico.getIdTestaPaki());
 			for (PakiArticolo riga : righe) {
 				int quantità = riga.getQtaVerificata();
 				String idUniArticolo = riga.getCodUnicoArt();
-				if (idUniArticolo.equals("180623040653735"))
-					System.out.println("trovato carico");
 				aggiungiDisponibile(idUniArticolo, quantità);
 				aggiungiEsistenza(idUniArticolo, quantità);
 			}
@@ -69,9 +81,7 @@ public class AggiornaDisponibilitaMain {
 			List<RighiOrdine> righe = daoRigheOrdine.trovaRigheDaIDOrdine(testata.getIdTestaSped());
 			for (RighiOrdine riga : righe) {
 				String idUniArticolo = riga.getIdUnicoArt();
-				if (idUniArticolo.equals("180623040653735"))
-					System.out.println("trovato ordine");
-				int quantità = riga.getQtaSpedizione(); //riga.getQtaImballata();
+				int quantità = riga.getQtaSpedizione();
 				aggiungiDisponibile(idUniArticolo, -quantità);
 				aggiungiImpegnato(idUniArticolo, quantità);
 			}
@@ -81,9 +91,7 @@ public class AggiornaDisponibilitaMain {
 			List<RighiOrdine> righe = daoRigheOrdine.trovaRigheDaIDOrdine(testata.getIdTestaSped());
 			for (RighiOrdine riga : righe) {
 				String idUniArticolo = riga.getIdUnicoArt();
-				if (idUniArticolo.equals("180623040653735"))
-					System.out.println("trovato ordine");
-				int quantità = riga.getQtaSpedizione(); //riga.getQtaImballata();
+				int quantità = riga.getQtaSpedizione();
 				aggiungiDisponibile(idUniArticolo, -quantità);
 				aggiungiImpegnato(idUniArticolo, quantità);
 			}
@@ -93,9 +101,7 @@ public class AggiornaDisponibilitaMain {
 			List<RighiOrdine> righe = daoRigheOrdine.trovaRigheDaIDOrdine(testata.getIdTestaSped());
 			for (RighiOrdine riga : righe) {
 				String idUniArticolo = riga.getIdUnicoArt();
-				if (idUniArticolo.equals("180623040653735"))
-					System.out.println("trovato ordine");
-				int quantità = riga.getQtaSpedizione(); //riga.getQtaImballata();
+				int quantità = riga.getQtaSpedizione();
 				aggiungiDisponibile(idUniArticolo, -quantità);
 				aggiungiImpegnato(idUniArticolo, quantità);
 			}
@@ -105,8 +111,6 @@ public class AggiornaDisponibilitaMain {
 			List<RighiOrdine> righe = daoRigheOrdine.trovaRigheDaIDOrdine(testata.getIdTestaSped());
 			for (RighiOrdine riga : righe) {
 				String idUniArticolo = riga.getIdUnicoArt();
-				if (idUniArticolo.equals("180623040653735"))
-					System.out.println("trovato ordine");
 				int quantità = riga.getQtaImballata();
 				aggiungiDisponibile(idUniArticolo, -quantità);
 				aggiungiImpegnato(idUniArticolo, quantità);
@@ -117,8 +121,6 @@ public class AggiornaDisponibilitaMain {
 			List<RighiOrdine> righe = daoRigheOrdine.trovaRigheDaIDOrdine(testata.getIdTestaSped());
 			for (RighiOrdine riga : righe) {
 				String idUniArticolo = riga.getIdUnicoArt();
-				if (idUniArticolo.equals("180623040653735"))
-					System.out.println("trovato ordine");
 				int quantità = riga.getQtaImballata();
 				aggiungiDisponibile(idUniArticolo, -quantità);
 				aggiungiEsistenza(idUniArticolo, -quantità);
@@ -129,8 +131,6 @@ public class AggiornaDisponibilitaMain {
 			List<RighiOrdine> righe = daoRigheOrdine.trovaRigheDaIDOrdine(testata.getIdTestaSped());
 			for (RighiOrdine riga : righe) {
 				String idUniArticolo = riga.getIdUnicoArt();
-				if (idUniArticolo.equals("180623040653735"))
-					System.out.println("trovato ordine");
 				int quantità = riga.getQtaImballata();
 				aggiungiDisponibile(idUniArticolo, -quantità);
 				aggiungiEsistenza(idUniArticolo, -quantità);
@@ -141,8 +141,6 @@ public class AggiornaDisponibilitaMain {
 			List<RighiOrdine> righe = daoRigheOrdine.trovaRigheDaIDOrdine(testata.getIdTestaSped());
 			for (RighiOrdine riga : righe) {
 				String idUniArticolo = riga.getIdUnicoArt();
-				if (idUniArticolo.equals("180623040653735"))
-					System.out.println("trovato ordine");
 				int quantità = riga.getQtaImballata();
 				aggiungiDisponibile(idUniArticolo, -quantità);
 				aggiungiEsistenza(idUniArticolo, -quantità);
@@ -154,8 +152,6 @@ public class AggiornaDisponibilitaMain {
 		Set<MagaSd> saldiSbagliati = new HashSet<>();
 		for (MagaSd saldo : saldiCorrenti) {
 			String idUniArticolo = saldo.getIdUniArticolo();
-			if (idUniArticolo.equals("180623040653735"))
-				System.out.println("trovato saldo");
 			//Disponibile
 			Integer checkDisponibile = mappaDisponibile.get(idUniArticolo);
 			if (checkDisponibile == null) {
@@ -185,10 +181,22 @@ public class AggiornaDisponibilitaMain {
 				saldiSbagliati.add(saldo);
 			}
 		}
-		System.out.println("Saldi sbagliati:");
-		for (MagaSd saldo : saldiSbagliati) {
-			System.out.println(saldo);
-		}
+		scriviRisultatoSuFile(outputFilePath, saldiSbagliati);
+	}
+	
+	private void scriviRisultatoSuFile(String outputFilePath, Set<MagaSd> saldiSbagliati) {
+		try (FileWriter out = new FileWriter(outputFilePath)){
+			BufferedWriter bw = new BufferedWriter(out);
+			bw.write(saldiSbagliati.isEmpty() ? "Nessun saldo anomalo!" : "Lista dei saldi sbagliati");
+			for (MagaSd saldo : saldiSbagliati) {
+				bw.newLine();
+				bw.write(saldo.toString());
+			}
+			bw.flush();
+			bw.close();
+		} catch (IOException e) {
+			logger.error("Impossibile scrivere il file di output. (" + outputFilePath + ")");
+		}		
 	}
 
 }

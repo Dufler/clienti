@@ -50,7 +50,7 @@ public class Movimenti {
 			sb.append(utility.getFormattedString(movimento.getDocNr(), 20)); //Numero documento
 			sb.append(sdf.format(movimento.getDataMovMag())); //Data documento
 			sb.append(sdf.format(movimento.getDataMovMag())); //Data conferma, che non ho.
-			sb.append(utility.getFormattedString(0, 10)); //ID_Riga, che non ho.
+			sb.append(utility.getFormattedString(movimento.getIdMagaMov(), 10)); //ID_Riga, che non ho.
 			sb.append(utility.getFormattedString(articolo.getModello(), 10)); //ID articolo Ivy oxford
 			righeDocumento.add(sb.toString());
 		}
