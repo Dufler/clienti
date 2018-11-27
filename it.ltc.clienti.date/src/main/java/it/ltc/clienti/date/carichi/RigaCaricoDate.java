@@ -1,4 +1,4 @@
-package it.ltc.clienti.date;
+package it.ltc.clienti.date.carichi;
 
 /**
  * Classe che mappa le info di base di una riga del file esportato verso DATE alla generazione di un carico.

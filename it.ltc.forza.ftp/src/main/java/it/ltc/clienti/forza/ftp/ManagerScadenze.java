@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp;
+package it.ltc.clienti.forza.ftp;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -14,10 +14,10 @@ import javax.persistence.criteria.Root;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.clienti.forza.ftp.model.ProdottoInScadenza;
 import it.ltc.database.dao.Dao;
 import it.ltc.database.model.legacy.ColliPack;
 import it.ltc.database.model.legacy.scadenza.ColliPackConScadenza;
-import it.ltc.forza.ftp.model.ProdottoInScadenza;
 
 public class ManagerScadenze extends Dao {
 	

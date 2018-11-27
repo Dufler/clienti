@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp.model;
+package it.ltc.clienti.forza.ftp.model;
 
 /**
  * Classe che mappa una riga del file .csv da restituire sulla lettura dei carichi.

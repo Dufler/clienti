@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.dao.legacy.PakiTestaDao;
 import it.ltc.database.model.legacy.Articoli;
@@ -17,10 +17,10 @@ public class DocumentiEntrataRighe {
 	
 	public static final String CONDIZIONE_ELIMINA = "ELIMINA";
 	
-	private static final PakiTestaDao daoTestata = new PakiTestaDao(Import.persistenceUnit);
+	private static final PakiTestaDao daoTestata = new PakiTestaDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	private static final HashMap<String, PakiTesta> mappaTestate = new HashMap<>();
 	
-	private static final ArticoliDao daoArticoli = new ArticoliDao(Import.persistenceUnit);
+	private static final ArticoliDao daoArticoli = new ArticoliDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	private static final HashMap<String, Articoli> mappaArticoli = new HashMap<>();
 	
 	public static List<PakiArticolo> parsaRigheDocumento(List<String> righe) {
@@ -67,17 +67,6 @@ public class DocumentiEntrataRighe {
 					indexQta += 10;
 					counter++;
 				}
-			} else if (operazione == 3) {
-				String riferimentoTestata = parser.getStringa(1, 21);
-				PakiTesta testata = trovaTestata(riferimentoTestata);
-				if (testata == null) 
-					throw new RuntimeException("La testata non esiste, riferimento: '" + riferimentoTestata + "'");
-				int numeroRiga = parser.getIntero(21, 31);
-				PakiArticolo riga = new PakiArticolo();
-				riga.setIdPakiTesta(testata.getIdTestaPaki());
-				riga.setRigaPacki(numeroRiga);
-				riga.setNrDispo(CONDIZIONE_ELIMINA);
-				righeDocumento.add(riga);
 			}
 		} while (parser.prossimaLinea());
 		return righeDocumento;
@@ -108,7 +97,7 @@ public class DocumentiEntrataRighe {
 			String[] datiArticolo = riga.getCodArtStr().split("_");
 			String idUnivoco = datiArticolo[0];
 			int index = Integer.parseInt(datiArticolo[1]) - 1;
-			String key = idUnivoco + "§" + riga.getMagazzinoltc();
+			String key = idUnivoco + "§" + riga.getMagazzinoltc() + "§" + riga.getRigaPacki();
 			if (!mappaListe.containsKey(key)) {
 				mappaListe.put(key, new PakiArticolo[40]);
 			}

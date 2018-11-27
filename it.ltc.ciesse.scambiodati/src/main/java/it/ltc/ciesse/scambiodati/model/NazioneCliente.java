@@ -6,12 +6,12 @@ import java.util.List;
 import it.ltc.database.model.legacy.Nazioni;
 import it.ltc.utility.miscellanea.string.StringParser;
 
-public class Nazione {
+public class NazioneCliente {
 	
 	private final String codiceISO;
 	private final String nome;
 	
-	public Nazione(String codiceISO, String nome) {
+	public NazioneCliente(String codiceISO, String nome) {
 		super();
 		this.codiceISO = codiceISO;
 		this.nome = nome;

@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp;
+package it.ltc.clienti.forza.ftp;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,10 +12,10 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import it.ltc.clienti.forza.ftp.model.LinnworksInvenctoryLine;
 import it.ltc.database.dao.Dao;
 import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.MagaSd;
-import it.ltc.forza.ftp.model.LinnworksInvenctoryLine;
 
 public class ManagerMagazzino extends Dao {
 	

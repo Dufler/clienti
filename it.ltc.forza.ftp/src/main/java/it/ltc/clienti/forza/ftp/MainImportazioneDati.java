@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp;
+package it.ltc.clienti.forza.ftp;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -6,11 +6,11 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.clienti.forza.ftp.model.AnagraficaProdotti;
 import it.ltc.database.dao.legacy.ArtibarDao;
 import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.model.legacy.ArtiBar;
 import it.ltc.database.model.legacy.Articoli;
-import it.ltc.forza.ftp.model.AnagraficaProdotti;
 import it.ltc.utility.csv.FileCSV;
 
 /**

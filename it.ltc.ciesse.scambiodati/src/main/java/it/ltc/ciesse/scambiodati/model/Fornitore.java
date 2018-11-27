@@ -3,7 +3,7 @@ package it.ltc.ciesse.scambiodati.model;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.NazioniDao;
 import it.ltc.database.model.legacy.Fornitori;
 import it.ltc.database.model.legacy.Nazioni;
@@ -12,7 +12,7 @@ import it.ltc.utility.miscellanea.string.StringParser;
 public class Fornitore {
 	
 	public static List<Fornitori> parsaFornitori(List<String> righe) {
-		NazioniDao daoNazioni = new NazioniDao(Import.persistenceUnit);
+		NazioniDao daoNazioni = new NazioniDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 		List<Fornitori> fornitori = new LinkedList<>();
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);

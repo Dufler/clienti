@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.FornitoreDao;
 import it.ltc.database.model.legacy.Fornitori;
 import it.ltc.database.model.legacy.PakiTesta;
@@ -21,7 +21,7 @@ public class DocumentiEntrataTestata {
 	private static final SimpleDateFormat sdf = new SimpleDateFormat(PATTERN_DATA);
 	
 	public static List<PakiTesta> parsaTestate(List<String> righe) throws ParseException {
-		FornitoreDao daoFornitore = new FornitoreDao(Import.persistenceUnit);
+		FornitoreDao daoFornitore = new FornitoreDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 		List<PakiTesta> testate = new LinkedList<>();
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);

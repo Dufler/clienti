@@ -1,4 +1,4 @@
-package it.ltc.clienti.artcraft;
+package it.ltc.clienti.artcraft.carichi;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.clienti.artcraft.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.dao.legacy.PakiArticoloDao;
 import it.ltc.database.dao.legacy.PakiTestaDao;
@@ -20,9 +21,6 @@ import it.ltc.utility.miscellanea.string.StringUtility;
 public class EsportaCarichi {
 	
 	private static final Logger logger = Logger.getLogger(EsportaCarichi.class);
-	
-//	public static final String persistenceUnit = "legacy-artcraft-pg";
-//	public static final String PATH_CARTELLA_EXPORT = "\\\\192.168.0.10\\e$\\\\Artcrpgges\\\\Out\\"; //FIXME: VERIFICA!
 	
 	private static EsportaCarichi instance;
 	
@@ -45,7 +43,7 @@ public class EsportaCarichi {
 		sdfNow = new SimpleDateFormat("yyyyMMddHHmmss");
 		mappaArticoli = new HashMap<>();
 		persistenceUnit = ConfigurationUtility.getInstance().getPersistenceUnit();
-		pathCartellaExport = ConfigurationUtility.getInstance().getExportFolderPath();
+		pathCartellaExport = ConfigurationUtility.getInstance().getLocalFolderOUT();
 		daoArticoli = new ArticoliDao(persistenceUnit);
 		daoCarichi = new PakiTestaDao(persistenceUnit);
 		daoRighe = new PakiArticoloDao(persistenceUnit);

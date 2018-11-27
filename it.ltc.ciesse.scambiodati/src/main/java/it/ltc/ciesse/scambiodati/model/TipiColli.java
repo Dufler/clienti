@@ -3,14 +3,14 @@ package it.ltc.ciesse.scambiodati.model;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ImballoDao;
 import it.ltc.database.model.legacy.Imballi;
 import it.ltc.utility.miscellanea.string.StringUtility;
 
 public class TipiColli {
 	
-	private static final ImballoDao daoImballi = new ImballoDao(Import.persistenceUnit);
+	private static final ImballoDao daoImballi = new ImballoDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	
 	public static List<String> esportaTipiColli() {
 		StringUtility utility = new StringUtility();

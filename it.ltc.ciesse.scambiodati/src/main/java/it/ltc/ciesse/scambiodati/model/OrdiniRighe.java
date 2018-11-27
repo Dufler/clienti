@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.MagazzinoDao;
 import it.ltc.database.model.legacy.Magazzini;
 import it.ltc.database.model.legacy.RighiOrdine;
@@ -19,7 +19,7 @@ public class OrdiniRighe {
 	
 	public static void parsaRigheOrdine(HashMap<String, MOrdine> mappaOrdini, List<String> righe) {
 		//ArticoliDao daoArticoli = new ArticoliDao(Import.persistenceUnit);
-		MagazzinoDao daoMagazzini = new MagazzinoDao(Import.persistenceUnit);
+		MagazzinoDao daoMagazzini = new MagazzinoDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);
 		StringParser parser = new StringParser(lines, 991);
@@ -66,119 +66,6 @@ public class OrdiniRighe {
 			}
 		} while (parser.prossimaLinea());
 	}
-	
-//	public static List<RighiOrdine> parsaRigheOrdine(List<String> righe) {
-//		TestataOrdiniDao daoTestate = new TestataOrdiniDao(Import.persistenceUnit);
-//		MagazzinoDao daoMagazzini = new MagazzinoDao(Import.persistenceUnit);
-//		ArticoliDao daoArticoli = new ArticoliDao(Import.persistenceUnit);
-//		MagaSdDao daoSaldi = new MagaSdDao(Import.persistenceUnit);
-//		MagaMovDao daoMovimenti = new MagaMovDao(Import.persistenceUnit);
-//		List<RighiOrdine> righeOrdine = new LinkedList<>();
-//		List<MagaMov> movimentiDaInserire = new LinkedList<>();
-//		List<MagaSd> saldiDaAggiornare = new LinkedList<>();
-//		List<MagaSd> saldiDaInserire = new LinkedList<>();
-//		String[] lines = new String[righe.size()];
-//		lines = righe.toArray(lines);
-//		StringParser parser = new StringParser(lines, 991);
-//		do {
-//			int operazione = parser.getIntero(0, 1);
-//			String riferimento = parser.getStringa(1, 21);
-//			TestataOrdini testata = daoTestate.trovaDaRiferimento(riferimento);
-//			if (testata == null)
-//				throw new RuntimeException("Nessun ordine trovato con questo riferimento. (" + riferimento + ")");
-//			int numeroRiga = parser.getIntero(21, 31);
-//			String codificaMagazzino = parser.getStringa(140, 150);
-//			Magazzini magazzino = daoMagazzini.trovaDaCodificaCliente(codificaMagazzino);
-//			if (magazzino == null)
-//				throw new RuntimeException("Nessun magazzino trovato con questo riferimento. (" + codificaMagazzino + ")");
-//			//String stagione = parser.getStringa(143, 193); //Non mappato
-//			String riferimentoCliente = parser.getStringa(216, 245);
-//			String diversificazione = parser.getStringa(245, 285);
-//			if (diversificazione != null && diversificazione.length() > 30) {
-//				diversificazione = diversificazione.substring(0, 30);
-//			}
-//			String codiceArticolo = parser.getStringa(1088, 1098); //Da verificare
-//			int indexTaglia = 285;
-//			int counter = 1;
-//			int lunghezzaCampo = 10;
-//			while (counter < 40) {
-//				if (operazione == 1 /*|| operazione == 2*/) {
-//					int quantità = parser.getIntero(indexTaglia + (counter - 1) * lunghezzaCampo, indexTaglia + (counter) * lunghezzaCampo);
-//					if (quantità > 0) {
-//						String skuEffettivo = codiceArticolo + "_" + counter;
-//						Articoli articolo = daoArticoli.trovaDaSKU(skuEffettivo);
-//						if (articolo == null)
-//							throw new RuntimeException("Nessun articolo corrispondente trovato. (" + skuEffettivo + ")");
-//						RighiOrdine riga = new RighiOrdine();
-//						riga.setBarraEAN(articolo.getBarraEAN());
-//						riga.setBarraUPC(articolo.getBarraUPC());
-//						riga.setCodBarre(articolo.getCodBarre());
-//						riga.setCodiceArticolo(articolo.getCodArtStr());
-//						riga.setColore(articolo.getColore());
-//						riga.setDataOrdine(testata.getDataOrdine());
-//						riga.setDescrizione(articolo.getDescrizione());
-//						riga.setIdDestina(testata.getIdDestina());
-//						riga.setIdTestataOrdine(testata.getIdTestaSped());
-//						riga.setIdUnicoArt(articolo.getIdUniArticolo());
-//						riga.setMagazzino(magazzino.getCodiceMag());
-//						riga.setPONumber(riferimentoCliente);
-//						riga.setNoteCliente(diversificazione);
-//						riga.setNrLista(testata.getNrLista());
-//						riga.setRagstampe1(testata.getNrLista());
-//						riga.setNrOrdine(testata.getNrOrdine());
-//						riga.setNrRigo(numeroRiga);
-//						riga.setQtaSpedizione(quantità);
-//						riga.setTaglia(articolo.getTaglia());
-//						riga.setTipoord(testata.getTipoOrdine());
-//						righeOrdine.add(riga);
-//						//Saldo
-//						MagaSd saldo = daoSaldi.trovaDaArticoloEMagazzino(articolo.getIdUniArticolo(), magazzino.getCodiceMag());
-//						if (saldo == null) {
-//							saldo = new MagaSd();
-//							saldo.setCodMaga(magazzino.getCodiceMag());
-//							saldo.setIdUniArticolo(articolo.getIdUniArticolo());
-//							saldo.setImpegnato(quantità);
-//							saldiDaInserire.add(saldo);
-//						} else {
-//							saldo.setImpegnato(saldo.getImpegnato() + quantità);
-//							saldiDaAggiornare.add(saldo);
-//						}						
-//						//Movimento
-//						MagaMov movimento = new MagaMov();
-//						movimento.setCausale("IOS");
-//						movimento.setCodMaga(magazzino.getCodiceMag());
-//						movimento.setDocCat("O");
-//						movimento.setDocTipo("ORD");
-//						movimento.setDocNr(testata.getNrLista());
-//						movimento.setDocNote("IMPEGNATO DA ORDINE");
-//						movimento.setQuantita(quantità);
-//						movimento.setSegno("+");
-//						movimento.setTipo("IP");
-//						movimento.setUtente("WS");
-//						movimento.setSegnoEsi("N");
-//						movimento.setSegnoImp("+");
-//						movimento.setSegnoDis("-");
-//						movimento.setIncTotali("NO");
-//						movimento.setEsistenzamov(saldo.getEsistenza());
-//						movimento.setDisponibilemov(saldo.getDisponibile());
-//						movimento.setImpegnatomov(saldo.getImpegnato());
-//						movimentiDaInserire.add(movimento);
-//					}					
-//				} /*else if (operazione == 3) {
-//					RighiOrdine riga = new RighiOrdine();
-//					riga.setNrLista(testata.getNrLista());
-//					riga.setNrRigo(numeroRiga);
-//					riga.setTipoord(CANCELLAZIONE);
-//					righeOrdine.add(riga);
-//				}*/
-//				else {
-//					throw new RuntimeException("Operazione non consentita sulle righe d'ordine. (update/delete)");
-//				}
-//				counter++;
-//			}
-//		} while (parser.prossimaLinea());
-//		return righeOrdine;
-//	}
 	
 	public static List<String> esportaRigheOrdine(List<RighiOrdine> righeOrdine) {
 		StringUtility utility = new StringUtility(" ", " ", false, false);

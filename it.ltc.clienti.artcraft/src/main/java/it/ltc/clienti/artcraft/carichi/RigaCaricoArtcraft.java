@@ -1,4 +1,4 @@
-package it.ltc.clienti.artcraft;
+package it.ltc.clienti.artcraft.carichi;
 
 public class RigaCaricoArtcraft {
 	

@@ -71,8 +71,8 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>it.ltc.model.persistence</groupId>
-			<artifactId>it.ltc.model.persistence</artifactId>
+			<groupId>it.ltc.model</groupId>
+			<artifactId>persistence</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
@@ -81,14 +81,20 @@
 			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.utility.csv</groupId>
-			<artifactId>it.ltc.utility.csv</artifactId>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>csv</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.utility.configuration</groupId>
-			<artifactId>it.ltc.utility.configuration</artifactId>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>configuration</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>it.ltc.model</groupId>
+			<artifactId>interfaces</artifactId>
 			<version>1.0</version>
 		</dependency>
 	</dependencies>
+	
 </project>

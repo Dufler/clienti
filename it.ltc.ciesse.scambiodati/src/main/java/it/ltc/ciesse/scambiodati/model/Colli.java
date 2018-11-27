@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ColliImballoDao;
 import it.ltc.database.model.legacy.ColliImballo;
 import it.ltc.database.model.legacy.ColliPreleva;
@@ -18,7 +18,7 @@ public class Colli {
 	public static final String PATTERN_DATA = "dd/MM/yyyy HH:mm:ss";
 	private static final SimpleDateFormat sdf = new SimpleDateFormat(PATTERN_DATA);
 	
-	private static final ColliImballoDao daoColli = new ColliImballoDao(Import.persistenceUnit);
+	private static final ColliImballoDao daoColli = new ColliImballoDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	
 	public static List<String> esportaColli(List<ColliImballo> colli, String riferimentoOrdine) {
 		StringUtility utility = new StringUtility();

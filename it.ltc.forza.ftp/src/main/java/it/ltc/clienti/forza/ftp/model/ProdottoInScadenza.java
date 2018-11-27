@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp.model;
+package it.ltc.clienti.forza.ftp.model;
 
 import java.util.Date;
 

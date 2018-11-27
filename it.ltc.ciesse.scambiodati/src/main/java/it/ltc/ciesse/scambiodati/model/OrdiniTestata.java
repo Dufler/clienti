@@ -6,12 +6,14 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.DestinatariDao;
 import it.ltc.database.model.legacy.Destinatari;
 import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.model.interfaces.indirizzo.MIndirizzo;
 import it.ltc.model.interfaces.ordine.MOrdine;
+import it.ltc.model.interfaces.ordine.TipoIDProdotto;
+import it.ltc.model.interfaces.ordine.TipoOrdine;
 import it.ltc.utility.miscellanea.string.StringParser;
 import it.ltc.utility.miscellanea.string.StringUtility;
 
@@ -40,7 +42,7 @@ public class OrdiniTestata {
 			//String tipoEvasione = parser.getStringa(79, 80); //Non mappato
 			//String condizionePagamaneto = parser.getStringa(80, 84); //Non mappato
 			String vettore = parser.getStringa(88, 108);
-			String note = parser.getStringa(164, 214);
+			String note = parser.getStringa(164, 414);
 			String tipo = parser.getStringa(614, 615);
 			//solo inserimento, se chiedono cancellazione o aggiornamento lancio un'eccezione.
 			if (operazione == 1) {
@@ -61,11 +63,11 @@ public class OrdiniTestata {
 				ordine.setRiferimentoDocumento(riferimento);
 				ordine.setRiferimentoOrdine(riferimento);
 				ordine.setServizioCorriere("DEF");
-				ordine.setTipo(tipo);
-				ordine.setTipoIdentificazioneProdotti("CHIAVE");
+				ordine.setTipo(TipoOrdine.PRN);
+				ordine.setTipoIdentificazioneProdotti(TipoIDProdotto.CHIAVE);
 				ordine.setValoreDoganale(0.0);
 				ordine.setDataDocumento(new Date());
-				ordine.setTipoDocumento("ORDINE");
+				ordine.setTipoDocumento(tipo);
 				ordini.add(ordine);
 			}
 		} while (parser.prossimaLinea());	
@@ -81,13 +83,13 @@ public class OrdiniTestata {
 		mittente.setLocalita("Fermignano");
 		mittente.setNazione("ITA");
 		mittente.setProvincia("PU");
-		mittente.setRagionesociale("CiEsse");
+		mittente.setRagioneSociale("CiEsse");
 		mittente.setTelefono("");
 		return mittente;
 	}
 	
 	public static List<TestataOrdini> parsaTestate(List<String> righe) {
-		DestinatariDao daoDestinatari = new DestinatariDao(Import.persistenceUnit);
+		DestinatariDao daoDestinatari = new DestinatariDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 		List<TestataOrdini> testate = new LinkedList<>();
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);

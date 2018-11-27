@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp;
+package it.ltc.clienti.forza.ftp;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -17,6 +17,8 @@ import javax.persistence.criteria.Root;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.clienti.forza.ftp.model.AssegnazioneProdotto;
+import it.ltc.clienti.forza.ftp.model.AssegnazioneProdotto.TipoAssegnazione;
 import it.ltc.database.dao.Dao;
 import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.ColliCarico;
@@ -30,8 +32,6 @@ import it.ltc.database.model.legacy.Scorte2;
 import it.ltc.database.model.legacy.ScorteColli;
 import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.database.model.legacy.Ubicazioni;
-import it.ltc.forza.ftp.model.AssegnazioneProdotto;
-import it.ltc.forza.ftp.model.AssegnazioneProdotto.TipoAssegnazione;
 
 public class ManagerAssegnazione extends Dao {
 	

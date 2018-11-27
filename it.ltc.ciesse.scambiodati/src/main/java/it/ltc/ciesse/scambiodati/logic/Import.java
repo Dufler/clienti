@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.ciesse.scambiodati.model.Articolo;
 import it.ltc.ciesse.scambiodati.model.Assortimenti;
 import it.ltc.ciesse.scambiodati.model.ClasseTaglie;
@@ -18,13 +19,11 @@ import it.ltc.ciesse.scambiodati.model.DDTSpedizione;
 import it.ltc.ciesse.scambiodati.model.DocumentiEntrataRighe;
 import it.ltc.ciesse.scambiodati.model.DocumentiEntrataTestata;
 import it.ltc.ciesse.scambiodati.model.Fornitore;
-import it.ltc.ciesse.scambiodati.model.Nazione;
+import it.ltc.ciesse.scambiodati.model.NazioneCliente;
 import it.ltc.ciesse.scambiodati.model.OrdiniRighe;
 import it.ltc.ciesse.scambiodati.model.OrdiniTestata;
 import it.ltc.ciesse.scambiodati.model.Stagione;
 import it.ltc.ciesse.scambiodati.model.Vettori;
-import it.ltc.database.dao.legacy.ArtibarDao;
-import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.dao.legacy.ColliPrelevaDao;
 import it.ltc.database.dao.legacy.ColoriDao;
 import it.ltc.database.dao.legacy.CorrieriDao;
@@ -37,8 +36,6 @@ import it.ltc.database.dao.legacy.PakiTestaDao;
 import it.ltc.database.dao.legacy.StagioniDao;
 import it.ltc.database.dao.legacy.TempCorrDao;
 import it.ltc.database.dao.legacy.bundle.CasseKitDao;
-import it.ltc.database.model.legacy.ArtiBar;
-import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.ColliPreleva;
 import it.ltc.database.model.legacy.Colori;
 import it.ltc.database.model.legacy.Corrieri;
@@ -51,25 +48,42 @@ import it.ltc.database.model.legacy.PakiTesta;
 import it.ltc.database.model.legacy.Stagioni;
 import it.ltc.database.model.legacy.TempCorr;
 import it.ltc.database.model.legacy.bundle.CasseKIT;
+import it.ltc.model.interfaces.exception.ModelPersistenceException;
+import it.ltc.model.interfaces.exception.ModelValidationException;
 import it.ltc.model.interfaces.ordine.MOrdine;
+import it.ltc.model.interfaces.prodotto.MProdotto;
+import it.ltc.utility.mail.Email;
+import it.ltc.utility.mail.MailMan;
 import it.ltc.utility.miscellanea.file.FileUtility;
 
 public class Import {
 	
 	private static final Logger logger = Logger.getLogger(Import.class);
 	
-	public static final String persistenceUnit = "legacy-test";
+	private final String persistenceUnit;
 	
-	public static final String PATH_CARTELLA_IMPORT = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\IN";
-	public static final String PATH_CARTELLA_IMPORT_STORICO = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\IN\\storico\\";
-	public static final String PATH_CARTELLA_IMPORT_ERRORI = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\IN\\errori\\";
+	private final String pathCartellaImport;
+	private final String pathCartellaImportStorico;
+	private final String pathCartellaImportErrori;
+	private final String pathCartellaImportNonUsati;
 	
 	private static Import instance;
 	
 	private final HashMap<String, MOrdine> mappaOrdini;
+	
+	private final List<String> messaggiInfo;
+	private final List<String> messaggiErrore;
 
 	private Import() {
+		ConfigurationUtility config = ConfigurationUtility.getInstance();
+		persistenceUnit = config.getPersistenceUnit();
+		pathCartellaImport = config.getLocalFolderIN();
+		pathCartellaImportStorico = config.getLocalFolderINStorico();
+		pathCartellaImportErrori = config.getLocalFolderINErrori();
+		pathCartellaImportNonUsati = config.getLocalFolderINNonUsati();
 		mappaOrdini = new HashMap<>();
+		messaggiInfo = new LinkedList<>();
+		messaggiErrore = new LinkedList<>();
 	}
 
 	public static Import getInstance() {
@@ -91,7 +105,11 @@ public class Import {
 	 * I files importati correttamente vengono spostati nella cartella storico, i files che hanno provocato errori vengono spostati nella cartella errori.
 	 */
 	public void importaDati() {
-		File folder = new File(PATH_CARTELLA_IMPORT);
+		//Reset sulla lista di messaggi
+		messaggiInfo.clear();
+		messaggiErrore.clear();
+		//Trovo i files da importare
+		File folder = new File(pathCartellaImport);
 		File[] files = folder.listFiles();
 		List<File> filesDaImportare = new LinkedList<>();
 		for (File file : files) {
@@ -100,13 +118,12 @@ public class Import {
 			}
 		}
 		filesDaImportare.sort(new Ordinatore());
-		//Arrays.sort(files, new Ordinatore());
 		//Per ogni file contenuto nella cartella avvio una modalità diversa in base alla sua tipologia.
 		for (File file : filesDaImportare) {
 			if (file.isFile()) {
 				String fileName = file.getName();
 				if (fileName.endsWith("chk")) {
-					spostaFileNelloStorico(file);
+					importaFileNonConforme(file);
 				} else {
 					String fileType = fileName.split("_|\\d")[0];
 					switch (fileType) {
@@ -133,36 +150,67 @@ public class Import {
 		//Se ho ricevuto ordini li inserisco a sistema
 		if (!mappaOrdini.isEmpty())
 			inserisciOrdini();
+		//Invio una mail di riepilogo
+		inviaMailRiepilogo();
+	}
+	
+	private void inviaMailRiepilogo() {
+		//Vado a fare una mail di riepilogo solo se ci sono messaggi.
+		if (messaggiInfo.size() + messaggiErrore.size() > 0) {
+			List<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
+			MailMan postino = ConfigurationUtility.getInstance().getMailMan();
+			String subject = "Riepilogo Scambio Dati Ciesse";
+			if (!messaggiErrore.isEmpty()) {
+				subject = "Alert - " + subject;
+				destinatari.addAll(ConfigurationUtility.getInstance().getIndirizziResponsabili());
+			}
+			StringBuilder body = new StringBuilder();
+			for (String message : messaggiInfo) {
+				body.append(message);
+				body.append("\r\n");
+			}
+			for (String message : messaggiErrore) {
+				body.append(message);
+				body.append("\r\n");
+			}
+			Email mail = new Email(subject, body.toString());
+			postino.invia(destinatari, mail);
+		}		
 	}
 
 	private void spostaFileConErrori(File fileConErrori) {
 		String nomeFile = fileConErrori.getName();
-		File fileDaSpostare = new File(PATH_CARTELLA_IMPORT_ERRORI + nomeFile);
+		File fileDaSpostare = new File(pathCartellaImportErrori + nomeFile);
 		boolean spostato = fileConErrori.renameTo(fileDaSpostare);
 		if (spostato) {
-			logger.info("Spostato il file '" + nomeFile + "' in '" + PATH_CARTELLA_IMPORT_ERRORI + "'");
+			logger.info("Spostato il file '" + nomeFile + "' in '" + pathCartellaImportErrori + "'");
 		}
 	}
 	
 	private void spostaFileNelloStorico(File fileStorico) {
 		String nomeFile = fileStorico.getName();
-		File fileDaSpostare = new File(PATH_CARTELLA_IMPORT_STORICO + nomeFile);
+		File fileDaSpostare = new File(pathCartellaImportStorico + nomeFile);
 		boolean spostato = fileStorico.renameTo(fileDaSpostare);
 		if (spostato) {
-			logger.info("Spostato il file '" + nomeFile + "' in '" + PATH_CARTELLA_IMPORT_STORICO + "'");
+			logger.info("Spostato il file '" + nomeFile + "' in '" + pathCartellaImportStorico + "'");
 		}
 	}
 	
 	private void importaFileNonConforme(File fileNonConforme) {
 		logger.warn("File con nome non conforme: '" + fileNonConforme.getName());
 		//Sposto il file nella cartella degli errori.
-		spostaFileConErrori(fileNonConforme);
+		String nomeFile = fileNonConforme.getName();
+		File fileDaSpostare = new File(pathCartellaImportNonUsati + nomeFile);
+		boolean spostato = fileNonConforme.renameTo(fileDaSpostare);
+		if (spostato) {
+			logger.info("Spostato il file '" + nomeFile + "' in '" + pathCartellaImportNonUsati + "'");
+		}
 	}
 	
 	private void importaNazioni(File fileNazioni) {
 		try {
 			ArrayList<String> lines = FileUtility.readLines(fileNazioni);
-			List<Nazioni> nazioni = Nazione.parsaNazioni(lines);
+			List<Nazioni> nazioni = NazioneCliente.parsaNazioni(lines);
 			NazioniDao daoNazioni = new NazioniDao(persistenceUnit);
 			for (Nazioni nazione : nazioni) {
 				Nazioni entity = daoNazioni.trovaDaCodiceISO(nazione.getCodIso());
@@ -174,6 +222,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileNazioni);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileNazioni);
 		}
@@ -199,6 +248,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileTaglie);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileTaglie);
 		}
@@ -222,6 +272,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileColori);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileColori);
 		}		
@@ -250,6 +301,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileAssortimenti);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileAssortimenti);
 		}
@@ -258,45 +310,29 @@ public class Import {
 	private void importaArticoli(File fileArticoli) {
 		try {
 			ArrayList<String> lines = FileUtility.readLines(fileArticoli);
-			List<Articoli> articoli = Articolo.parsaArticoli(lines);
-			ArticoliDao daoArticoli = new ArticoliDao(persistenceUnit);
-			ArtibarDao daoBarcode = new ArtibarDao(persistenceUnit);
-			for (Articoli articolo : articoli) {
-				Articoli entity = daoArticoli.trovaDaSKU(articolo.getCodArtStr());
-				if (entity == null) {
-					entity = daoArticoli.inserisci(articolo);
-					if (entity != null) {
-						ArtiBar barcode = new ArtiBar();
-						barcode.setBarraEAN(entity.getBarraEAN());
-						barcode.setBarraUPC(entity.getBarraUPC());
-						barcode.setCodiceArticolo(entity.getCodArtStr());
-						barcode.setIdUniArticolo(entity.getIdUniArticolo());
-						barcode.setTaglia(entity.getTaglia());
-						barcode = daoBarcode.inserisci(barcode);
-						if (barcode == null)
-							throw new RuntimeException("Impossibile inserire il barcode: " + entity.getBarraEAN());
-					} else {
-						throw new RuntimeException("Impossibile inserire l'articolo: " + articolo.toString());
-					}
-				} else {
-					articolo.setIdArticolo(entity.getIdArticolo());
-					entity = daoArticoli.aggiorna(articolo);
-					if (entity == null) {
-						throw new RuntimeException("Impossibile aggiornare l'articolo: " + articolo.toString());
-					} else {
-						ArtiBar barcode = daoBarcode.trovaDaSKU(entity.getCodArtStr());
-						barcode.setBarraEAN(articolo.getBarraEAN());
-						barcode.setBarraUPC(articolo.getBarraUPC());
-						barcode = daoBarcode.aggiorna(barcode);
-						if (barcode == null)
-							throw new RuntimeException("Impossibile aggiornare il barcode: " + entity.getBarraEAN());
-					}
+			List<MProdotto> articoli = Articolo.parsaArticoli(lines);
+			ControllerArticoli controller = new ControllerArticoli();
+			int prodottiInseriti = 0;
+			for (MProdotto articolo : articoli) {
+				try {
+					controller.valida(articolo);
+					controller.inserisci(articolo);
+				} catch (ModelPersistenceException e) {
+					logger.error(e);
+					messaggiErrore.add(e.getMessage());
+				} catch (ModelValidationException e) {
+					logger.error(e);
 				}
 			}
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileArticoli);
+			if (prodottiInseriti > 0)
+				messaggiInfo.add("Sono stati inseriti a sistema " + prodottiInseriti + " nuovi prodotti.");
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
+			for (StackTraceElement trace : e.getStackTrace())
+				logger.error(trace);
 			spostaFileConErrori(fileArticoli);
 		}	
 	}
@@ -322,6 +358,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileDestinatari);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileDestinatari);
 		}	
@@ -348,6 +385,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileFornitori);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileFornitori);
 		}
@@ -374,6 +412,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileVettori);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileVettori);
 		}
@@ -400,6 +439,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileStagioni);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileStagioni);
 		}
@@ -411,36 +451,24 @@ public class Import {
 			List<PakiTesta> testate = DocumentiEntrataTestata.parsaTestate(lines);
 			PakiTestaDao daoTestate = new PakiTestaDao(persistenceUnit);
 			for (PakiTesta testata : testate) {
-				//Controllo se mi hanno chiesto di eliminarla e se lo stato è congruente con la richiesta di eliminazione.
-//				if (DocumentiEntrataTestata.CONDIZIONE_ELIMINA.equals(testata.getFlussoDichiarato())) {
-					//NON FACCIO NULLA, gli ordini non devono essere eliminati così.
-//					PakiTesta entity = daoTestate.trovaDaRiferimento(testata.getNrPaki());
-//					if (entity == null)
-//						logger.error("La testata del documento di carico: " + testata.getNrPaki() + " non esiste e non sarà eliminata.");
-//					else {
-//						if (entity.getStato().equals("INSERITO"))
-//							entity = daoTestate.elimina(testata);
-//						else throw new RuntimeException("Impossibile eliminare il carico '" + testata.getNrPaki() + "' perchè è già in lavorazione.");							
-//						if (entity == null) 
-//							throw new RuntimeException("Impossibile eliminare la testata del documento di carico: " + testata.getNrPaki());
-//					}
-//				} else { //Altrimenti procedo come di consueto con inserimenti/aggiornamenti
-					PakiTesta entity = daoTestate.trovaDaRiferimento(testata.getNrPaki());
-					if (entity != null) {
-						testata.setIdTestaPaki(entity.getIdTestaPaki());
-						entity = daoTestate.aggiorna(testata);
-						if (entity == null) 
-								throw new RuntimeException("Impossibile aggiornare la testata del documento di carico: " + testata.getNrPaki());
-					} else {
-						entity = daoTestate.inserisci(testata);
-						if (entity == null) 
-							throw new RuntimeException("Impossibile inserire la testata del documento di carico: " + testata.getNrPaki());
-					}
+				PakiTesta entity = daoTestate.trovaDaRiferimento(testata.getNrPaki());
+				if (entity != null) {
+					testata.setIdTestaPaki(entity.getIdTestaPaki());
+					entity = daoTestate.aggiorna(testata);
+					if (entity == null) 
+						throw new RuntimeException("Impossibile aggiornare la testata del documento di carico: " + testata.getNrPaki());
+				} else {
+					entity = daoTestate.inserisci(testata);
+					if (entity == null) 
+						throw new RuntimeException("Impossibile inserire la testata del documento di carico: " + testata.getNrPaki());
+					else
+						messaggiInfo.add("Inserito nuovo carico " + entity.getNrPaki());
 				}
-//			}
+			}
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileTestateCarichi);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileTestateCarichi);
 		}
@@ -452,37 +480,23 @@ public class Import {
 			List<PakiArticolo> righe = DocumentiEntrataRighe.parsaRigheDocumento(lines);
 			PakiArticoloDao daoRighe = new PakiArticoloDao(persistenceUnit);
 			for (PakiArticolo riga : righe) {
-				//Controllo se mi hanno chiesto di eliminarla e se lo stato è congruente con la richiesta di eliminazione.
-//				if (DocumentiEntrataTestata.CONDIZIONE_ELIMINA.equals(riga.getNrDispo())) {
-					//NON FACCIO NULLA, gli ordini non devono essere eliminati così.
-//					List<PakiArticolo> entities = daoRighe.trovaRigheDaCaricoENumeroRiga(riga.getIdPakiTesta(), riga.getRigaPacki());
-//					if (entities.isEmpty())
-//						logger.error("Nessuna riga trovata per il documento di carico ID: " + riga.getIdPakiTesta() + " e numero riga: " + riga.getRigaPacki() + ", non saranno eliminate.");
-//					else {
-//						for (PakiArticolo entity : entities) {
-//							if (daoRighe.elimina(entity) == null) 
-//								throw new RuntimeException("Impossibile eliminare la riga ID: " + riga.getIdPakiArticolo());
-//						}
-//						
-//					}
-//				} else { //Altrimenti procedo come di consueto con inserimenti/aggiornamenti
-					List<PakiArticolo> entities = daoRighe.trovaRigheDaCaricoEProdotto(riga.getIdPakiTesta(), riga.getCodUnicoArt());
-					if (entities.size() == 1) {
-						PakiArticolo entity = entities.get(0);
-						riga.setIdPakiArticolo(entity.getIdPakiArticolo());
-						entity = daoRighe.aggiorna(riga);
-						if (entity == null)
-								throw new RuntimeException("Impossibile aggiornare la riga del documento di carico ID: " + riga.getIdPakiArticolo());
-					} else if (entities.size() == 0) {
-						PakiArticolo entity = daoRighe.inserisci(riga);
-						if (entity == null) 
-							throw new RuntimeException("Impossibile inserire la riga del documento di carico con l'articolo: " + riga.getCodUnicoArt());
-					}
+				List<PakiArticolo> entities = daoRighe.trovaRigheDaCaricoNumeroRigaEProdotto(riga.getIdPakiTesta(), riga.getRigaPacki(), riga.getCodUnicoArt());
+				if (entities.size() == 1) {
+					PakiArticolo entity = entities.get(0);
+					riga.setIdPakiArticolo(entity.getIdPakiArticolo());
+					entity = daoRighe.aggiorna(riga);
+					if (entity == null)
+						throw new RuntimeException("Impossibile aggiornare la riga del documento di carico ID: " + riga.getIdPakiArticolo());
+				} else if (entities.size() == 0) {
+					PakiArticolo entity = daoRighe.inserisci(riga);
+					if (entity == null) 
+						throw new RuntimeException("Impossibile inserire la riga del documento di carico con l'articolo: " + riga.getCodUnicoArt());
 				}
-//			}
+			}
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileRigheCarichi);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileRigheCarichi);
 		}
@@ -498,6 +512,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileTestateOrdini);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileTestateOrdini);
 		}
@@ -510,6 +525,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileRigheOrdini);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileRigheOrdini);
 		}
@@ -522,93 +538,13 @@ public class Import {
 			try {
 				controller.valida(ordine);
 				controller.inserisci(ordine);
+				messaggiInfo.add("Inserito nuovo ordine " + ordine.getRiferimentoOrdine());
 			} catch (Exception e) {
+				messaggiErrore.add(e.getMessage());
 				logger.error(e);
 			}			
 		}
 	}
-	
-//	private void importaTestateOrdini(File fileTestateOrdini) {
-//		try {
-//			ArrayList<String> lines = FileUtility.readLines(fileTestateOrdini);
-//			List<TestataOrdini> testate = OrdiniTestata.parsaTestate(lines);
-//			TestataOrdiniDao daoTestate = new TestataOrdiniDao(persistenceUnit);
-//			for (TestataOrdini testata : testate) {
-//				String riferimento = testata.getRifOrdineCli();
-//				//Controllo se mi hanno chiesto di eliminarla e se lo stato è congruente con la richiesta di eliminazione.
-//				if (OrdiniTestata.CANCELLAZIONE.equals(testata.getTipoDoc())) {
-//					TestataOrdini entity = daoTestate.trovaDaRiferimento(riferimento);
-//					if (entity == null)
-//						logger.error("La testata dell'ordine: " + riferimento + " non esiste e non sarà eliminata.");
-//					else {
-//						if (entity.getStato().equals("IMPO"))
-//							entity = daoTestate.elimina(testata);
-//						else throw new RuntimeException("Impossibile eliminare l'ordine '" + riferimento + "' perchè è già in lavorazione.");
-//						if (entity == null) 
-//							throw new RuntimeException("Impossibile eliminare la testata dell'ordine: " + riferimento);
-//					}
-//				} else { //Altrimenti procedo come di consueto con inserimenti/aggiornamenti
-//					TestataOrdini entity = daoTestate.trovaDaRiferimento(testata.getRifOrdineCli());
-//					if (entity != null) {
-//						testata.setIdTestaSped(entity.getIdTestaSped());
-//						entity = daoTestate.aggiorna(testata);
-//						if (entity == null) 
-//								throw new RuntimeException("Impossibile aggiornare la testata dell'ordine: " + riferimento);
-//					} else {
-//						entity = daoTestate.inserisci(testata);
-//						if (entity == null) 
-//							throw new RuntimeException("Impossibile inserire la testata dell'ordine: " + riferimento);
-//					}
-//				}
-//			}
-//			//Sposto il file nella cartella di storico
-//			spostaFileNelloStorico(fileTestateOrdini);
-//		} catch (Exception e) {
-//			logger.error(e);
-//			spostaFileConErrori(fileTestateOrdini);
-//		}
-//	}
-	
-//	private void importaRigheOrdini(File fileRigheOrdini) {
-//		try {
-//			ArrayList<String> lines = FileUtility.readLines(fileRigheOrdini);
-//			List<RighiOrdine> righe = OrdiniRighe.parsaRigheOrdine(lines);
-//			RighiOrdineDao daoRighe = new RighiOrdineDao(persistenceUnit);
-//			for (RighiOrdine riga : righe) {
-//				//Controllo se mi hanno chiesto di eliminarla e se lo stato è congruente con la richiesta di eliminazione.
-//				if (OrdiniRighe.CANCELLAZIONE.equals(riga.getTipoord())) {
-//					List<RighiOrdine> entities = daoRighe.trovaRigheDaOrdineENumeroRiga(riga.getIdTestataOrdine(), riga.getNrRigo());
-//					if (entities.isEmpty())
-//						logger.error("Nessuna riga trovata per l'ordine ID: " + riga.getIdTestataOrdine() + " e numero riga: " + riga.getNrRigo() + ", non saranno eliminate.");
-//					else {
-//						for (RighiOrdine entity : entities) {
-//							if (daoRighe.elimina(entity) == null) 
-//								throw new RuntimeException("Impossibile eliminare la riga d'ordine ID: " + riga.getIdRigoOrdine());
-//						}
-//						
-//					}
-//				} else { //Altrimenti procedo come di consueto con inserimenti/aggiornamenti
-//					List<RighiOrdine> entities = daoRighe.trovaRigheDaOrdineEProdotto(riga.getIdTestataOrdine(), riga.getIdUnicoArt());
-//					if (entities.size() == 1) {
-//						RighiOrdine entity = entities.get(0);
-//						riga.setIdRigoOrdine(entity.getIdRigoOrdine());
-//						entity = daoRighe.aggiorna(riga);
-//						if (entity == null) 
-//								throw new RuntimeException("Impossibile aggiornare la riga d'ordine ID: " + riga.getIdRigoOrdine());
-//					} else if (entities.size() == 0) {
-//						RighiOrdine entity = daoRighe.inserisci(riga);
-//						if (entity == null) 
-//							throw new RuntimeException("Impossibile inserire la riga d'ordine con l'articolo: " + riga.getIdUnicoArt());
-//					}
-//				}
-//			}
-//			//Sposto il file nella cartella di storico
-//			spostaFileNelloStorico(fileRigheOrdini);
-//		} catch (Exception e) {
-//			logger.error(e);
-//			spostaFileConErrori(fileRigheOrdini);
-//		}
-//	}
 	
 	private void importaColliDaSpedire(File fileColli) {
 		try {
@@ -632,6 +568,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileColli);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileColli);
 		}
@@ -649,6 +586,8 @@ public class Import {
 					entity = daoSpedizioni.inserisci(spedizione);
 					if (entity == null) 
 						throw new RuntimeException("Impossibile inserire i dati sulla spedizione con numero di lista: " + spedizione.getNrLista());
+					else
+						messaggiInfo.add("Inserito nuove info per spedizione ordine " + spedizione.getNrLista());
 				} else {
 					spedizione.setIdTempCor(entity.getIdTempCor());
 					entity = daoSpedizioni.aggiorna(spedizione);
@@ -659,6 +598,7 @@ public class Import {
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(fileSpedizioni);
 		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
 			logger.error(e);
 			spostaFileConErrori(fileSpedizioni);
 		}

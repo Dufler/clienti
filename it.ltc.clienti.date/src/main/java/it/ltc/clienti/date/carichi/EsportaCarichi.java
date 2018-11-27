@@ -1,4 +1,4 @@
-package it.ltc.clienti.date;
+package it.ltc.clienti.date.carichi;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.clienti.date.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.dao.legacy.PakiArticoloDao;
 import it.ltc.database.dao.legacy.PakiTestaDao;
@@ -21,10 +22,7 @@ public class EsportaCarichi {
 	
 	private static final Logger logger = Logger.getLogger(EsportaCarichi.class);
 	
-	public static final String persistenceUnit = "legacy-date";
-	public static final String PATH_CARTELLA_EXPORT = "\\\\192.168.0.10\\e$\\Applicativi\\Date1\\Out\\";
-	
-	private static EsportaCarichi instance;
+	private final String pathFolderExport;
 	
 	private final StringUtility su;
 	private final SimpleDateFormat sdfToday;
@@ -36,21 +34,17 @@ public class EsportaCarichi {
 	private final PakiTestaDao daoCarichi;
 	private final PakiArticoloDao daoRighe;
 
-	private EsportaCarichi() {
+	public EsportaCarichi(String persistenceUnit) {
 		su = new StringUtility();
 		sdfToday = new SimpleDateFormat("yyyyMMdd");
 		sdfNow = new SimpleDateFormat("yyyyMMddHHmmss");
 		mappaArticoli = new HashMap<>();
+		
 		daoArticoli = new ArticoliDao(persistenceUnit);
 		daoCarichi = new PakiTestaDao(persistenceUnit);
 		daoRighe = new PakiArticoloDao(persistenceUnit);
-	}
-
-	public static EsportaCarichi getInstance() {
-		if (instance == null) {
-			instance = new EsportaCarichi();
-		}
-		return instance;
+		
+		pathFolderExport = ConfigurationUtility.getInstance().getFolderPathExport();
 	}
 	
 	public void esportaCarichi() {
@@ -142,7 +136,7 @@ public class EsportaCarichi {
 	
 	private boolean scriviFileCarico(List<String> righe) {
 		String nomeFile = "TR07_" + sdfNow.format(now) + ".TXT";
-		String pathDocumento = PATH_CARTELLA_EXPORT + nomeFile;
+		String pathDocumento = pathFolderExport + nomeFile;
 		boolean exportDocumento = FileUtility.writeFile(pathDocumento, righe);
 		if (!exportDocumento)
 			logger.error("Impossibile esportare il documento di carico: " + nomeFile);

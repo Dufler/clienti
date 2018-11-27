@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp;
+package it.ltc.clienti.forza;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -26,7 +26,9 @@ public class ConfigurationUtility {
 	private final boolean verbose;
 
 	// Cartelle Locali
-	private final String localFolder;
+	private final String localFolderOrders;
+	private final String localFolderInventory;
+	private final String localFolderStatus;
 
 	// Cartelle FTP
 	private final String remoteFolder;
@@ -57,10 +59,15 @@ public class ConfigurationUtility {
 			//Verbose
 			verbose = Boolean.parseBoolean(configuration.get("verbose"));
 			//Cartelle locali
-			if (test)
-				localFolder = configuration.get("test_folder_local");
-			else
-				localFolder = configuration.get("folder_local");
+			if (test) {
+				localFolderOrders = configuration.get("test_local_folder_orders");
+				localFolderInventory = configuration.get("test_local_folder_inventory");
+				localFolderStatus = configuration.get("test_local_folder_status");
+			} else {
+				localFolderOrders = configuration.get("local_folder_orders");
+				localFolderInventory = configuration.get("local_folder_inventory");
+				localFolderStatus = configuration.get("local_folder_status");
+			}
 			//Cartelle FTP
 			remoteFolder = configuration.get("folder_ftp");
 			remoteArchiveFolder = configuration.get("folder_ftp_archive");
@@ -95,8 +102,16 @@ public class ConfigurationUtility {
 		return verbose;
 	}
 
-	public String getLocalFolder() {
-		return localFolder;
+	public String getLocalFolderOrders() {
+		return localFolderOrders;
+	}
+
+	public String getLocalFolderInventory() {
+		return localFolderInventory;
+	}
+
+	public String getLocalFolderStatus() {
+		return localFolderStatus;
 	}
 
 	public String getRemoteFolder() {
@@ -221,7 +236,7 @@ public class ConfigurationUtility {
 		indirizzo.setLocalita(configuration.get("mittente_localita"));
 		indirizzo.setNazione(configuration.get("mittente_nazione"));
 		indirizzo.setProvincia(configuration.get("mittente_provincia"));
-		indirizzo.setRagionesociale(configuration.get("mittente_ragione_sociale"));
+		indirizzo.setRagioneSociale(configuration.get("mittente_ragione_sociale"));
 		indirizzo.setTelefono(configuration.get("mittente_telefono"));
 		return indirizzo;
 	}

@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp;
+package it.ltc.clienti.forza;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,12 +13,17 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.clienti.forza.ftp.ManagerAssegnazione;
+import it.ltc.clienti.forza.ftp.ManagerImportazione;
+import it.ltc.clienti.forza.ftp.ManagerMagazzino;
+import it.ltc.clienti.forza.ftp.ManagerScadenze;
+import it.ltc.clienti.forza.ftp.ManagerStatoOrdini;
+import it.ltc.clienti.forza.ftp.model.LinnworksInvenctoryLine;
+import it.ltc.clienti.forza.ftp.model.LinnworksOrderLine;
+import it.ltc.clienti.forza.ftp.model.LinnworksOrderStatus;
+import it.ltc.clienti.forza.ftp.model.ProdottoInScadenza;
 import it.ltc.database.model.legacy.ColliPack;
 import it.ltc.database.model.legacy.TestataOrdini;
-import it.ltc.forza.ftp.model.LinnworksInvenctoryLine;
-import it.ltc.forza.ftp.model.LinnworksOrderLine;
-import it.ltc.forza.ftp.model.LinnworksOrderStatus;
-import it.ltc.forza.ftp.model.ProdottoInScadenza;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.utility.csv.FileCSV;
 import it.ltc.utility.ftp.FTP;
@@ -41,7 +46,9 @@ public class MainForza {
 	public static String remoteFolder;
 	public static String remoteFolderProcessed;
 	public static String remoteFolderErrors;
-	public static String localPath;
+	public static String localPathOrders;
+	public static String localPathInventory;
+	public static String localPathStatus;
 	public static String nomeFileOrders;
 	public static String nomeFileStatus;
 	public static String nomeFileInvenctory;
@@ -117,7 +124,7 @@ public class MainForza {
 			List<String> files = ftpClient.getFiles(remoteFolder);
 			Date now = new Date();
 			String processDate = sdfRenamer.format(now);
-			String tempFilePath = localPath + processDate + "_" + nomeFileStatus;
+			String tempFilePath = localPathStatus + processDate + "_" + nomeFileStatus;
 			File fileUpdate = new File(tempFilePath);
 			//Genero il contenuto del file
 			try (FileWriter writer = new FileWriter(fileUpdate)) {
@@ -158,7 +165,7 @@ public class MainForza {
 		if (!dettagliCarichiDaInviare.isEmpty()) {
 			Date now = new Date();
 			String processDate = sdfRenamer.format(now);
-			String tempFilePath = localPath + processDate + "_" + nomeFileInvenctory;
+			String tempFilePath = localPathInventory + processDate + "_" + nomeFileInvenctory;
 			File fileUpdate = new File(tempFilePath);
 			//Genero il contenuto del file
 			try (FileWriter writer = new FileWriter(fileUpdate)) {
@@ -182,7 +189,7 @@ public class MainForza {
 		}
 	}
 
-	private static void importazione() {
+	private static void importazione() throws Exception {
 		ManagerImportazione managerImportazione = new ManagerImportazione(persistenceUnit);
 		//Mi collego al server FTP e scarico la lista dei file .csv contenenti gli ordini
 		List<String> files = ftpClient.getFiles(remoteFolder);
@@ -255,7 +262,7 @@ public class MainForza {
 		if (ordine != null) {
 			orderDescription += ordine.getRiferimentoOrdine();
 			if (ordine.getDestinatario() != null)
-				orderDescription += " per " + ordine.getDestinatario().getRagionesociale();
+				orderDescription += " per " + ordine.getDestinatario().getRagioneSociale();
 			String note = ordine.getNote();
 			if (note != null && !note.isEmpty())
 				orderDescription += ", note: '" + note + "'";
@@ -293,7 +300,7 @@ public class MainForza {
 		HashMap<String, List<LinnworksOrderLine>> orders = new HashMap<String, List<LinnworksOrderLine>>();
 		for (String[] line : csv.getRighe()) {
 			try {
-				LinnworksOrderLine orderLine = new LinnworksOrderLine(csv.getMappaColonne(), line);
+				LinnworksOrderLine orderLine = new LinnworksOrderLine(csv, line);
 				String orderID = orderLine.getOrderId();
 				if (!orders.containsKey(orderID)) {
 					List<LinnworksOrderLine> list = new LinkedList<LinnworksOrderLine>();
@@ -323,7 +330,7 @@ public class MainForza {
 			String remoteRelativePath = remoteFolder + fileName;
 			Date now = new Date();
 			String processDate = sdfRenamer.format(now);
-			String localTempFile = localPath + processDate + "_" + fileName;
+			String localTempFile = localPathOrders + processDate + "_" + fileName;
 			boolean download = ftpClient.download(localTempFile, remoteRelativePath);
 			if (!download)
 				throw new RuntimeException("Impossibile scaricare il file: '" + fileName + "'");
@@ -360,7 +367,9 @@ public class MainForza {
 		remoteFolder = config.getRemoteFolder();
 		remoteFolderProcessed = config.getRemoteArchiveFolder();
 		remoteFolderErrors = config.getRemoteErrorFolder();
-		localPath = config.getLocalFolder();
+		localPathOrders = config.getLocalFolderOrders();
+		localPathInventory = config.getLocalFolderInventory();
+		localPathStatus = config.getLocalFolderStatus();
 		nomeFileStatus = config.getNomeFileStatus();
 		nomeFileInvenctory = config.getNomeFileInvectory();
 		nomeFileOrders = config.getNomeFileOrders();

@@ -3,16 +3,16 @@ package it.ltc.ciesse.scambiodati.model;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
-import it.ltc.database.dao.legacy.NazioniDao;
+import it.ltc.database.dao.common.NazioneDao;
+import it.ltc.database.model.centrale.Nazione;
 import it.ltc.database.model.legacy.Destinatari;
-import it.ltc.database.model.legacy.Nazioni;
 import it.ltc.utility.miscellanea.string.StringParser;
 
 public class ClientiDestinatari {
 	
 	public static List<Destinatari> parsaDestinatari(List<String> righe) {
-		NazioniDao daoNazioni = new NazioniDao(Import.persistenceUnit);
+		//NazioniDao daoNazioni = new NazioniDao(ConfigurationUtility.getInstance().getPersistenceUnit());
+		NazioneDao daoNazioni = new NazioneDao("produzione");
 		List<Destinatari> destinatari = new LinkedList<>();
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);
@@ -29,16 +29,17 @@ public class ClientiDestinatari {
 				String cap = parser.getStringa(1583, 1593);//parser.getStringa(221, 231);
 				String localita = parser.getStringa(1593, 1643);
 				String provincia = parser.getStringa(1643, 1645);
-				Nazioni n = daoNazioni.trovaDaNome(nazione);
-				String iso = n != null ? n.getCodIso() : "";
+				//Nazioni n = daoNazioni.trovaDaNome(nazione);
+				//String iso = n != null ? n.getCodIso() : "";
+				Nazione n = daoNazioni.trovaDaCodiceISO2(nazione);				
 				Destinatari destinatario = new Destinatari();
 				destinatario.setCodDestina(codice);
 				destinatario.setCap(cap);
 				destinatario.setCodIso("");
 				destinatario.setIndirizzo(indirizzo);
 				destinatario.setLocalita(localita);
-				destinatario.setCodIso(iso);
-				destinatario.setCodNaz(iso);
+				destinatario.setCodIso(n != null ? n.getCodiceIsoTre() : "");
+				destinatario.setCodNaz(n != null ? n.getCodiceIsoDue() : "");
 				destinatario.setNazione(nazione);
 				destinatario.setProvincia(provincia);
 				destinatario.setRagSoc1(ragioneSociale); //TODO verificare lunghezze massime per tutti i campi.

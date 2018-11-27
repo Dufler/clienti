@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>it.ltc.forza.ftp</groupId>
-	<artifactId>it.ltc.forza.ftp</artifactId>
-	<version>0.1</version>
+	<groupId>it.ltc.clienti</groupId>
+	<artifactId>forza</artifactId>
+	<version>1.0</version>
 
 	<properties>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -36,7 +36,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>it.ltc.forza.ftp.MainForza</mainClass>
+							<mainClass>it.ltc.clienti.forza.MainForza</mainClass>
 						</manifest>
 						<manifestEntries>
 							<Class-Path>.</Class-Path>
@@ -70,38 +70,33 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>it.ltc.utility.ftp</groupId>
-			<artifactId>it.ltc.utility.ftp</artifactId>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>ftp</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.utility.csv</groupId>
-			<artifactId>it.ltc.utility.csv</artifactId>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>csv</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.utility.configuration</groupId>
-			<artifactId>it.ltc.utility.configuration</artifactId>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>configuration</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.database.model</groupId>
-			<artifactId>legacy</artifactId>
-			<version>1.1</version>
-		</dependency>
-		<dependency>
-			<groupId>it.ltc.model.interfaces</groupId>
-			<artifactId>it.ltc.model.interfaces</artifactId>
+			<groupId>it.ltc.model</groupId>
+			<artifactId>interfaces</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.database.model</groupId>
-			<artifactId>centrale</artifactId>
+			<groupId>it.ltc.database</groupId>
+			<artifactId>model-centrale</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.model.persistence</groupId>
-			<artifactId>it.ltc.model.persistence</artifactId>
+			<groupId>it.ltc.model</groupId>
+			<artifactId>persistence</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
@@ -111,12 +106,12 @@
 		</dependency>
 		<dependency>
 			<groupId>it.ltc.database</groupId>
-			<artifactId>configuration</artifactId>
-			<version>0.1</version>
+			<artifactId>dao</artifactId>
+			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.database.dao</groupId>
-			<artifactId>legacy</artifactId>
+			<groupId>it.ltc.database</groupId>
+			<artifactId>dao-legacy</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>

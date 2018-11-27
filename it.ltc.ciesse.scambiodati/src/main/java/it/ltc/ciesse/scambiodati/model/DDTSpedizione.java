@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ColliImballoDao;
 import it.ltc.database.dao.legacy.ColliPrelevaDao;
 import it.ltc.database.dao.legacy.TestataOrdiniDao;
@@ -19,9 +19,9 @@ public class DDTSpedizione {
 	
 	public static final String PATTERN_DATA = "dd/MM/yyyy HH:mm:ss";
 	
-	private static final TestataOrdiniDao daoOrdini = new TestataOrdiniDao(Import.persistenceUnit);
-	private static final ColliPrelevaDao daoColli = new ColliPrelevaDao(Import.persistenceUnit);
-	private static final ColliImballoDao daoImballi = new ColliImballoDao(Import.persistenceUnit);
+	private static final TestataOrdiniDao daoOrdini = new TestataOrdiniDao(ConfigurationUtility.getInstance().getPersistenceUnit());
+	private static final ColliPrelevaDao daoColli = new ColliPrelevaDao(ConfigurationUtility.getInstance().getPersistenceUnit());
+	private static final ColliImballoDao daoImballi = new ColliImballoDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	
 	public static List<TempCorr> parsaDDT(List<String> righe) {
 		List<TempCorr> documenti = new LinkedList<>();

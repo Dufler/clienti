@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.dao.legacy.MagazzinoDao;
 import it.ltc.database.model.legacy.Articoli;
@@ -18,10 +18,10 @@ public class Movimenti {
 	public static final String PATTERN_DATA = "dd/MM/yyyy HH:mm:ss";
 	private static final SimpleDateFormat sdf = new SimpleDateFormat(PATTERN_DATA);
 	
-	private static final ArticoliDao daoArticoli = new ArticoliDao(Import.persistenceUnit);
+	private static final ArticoliDao daoArticoli = new ArticoliDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	private static final HashMap<String, Articoli> mappaArticoli = new HashMap<>();
 	
-	private static final MagazzinoDao daoMagazzini = new MagazzinoDao(Import.persistenceUnit);
+	private static final MagazzinoDao daoMagazzini = new MagazzinoDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	private static final HashMap<String, Magazzini> mappaMagazzini = new HashMap<>();
 
 	public static List<String> esportaMovimenti(List<MagaMov> movimenti) {

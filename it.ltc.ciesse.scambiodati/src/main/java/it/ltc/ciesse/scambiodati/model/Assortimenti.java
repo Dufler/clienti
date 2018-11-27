@@ -3,7 +3,7 @@ package it.ltc.ciesse.scambiodati.model;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.bundle.CasseKIT;
@@ -11,7 +11,7 @@ import it.ltc.utility.miscellanea.string.StringParser;
 
 public class Assortimenti {
 	
-	private static final ArticoliDao daoArticoli = new ArticoliDao(Import.persistenceUnit);
+	private static final ArticoliDao daoArticoli = new ArticoliDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	
 	public static List<CasseKIT> parsaKitArticoli(List<String> righe) {
 		List<CasseKIT> assortimenti = new LinkedList<>();
@@ -20,6 +20,7 @@ public class Assortimenti {
 		StringParser parser = new StringParser(lines, 507);
 		do {
 			int operazione = parser.getIntero(0, 1);
+			try {
 			if (operazione == 1 || operazione == 2) {
 				String skuKit =  parser.getStringa(1, 53);
 				Articoli kit = daoArticoli.trovaDaSKUVecchio(skuKit);
@@ -33,8 +34,8 @@ public class Assortimenti {
 				int indexQta = 105;
 				int counter = 1;
 				while (indexQta < 506) {
-					int qta = parser.getIntero(indexQta, indexQta + 10);
-					if (qta > 0) {
+					Integer qta = parser.getIntero(indexQta, indexQta + 10);
+					if (qta != null && qta > 0) {
 						Articoli articolo = daoArticoli.trovaDaSKU(skuBase + "_" + counter);
 						if (articolo == null)
 							throw new RuntimeException("Impossibile trovare l'anagrafica dell'articolo: '" + skuBase + "_" + counter + "'");
@@ -47,6 +48,9 @@ public class Assortimenti {
 					indexQta += 10;
 					counter++;
 				}
+			}
+			} catch (RuntimeException e) {
+				//Non ho trovato l'articolo corrispondente, salto alla riga successiva.
 			}
 		} while (parser.prossimaLinea());
 		return assortimenti;

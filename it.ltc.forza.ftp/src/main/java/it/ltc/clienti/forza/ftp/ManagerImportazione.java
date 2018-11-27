@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp;
+package it.ltc.clienti.forza.ftp;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -16,16 +16,19 @@ import javax.persistence.criteria.Root;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.clienti.forza.ConfigurationUtility;
+import it.ltc.clienti.forza.ftp.model.LinnworksOrderLine;
 import it.ltc.database.model.centrale.Cap;
 import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.database.model.legacy.bundle.CasseKIT;
-import it.ltc.forza.ftp.model.LinnworksOrderLine;
 import it.ltc.model.interfaces.exception.ModelPersistenceException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
 import it.ltc.model.interfaces.indirizzo.MIndirizzo;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.ordine.ProdottoOrdinato;
+import it.ltc.model.interfaces.ordine.TipoIDProdotto;
+import it.ltc.model.interfaces.ordine.TipoOrdine;
 import it.ltc.model.persistence.ordine.ControllerOrdiniSQLServer;
 
 public class ManagerImportazione extends ControllerOrdiniSQLServer {
@@ -33,8 +36,6 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 	private static final Logger logger = Logger.getLogger("ManagerImportazione");
 	
 	private static final String statoDefault = "IMP";
-	private static final String tipoDefault = "PRS";
-	private static final String tipoidentificazioneprodotti = "CHIAVE";
 	private static final String bundle = "BUNDLE";
 	
 	//private final SimpleDateFormat sdf;
@@ -116,8 +117,8 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		ordine.setRiferimentoDocumento(riga.getOrderId());
 		ordine.setRiferimentoOrdine(riga.getOrderId());
 		ordine.setStato(statoDefault);
-		ordine.setTipo(tipoDefault);
-		ordine.setTipoIdentificazioneProdotti(tipoidentificazioneprodotti);
+		ordine.setTipo(TipoOrdine.PRS);
+		ordine.setTipoIdentificazioneProdotti(TipoIDProdotto.CHIAVE);
 		ordine.setValoreDoganale(riga.getCostoTotale());
 		ordine.getProdotti().addAll(getProdotti(righe));
 		return ordine;
@@ -204,7 +205,7 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		Cap cap = ManagerCap.getInstance().trovaCap(riga.getCapDestinazione());
 		String provincia = cap != null ? cap.getProvincia() : riga.getProvinciaDestinazione(); 
 		indirizzo.setProvincia(provincia);
-		indirizzo.setRagionesociale(riga.getRagioneSocialeDestinazione());
+		indirizzo.setRagioneSociale(riga.getRagioneSocialeDestinazione());
 		indirizzo.setTelefono(riga.getTelefonoDestinazione());
 		return indirizzo;
 	}

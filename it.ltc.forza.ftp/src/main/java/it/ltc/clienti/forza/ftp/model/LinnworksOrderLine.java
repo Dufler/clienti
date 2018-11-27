@@ -1,9 +1,10 @@
-package it.ltc.forza.ftp.model;
+package it.ltc.clienti.forza.ftp.model;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
+
+import it.ltc.utility.csv.FileCSV;
 
 /**
  * Classe che mappa ogni riga dei file .csv con gli ordini. 
@@ -80,100 +81,100 @@ public class LinnworksOrderLine {
 	private final String note;
 //	private final Double TotalWeight;
 	
-	public LinnworksOrderLine(HashMap<String, Integer> mappaColonne, String[] campi) {
-		orderId = campi[mappaColonne.get("Order Id")];
-//		referenceNumber = campi[mappaColonne.get("Reference number")];
-//		externalReference = campi[mappaColonne.get("External reference")];
-//		ChannelReference = campi[mappaColonne.get("Channel reference")];
-		emailDestinazione = campi[mappaColonne.get("Customer email address")];
+	public LinnworksOrderLine(FileCSV csv, String[] campi) {
+		orderId = campi[csv.getIndiceColonna("Order Id")];
+//		referenceNumber = campi[csv.getIndiceColonna("Reference number")];
+//		externalReference = campi[csv.getIndiceColonna("External reference")];
+//		ChannelReference = campi[csv.getIndiceColonna("Channel reference")];
+		emailDestinazione = campi[csv.getIndiceColonna("Customer email address")];
 		
 		//Cambiamento in produzione del 13/10/2017
-		//telefonoDestinazione = campi[mappaColonne.get("Customer buyer phone number")];
-		telefonoDestinazione = campi[mappaColonne.get("Buyer phone number")];
+		//telefonoDestinazione = campi[csv.getIndiceColonna("Customer buyer phone number")];
+		telefonoDestinazione = campi[csv.getIndiceColonna("Buyer phone number")];
 		
-//		CustomerCompany = campi[mappaColonne.get("Customer company")];
+//		CustomerCompany = campi[csv.getIndiceColonna("Customer company")];
 		
 		//Cambiamento in produzione del 13/10/2017
-		//ragioneSocialeDestinazione = campi[mappaColonne.get("Shipping customer name")];
+		//ragioneSocialeDestinazione = campi[csv.getIndiceColonna("Shipping customer name")];
 		//Cambiamento in produzione del 01/12/2017
-		String customerName = campi[mappaColonne.get("Customer name")];
-		String customerCompany = campi[mappaColonne.get("Customer company")];
+		String customerName = campi[csv.getIndiceColonna("Customer name")];
+		String customerCompany = campi[csv.getIndiceColonna("Customer company")];
 		ragioneSocialeDestinazione = customerName.isEmpty() ? customerCompany : customerName;
 		
 		//Cambiamento in produzione del 13/10/2017
-		//indirizzoDestinazione1 = campi[mappaColonne.get("Shipping address 1")];
-		//indirizzoDestinazione2 = campi[mappaColonne.get("Shipping address 2")];
-		//indirizzoDestinazione3 = campi[mappaColonne.get("Shipping address 3")];
-		indirizzoDestinazione1 = campi[mappaColonne.get("Address 1")];
-		indirizzoDestinazione2 = campi[mappaColonne.get("Address 2")];
-		indirizzoDestinazione3 = campi[mappaColonne.get("Address 3")];
+		//indirizzoDestinazione1 = campi[csv.getIndiceColonna("Shipping address 1")];
+		//indirizzoDestinazione2 = campi[csv.getIndiceColonna("Shipping address 2")];
+		//indirizzoDestinazione3 = campi[csv.getIndiceColonna("Shipping address 3")];
+		indirizzoDestinazione1 = campi[csv.getIndiceColonna("Address 1")];
+		indirizzoDestinazione2 = campi[csv.getIndiceColonna("Address 2")];
+		indirizzoDestinazione3 = campi[csv.getIndiceColonna("Address 3")];
 		
 		//Cambiamento in produzione del 13/10/2017
-		//localitaDestinazione = campi[mappaColonne.get("Shipping town")];
-		//provinciaDestinazione = campi[mappaColonne.get("Shipping region")];
-		//capDestinazione = campi[mappaColonne.get("Shipping postcode")];
-		//nazioneDestinazione = campi[mappaColonne.get("Shipping country")];
-		//iso2NazioneDestinazione = campi[mappaColonne.get("Shipping country code")];
-		localitaDestinazione = campi[mappaColonne.get("Town")];
-		provinciaDestinazione = campi[mappaColonne.get("Region")];
-		capDestinazione = campi[mappaColonne.get("Postcode")];
-		nazioneDestinazione = campi[mappaColonne.get("Country")];
-		iso2NazioneDestinazione = campi[mappaColonne.get("Country code")];
+		//localitaDestinazione = campi[csv.getIndiceColonna("Shipping town")];
+		//provinciaDestinazione = campi[csv.getIndiceColonna("Shipping region")];
+		//capDestinazione = campi[csv.getIndiceColonna("Shipping postcode")];
+		//nazioneDestinazione = campi[csv.getIndiceColonna("Shipping country")];
+		//iso2NazioneDestinazione = campi[csv.getIndiceColonna("Shipping country code")];
+		localitaDestinazione = campi[csv.getIndiceColonna("Town")];
+		provinciaDestinazione = campi[csv.getIndiceColonna("Region")];
+		capDestinazione = campi[csv.getIndiceColonna("Postcode")];
+		nazioneDestinazione = campi[csv.getIndiceColonna("Country")];
+		iso2NazioneDestinazione = campi[csv.getIndiceColonna("Country code")];
 		
 		
-//		BillingName = campi[mappaColonne.get("Billing name")];
-//		BillingCompany = campi[mappaColonne.get("Billing company")];
-//		BillingAddress1 = campi[mappaColonne.get("Billing address 1")];
-//		BillingAddress2 = campi[mappaColonne.get("Billing address 2")];
-//		BillingAddress3 = campi[mappaColonne.get("Billing address 3")];
-//		BillingTown = campi[mappaColonne.get("Billing town")];
-//		BillingRegion = campi[mappaColonne.get("Billing region")];
-//		BillingPostcode = campi[mappaColonne.get("Billing postcode")];
-//		BillingCountryName = campi[mappaColonne.get("Billing country name")];
-//		BillingPhoneNumber = campi[mappaColonne.get("Billing phone number")];
-		Date rDate = parseDate(campi[mappaColonne.get("Received date")]);
+//		BillingName = campi[csv.getIndiceColonna("Billing name")];
+//		BillingCompany = campi[csv.getIndiceColonna("Billing company")];
+//		BillingAddress1 = campi[csv.getIndiceColonna("Billing address 1")];
+//		BillingAddress2 = campi[csv.getIndiceColonna("Billing address 2")];
+//		BillingAddress3 = campi[csv.getIndiceColonna("Billing address 3")];
+//		BillingTown = campi[csv.getIndiceColonna("Billing town")];
+//		BillingRegion = campi[csv.getIndiceColonna("Billing region")];
+//		BillingPostcode = campi[csv.getIndiceColonna("Billing postcode")];
+//		BillingCountryName = campi[csv.getIndiceColonna("Billing country name")];
+//		BillingPhoneNumber = campi[csv.getIndiceColonna("Billing phone number")];
+		Date rDate = parseDate(campi[csv.getIndiceColonna("Received date")]);
 		if (rDate == null)
 			rDate = new Date();
 		ReceivedDate = new Date(rDate.getTime());
-//		ShippingCost = campi[mappaColonne.get("Shipping cost")];
-//		OrderTax = campi[mappaColonne.get("Order tax")];
-		costoTotale = parseDouble(campi[mappaColonne.get("Order total")]);
-//		Currency = campi[mappaColonne.get("Currency")];
-//		Paid = campi[mappaColonne.get("Paid")];
-//		Status = campi[mappaColonne.get("Status")];
-//		Source = campi[mappaColonne.get("Source")];
-//		SubSource = campi[mappaColonne.get("SubSource")];
-//		DispatchBy = campi[mappaColonne.get("Dispatch By")];
-//		CreatedDate = campi[mappaColonne.get("Created Date")];
-//		ShippingServiceName = campi[mappaColonne.get("Shipping service name")];
-//		ShippingServiceTag = campi[mappaColonne.get("Shipping service tag")];
-//		ShippingServiceCode = campi[mappaColonne.get("Shipping service code")];
-//		ShippingServiceVendor = campi[mappaColonne.get("Shipping service vendor")];
-//		PackagingGroup = campi[mappaColonne.get("Packaging group")];
-//		TrackingNumber = campi[mappaColonne.get("Tracking number")];
-//		ChannelBuyerName = campi[mappaColonne.get("Channel buyer name")];
-//		Marker = campi[mappaColonne.get("Marker")];
-//		PaymentMethod = campi[mappaColonne.get("Payment method")];
-//		OnHold = campi[mappaColonne.get("On hold")];
-//		FulfillmentLocation = campi[mappaColonne.get("Fulfillment location")];
-		sku = campi[mappaColonne.get("SKU")];
-//		ItemTitle = campi[mappaColonne.get("Item title")];
-//		OriginalTitle = campi[mappaColonne.get("Original title")];
-//		ChannelSKU = campi[mappaColonne.get("Channel SKU")];
-//		ItemNumber = campi[mappaColonne.get("Item number")];
-		Integer q = parseInteger(campi[mappaColonne.get("Quantity")]);
+//		ShippingCost = campi[csv.getIndiceColonna("Shipping cost")];
+//		OrderTax = campi[csv.getIndiceColonna("Order tax")];
+		costoTotale = parseDouble(campi[csv.getIndiceColonna("Order total")]);
+//		Currency = campi[csv.getIndiceColonna("Currency")];
+//		Paid = campi[csv.getIndiceColonna("Paid")];
+//		Status = campi[csv.getIndiceColonna("Status")];
+//		Source = campi[csv.getIndiceColonna("Source")];
+//		SubSource = campi[csv.getIndiceColonna("SubSource")];
+//		DispatchBy = campi[csv.getIndiceColonna("Dispatch By")];
+//		CreatedDate = campi[csv.getIndiceColonna("Created Date")];
+//		ShippingServiceName = campi[csv.getIndiceColonna("Shipping service name")];
+//		ShippingServiceTag = campi[csv.getIndiceColonna("Shipping service tag")];
+//		ShippingServiceCode = campi[csv.getIndiceColonna("Shipping service code")];
+//		ShippingServiceVendor = campi[csv.getIndiceColonna("Shipping service vendor")];
+//		PackagingGroup = campi[csv.getIndiceColonna("Packaging group")];
+//		TrackingNumber = campi[csv.getIndiceColonna("Tracking number")];
+//		ChannelBuyerName = campi[csv.getIndiceColonna("Channel buyer name")];
+//		Marker = campi[csv.getIndiceColonna("Marker")];
+//		PaymentMethod = campi[csv.getIndiceColonna("Payment method")];
+//		OnHold = campi[csv.getIndiceColonna("On hold")];
+//		FulfillmentLocation = campi[csv.getIndiceColonna("Fulfillment location")];
+		sku = campi[csv.getIndiceColonna("SKU")];
+//		ItemTitle = campi[csv.getIndiceColonna("Item title")];
+//		OriginalTitle = campi[csv.getIndiceColonna("Original title")];
+//		ChannelSKU = campi[csv.getIndiceColonna("Channel SKU")];
+//		ItemNumber = campi[csv.getIndiceColonna("Item number")];
+		Integer q = parseInteger(campi[csv.getIndiceColonna("Quantity")]);
 		quantita = q != null ? q : 0;
-//		UnitCost = campi[mappaColonne.get("Unit cost")];
-//		LineDiscount = campi[mappaColonne.get("Line discount")];
-//		TaxRate = campi[mappaColonne.get("Tax rate")];
-//		LineTax = campi[mappaColonne.get("Line tax")];
-//		LineTotalExcludingTax = campi[mappaColonne.get("Line total excluding tax")];
-//		LineTotal = campi[mappaColonne.get("Line total")];
-//		IsService = campi[mappaColonne.get("Is service")];
-//		CompositeParentSKU = campi[mappaColonne.get("Composite parent SKU")];
-//		CompositeParentOrderItemNumber = campi[mappaColonne.get("Composite parent order item number")];
-		note = campi[mappaColonne.get("Order Notes")];
-//		TotalWeight = parseDouble(campi[mappaColonne.get("Total Weight")]);
+//		UnitCost = campi[csv.getIndiceColonna("Unit cost")];
+//		LineDiscount = campi[csv.getIndiceColonna("Line discount")];
+//		TaxRate = campi[csv.getIndiceColonna("Tax rate")];
+//		LineTax = campi[csv.getIndiceColonna("Line tax")];
+//		LineTotalExcludingTax = campi[csv.getIndiceColonna("Line total excluding tax")];
+//		LineTotal = campi[csv.getIndiceColonna("Line total")];
+//		IsService = campi[csv.getIndiceColonna("Is service")];
+//		CompositeParentSKU = campi[csv.getIndiceColonna("Composite parent SKU")];
+//		CompositeParentOrderItemNumber = campi[csv.getIndiceColonna("Composite parent order item number")];
+		note = campi[csv.getIndiceColonna("Order Notes")];
+//		TotalWeight = parseDouble(campi[csv.getIndiceColonna("Total Weight")]);
 	}
 	
 	protected Integer parseInteger(String value) {

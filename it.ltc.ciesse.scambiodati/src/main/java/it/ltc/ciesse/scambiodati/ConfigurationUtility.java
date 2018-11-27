@@ -1,4 +1,4 @@
-package it.ltc.clienti.artcraft;
+package it.ltc.ciesse.scambiodati;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,7 +8,6 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import it.ltc.utility.configuration.Configuration;
-import it.ltc.utility.ftp.FTP;
 import it.ltc.utility.mail.MailMan;
 
 
@@ -24,43 +23,40 @@ public class ConfigurationUtility {
 	
 	private final String persistenceUnit;
 	private final boolean verbose;
+	private final boolean testing;
 	
 	// Cartelle Locali
 	private final String localFolderIN;
+	private final String localFolderINStorico;
+	private final String localFolderINErrori;
+	private final String localFolderINNonUsati;
 	private final String localFolderOUT;
-	private final String localFolderTEMPOUT;
-	private final String localFolderPDF;
-
-	// Cartelle FTP
-	private final String remoteFolder;
-	private final String remoteStoricFolder;
-	private final String remoteFolderPrecarico;
-	private final String remoteStoricFolderPercarico;
-	private final String remotePDFFolder;
-	private final String remotePDFStoricFolder;
-	private final String remoteUploadFolderCarichi;
-	private final String remoteUploadFolderOut;
+	private final String localFolderOUTStorico;
 
 	private ConfigurationUtility() {
 		try {
 			InputStream stream = ConfigurationUtility.class.getResourceAsStream(configPath);
 			configuration = new Configuration(stream, false);
 			verbose = Boolean.parseBoolean(configuration.get("verbose"));
-			persistenceUnit = configuration.get("persistence_unit");
+			testing = Boolean.parseBoolean(configuration.get("test"));
 			//Cartelle locali
-			localFolderIN = configuration.get("folder_local_in");
-			localFolderOUT = configuration.get("folder_local_out");
-			localFolderTEMPOUT = configuration.get("folder_local_tempout");
-			localFolderPDF = configuration.get("folder_local_pdf");
-			//Cartelle FTP
-			remoteFolder = configuration.get("folder_ftp_in");
-			remoteStoricFolder = configuration.get("folder_ftp_in_archive");
-			remoteFolderPrecarico = configuration.get("folder_ftp_precarico");
-			remoteStoricFolderPercarico = configuration.get("folder_ftp_precarico_archive");
-			remotePDFFolder = configuration.get("folder_ftp_pdf");
-			remotePDFStoricFolder = configuration.get("folder_ftp_pdf_archive");
-			remoteUploadFolderCarichi = configuration.get("folder_ftp_carichi");
-			remoteUploadFolderOut = configuration.get("folder_ftp_out");
+			if (testing) {
+				persistenceUnit = configuration.get("test_persistence_unit");
+				localFolderIN = configuration.get("test_folder_local_in");
+				localFolderINStorico = configuration.get("test_folder_local_in_storico");
+				localFolderINErrori = configuration.get("test_folder_local_in_errori");
+				localFolderINNonUsati = configuration.get("test_folder_local_in_nonusati");
+				localFolderOUT = configuration.get("test_folder_local_out");
+				localFolderOUTStorico = configuration.get("test_folder_local_out_storico");
+			} else {
+				persistenceUnit = configuration.get("persistence_unit");
+				localFolderIN = configuration.get("folder_local_in");
+				localFolderINStorico = configuration.get("folder_local_in_storico");
+				localFolderINErrori = configuration.get("folder_local_in_errori");
+				localFolderINNonUsati = configuration.get("folder_local_in_nonusati");
+				localFolderOUT = configuration.get("folder_local_out");
+				localFolderOUTStorico = configuration.get("folder_local_out_storico");
+			}
 		} catch (IOException e) {
 			logger.error(e);
 			String errorMessage = "Impossibile caricare i files di configurazione.";
@@ -87,44 +83,20 @@ public class ConfigurationUtility {
 		return localFolderOUT;
 	}
 
-	public String getLocalFolderTEMPOUT() {
-		return localFolderTEMPOUT;
+	public String getLocalFolderINStorico() {
+		return localFolderINStorico;
 	}
 
-	public String getLocalFolderPDF() {
-		return localFolderPDF;
+	public String getLocalFolderINErrori() {
+		return localFolderINErrori;
 	}
 
-	public String getRemoteFolder() {
-		return remoteFolder;
+	public String getLocalFolderINNonUsati() {
+		return localFolderINNonUsati;
 	}
 
-	public String getRemoteStoricFolder() {
-		return remoteStoricFolder;
-	}
-
-	public String getRemoteFolderPrecarico() {
-		return remoteFolderPrecarico;
-	}
-
-	public String getRemoteStoricFolderPercarico() {
-		return remoteStoricFolderPercarico;
-	}
-
-	public String getRemotePDFFolder() {
-		return remotePDFFolder;
-	}
-
-	public String getRemotePDFStoricFolder() {
-		return remotePDFStoricFolder;
-	}
-
-	public String getRemoteUploadFolderCarichi() {
-		return remoteUploadFolderCarichi;
-	}
-
-	public String getRemoteUploadFolderOut() {
-		return remoteUploadFolderOut;
+	public String getLocalFolderOUTStorico() {
+		return localFolderOUTStorico;
 	}
 
 	public boolean isVerbose() {
@@ -167,19 +139,6 @@ public class ConfigurationUtility {
 		for (String indirizzo : indirizzi.split(","))
 			destinatari.add(indirizzo);
 		return destinatari;
-	}
-	
-	/**
-	 * Restituisce un client FTP.
-	 * 
-	 * @return un client FTP gia' configurato.
-	 */
-	public FTP getFTPClient() {
-		String ftpHost = configuration.get("ftp_host");
-		String ftpUser = configuration.get("ftp_user");
-		String ftpPassword = configuration.get("ftp_password");
-		FTP client = new FTP(ftpHost, ftpUser, ftpPassword);
-		return client;
 	}
 
 }

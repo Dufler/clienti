@@ -15,13 +15,13 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>it.ltc.database.model</groupId>
-			<artifactId>legacy</artifactId>
+			<groupId>it.ltc.database</groupId>
+			<artifactId>model-legacy</artifactId>
 			<version>1.1</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.database.dao</groupId>
-			<artifactId>legacy</artifactId>
+			<groupId>it.ltc.database</groupId>
+			<artifactId>dao-legacy</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
@@ -30,13 +30,23 @@
 			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>it.ltc.model.interfaces</groupId>
-			<artifactId>it.ltc.model.interfaces</artifactId>
+			<groupId>it.ltc.model</groupId>
+			<artifactId>interfaces</artifactId>
 			<version>1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>it.ltc.utility</groupId>
 			<artifactId>mail</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>configuration</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>it.ltc.model</groupId>
+			<artifactId>persistence</artifactId>
 			<version>1.0</version>
 		</dependency>
 	</dependencies>
@@ -47,7 +57,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>2.3.1</version>
+					<version>3.1</version>
 					<configuration>
 						<source>1.8</source>
 						<target>1.8</target>

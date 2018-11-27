@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.RighiImballo;
@@ -15,7 +15,7 @@ public class ContenutoColli {
 	//private static final RighiImballoDao daoImballato = new RighiImballoDao(Import.persistenceUnit);
 	
 	public static List<String> esportaImballatoDaLista(List<RighiImballo> imballati, String riferimentoOrdine) {
-		ArticoliDao daoArticoli = new ArticoliDao(Import.persistenceUnit);
+		ArticoliDao daoArticoli = new ArticoliDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 		StringUtility utility = new StringUtility();
 		List<String> righe = new LinkedList<>();
 		HashMap<String, RighiImballo[]> mappaListe = new HashMap<>(); //meglio array!

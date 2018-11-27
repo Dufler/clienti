@@ -1,4 +1,4 @@
-package it.ltc.forza.anagrafiche;
+package it.ltc.clienti.forza.anagrafiche;
 
 public class MainImportaAnagrafiche {
 

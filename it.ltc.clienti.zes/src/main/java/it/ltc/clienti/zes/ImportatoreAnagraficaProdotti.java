@@ -3,14 +3,18 @@ package it.ltc.clienti.zes;
 import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
 import it.ltc.model.interfaces.exception.ModelPersistenceException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
+import it.ltc.model.interfaces.prodotto.Cassa;
 import it.ltc.model.interfaces.prodotto.MProdotto;
 import it.ltc.model.persistence.prodotto.ControllerProdottoSQLServer;
 import it.ltc.utility.csv.FileCSV;
+import it.ltc.utility.mail.Email;
+import it.ltc.utility.mail.MailMan;
 
 public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 	
@@ -49,6 +53,9 @@ public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 			if (file.isDirectory()) {
 				continue;
 			} else if (file.isFile() && file.getName().matches(regexFileArticoli)) {
+				//Preparo il postino per notificare l'esito dell'importazione
+				MailMan postino = ConfigurationUtility.getInstance().getMailMan();
+				List<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
 				//Tento di leggere il file
 				try {
 					logger.info("Esamino il file '" + file.getName() + "'");
@@ -58,18 +65,34 @@ public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 					Collection<MProdotto> articoli = parsaArticoli(csv);
 					logger.info("Sono state trovate " + articoli.size() + " anagrafiche nel file.");
 					//li inserisco a sistema.
+					int nuoveAnagrafiche = 0;
 					for (MProdotto articolo : articoli) {
 						try {
 							valida(articolo);
 							inserisci(articolo);
+							nuoveAnagrafiche++;
 						} catch (ModelValidationException | ModelPersistenceException e) {
 							logger.error(e);
 						}						
 					}
 					spostaFileNelloStorico(file);
+					String subject = "ZeS - Importazione Anagrafica Prodotti";
+					String body = "Sono stati importati " + nuoveAnagrafiche + " nuovi articoli su " + articoli.size() + ".";
+					Email mail = new Email(subject, body);
+					boolean invio = postino.invia(destinatari, mail);
+					if (!invio) {
+						logger.error("Impossibile inviare la mail con il riepilogo dell'importazione anagrafiche.");
+					}
 				} catch (Exception e) {
 					logger.error(e);
 					spostaFileConErrori(file);
+					String subject = "Alert: ZeS - Importazione Anagrafica Prodotti";
+					String body = "Si sono verificati errori durante l'importazione delle anagrafiche: " + e.getMessage();
+					Email mail = new Email(subject, body);
+					boolean invio = postino.invia(destinatari, mail);
+					if (!invio) {
+						logger.error("Impossibile inviare la mail con gli errori riscontrati durante l'importazione anagrafiche.");
+					}
 				}				
 			}
 		}
@@ -116,7 +139,7 @@ public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 			articolo.setTaglia(csv.getStringa(TAGLIA));
 			articolo.setValore(csv.getNumerico(VALORE_DOGANALE));
 			//Fissi per ZeS
-			articolo.setCassa("");
+			articolo.setCassa(Cassa.NO);
 			articolo.setComposizione("x");
 			articoli.add(articolo);
 		}

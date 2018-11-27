@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.ciesse.scambiodati.model.Colli;
 import it.ltc.ciesse.scambiodati.model.ContenutoColli;
 import it.ltc.ciesse.scambiodati.model.DocumentiEntrataRighe;
@@ -33,16 +34,20 @@ public class Export {
 	
 	private static final Logger logger = Logger.getLogger(Export.class);
 	
-	public static final String persistenceUnit = "legacy-test";
+	private final String persistenceUnit;
 	
-	public static final String PATH_CARTELLA_EXPORT = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\OUT\\";
-	public static final String PATH_CARTELLA_STORICO = "\\\\192.168.0.10\\e$\\Gestionali\\Ciesse\\FTP\\OUT\\storico\\";
+	private final String pathCartellaExport;
+	private final String pathCartellaExportStorico;
 	
 	private static Export instance;
 
 	private final SimpleDateFormat sdf;
 	
 	private Export() {
+		ConfigurationUtility config = ConfigurationUtility.getInstance();
+		persistenceUnit = config.getPersistenceUnit();
+		pathCartellaExport = config.getLocalFolderOUT();
+		pathCartellaExportStorico = config.getLocalFolderOUTStorico();
 		sdf = new SimpleDateFormat("yyyyMMddHHmmssSSS");
 	}
 
@@ -66,7 +71,7 @@ public class Export {
 	private void generaFileCheck(Date now) {
 		String nomeFileCheck = sdf.format(now) + ".chk";
 		String contenutoFileCheck = "\r\n";
-		String pathFileCheck = PATH_CARTELLA_EXPORT + nomeFileCheck;
+		String pathFileCheck = pathCartellaExport + nomeFileCheck;
 		boolean exportFileCheck = FileUtility.writeFile(pathFileCheck, contenutoFileCheck);
 		if (!exportFileCheck)
 			logger.error("Impossibile esportare il file di controllo: " + nomeFileCheck);
@@ -82,7 +87,7 @@ public class Export {
 	private boolean generaFileGiacenza(List<String> righeDocumento) {
 		Date now = new Date();
 		String nomeFileDocumento = "Giacenza_" + sdf.format(now) + ".txt";
-		String pathDocumento = PATH_CARTELLA_EXPORT + nomeFileDocumento;
+		String pathDocumento = pathCartellaExport + nomeFileDocumento;
 		boolean exportDocumento = FileUtility.writeFile(pathDocumento, righeDocumento);
 		if (!exportDocumento)
 			logger.error("Impossibile esportare il documento della giacenza: " + nomeFileDocumento);
@@ -92,9 +97,9 @@ public class Export {
 	
 	private void esportaMovimenti() {
 		MagaMovDao daoMovimenti = new MagaMovDao(persistenceUnit);
-		List<MagaMov> movimentiScarico = daoMovimenti.trovaMovimentiNonComunicatiPerCausale("TRU");
+		List<MagaMov> movimentiScarico = daoMovimenti.trovaMovimentiNonComunicatiPerCausale("S01");
 		List<String> righeScarico = Movimenti.esportaMovimenti(movimentiScarico);
-		List<MagaMov> movimentiCarico = daoMovimenti.trovaMovimentiNonComunicatiPerCausale("TRI");
+		List<MagaMov> movimentiCarico = daoMovimenti.trovaMovimentiNonComunicatiPerCausale("C01");
 		List<String> righeCarico = Movimenti.esportaMovimenti(movimentiCarico);
 		List<String> righeDocumento = new LinkedList<>();
 		righeDocumento.addAll(righeScarico);
@@ -122,7 +127,7 @@ public class Export {
 	private boolean generaFileMovimenti(List<String> righeDocumento) {
 		Date now = new Date();
 		String nomeFileDocumento = "Movimenti_" + sdf.format(now) + ".txt";
-		String pathDocumento = PATH_CARTELLA_EXPORT + nomeFileDocumento;
+		String pathDocumento = pathCartellaExport + nomeFileDocumento;
 		boolean exportDocumento = FileUtility.writeFile(pathDocumento, righeDocumento);
 		if (!exportDocumento)
 			logger.error("Impossibile esportare il documento dei movimenti: " + nomeFileDocumento);
@@ -157,8 +162,8 @@ public class Export {
 		Date now = new Date();
 		String nomeFileDocumentoTestate = "DocumentiEntrata_" + sdf.format(now) + ".txt";
 		String nomeFileDocumentoRighe = "RigheDocumentiEntrata_" + sdf.format(now) + ".txt";
-		String pathDocumentoTestate = PATH_CARTELLA_EXPORT + nomeFileDocumentoTestate;
-		String pathDocumentoRighe = PATH_CARTELLA_EXPORT + nomeFileDocumentoRighe;
+		String pathDocumentoTestate = pathCartellaExport + nomeFileDocumentoTestate;
+		String pathDocumentoRighe = pathCartellaExport + nomeFileDocumentoRighe;
 		boolean exportDocumentoTestate = FileUtility.writeFile(pathDocumentoTestate, righeDocumentoTestate);
 		if (!exportDocumentoTestate)
 			logger.error("Impossibile esportare il documento testate di carico: " + nomeFileDocumentoTestate);
@@ -167,9 +172,9 @@ public class Export {
 			logger.error("Impossibile esportare il documento righe di carico: " + nomeFileDocumentoRighe);
 		generaFileCheck(now);
 		//Faccio delle copie da mettere nello storico dato che quei coioni di CiEsse non ce le mettono.
-		String pathDocumentoTestateStorico = PATH_CARTELLA_STORICO + nomeFileDocumentoTestate;
+		String pathDocumentoTestateStorico = pathCartellaExportStorico + nomeFileDocumentoTestate;
 		FileUtility.writeFile(pathDocumentoTestateStorico, righeDocumentoTestate);
-		String pathDocumentoRigheStorico = PATH_CARTELLA_STORICO + nomeFileDocumentoRighe;
+		String pathDocumentoRigheStorico = pathCartellaExportStorico + nomeFileDocumentoRighe;
 		FileUtility.writeFile(pathDocumentoRigheStorico, righeDocumento);
 		return exportDocumentoTestate && exportDocumentoRighe;
 	}
@@ -203,8 +208,8 @@ public class Export {
 		Date now = new Date();
 		String nomeFileDocumentoColli = "Colli_" + sdf.format(now) + ".txt";
 		String nomeFileDocumentoContenutoColli = "ContenutoColli_" + sdf.format(now) + ".txt";
-		String pathDocumentoColli = PATH_CARTELLA_EXPORT + nomeFileDocumentoColli;
-		String pathDocumentoContenutoColli = PATH_CARTELLA_EXPORT + nomeFileDocumentoContenutoColli;
+		String pathDocumentoColli = pathCartellaExport + nomeFileDocumentoColli;
+		String pathDocumentoContenutoColli = pathCartellaExport + nomeFileDocumentoContenutoColli;
 		boolean exportDocumentoTestate = FileUtility.writeFile(pathDocumentoColli, righeDocumentoColli);
 		if (!exportDocumentoTestate)
 			logger.error("Impossibile esportare il documento testate di carico: " + nomeFileDocumentoColli);
@@ -213,9 +218,9 @@ public class Export {
 			logger.error("Impossibile esportare il documento righe di carico: " + nomeFileDocumentoContenutoColli);
 		generaFileCheck(now);
 		//Faccio delle copie da mettere nello storico dato che quei coioni di CiEsse non ce le mettono.
-		String pathDocumentoColliStorico = PATH_CARTELLA_STORICO + nomeFileDocumentoColli;
+		String pathDocumentoColliStorico = pathCartellaExportStorico + nomeFileDocumentoColli;
 		FileUtility.writeFile(pathDocumentoColliStorico, righeDocumentoColli);
-		String pathDocumentoContenutoColliStorico = PATH_CARTELLA_STORICO + nomeFileDocumentoContenutoColli;
+		String pathDocumentoContenutoColliStorico = pathCartellaExportStorico + nomeFileDocumentoContenutoColli;
 		FileUtility.writeFile(pathDocumentoContenutoColliStorico, righeDocumentoContenutoColli);
 		return exportDocumentoTestate && exportDocumentoRighe;
 	}

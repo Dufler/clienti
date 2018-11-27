@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp;
+package it.ltc.clienti.forza.ftp;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class ManagerCap extends Dao {
 		CriteriaBuilder cb = em.getCriteriaBuilder();
 		CriteriaQuery<Cap> criteria = cb.createQuery(Cap.class);
 		Root<Cap> member = criteria.from(Cap.class);
-		criteria.select(member).where(cb.equal(member.get("id").get("cap"), cap));
+		criteria.select(member).where(cb.equal(member.get("cap"), cap));
 		List<Cap> list = em.createQuery(criteria).setMaxResults(1).getResultList();
 		em.close();
 		Cap match = list.size() == 1 ? list.get(0) : null;

@@ -1,4 +1,4 @@
-package it.ltc.forza.ftp;
+package it.ltc.clienti.forza.ftp;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -11,10 +11,10 @@ import javax.persistence.criteria.Root;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.clienti.forza.ftp.model.LinnworksOrderStatus;
+import it.ltc.clienti.forza.ftp.model.LinnworksOrderStatus.Status;
 import it.ltc.database.dao.Dao;
 import it.ltc.database.model.legacy.TestataOrdini;
-import it.ltc.forza.ftp.model.LinnworksOrderStatus;
-import it.ltc.forza.ftp.model.LinnworksOrderStatus.Status;
 
 public class ManagerStatoOrdini extends Dao {
 	
