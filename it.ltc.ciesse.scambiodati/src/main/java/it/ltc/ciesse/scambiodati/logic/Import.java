@@ -35,21 +35,22 @@ import it.ltc.database.dao.legacy.PakiArticoloDao;
 import it.ltc.database.dao.legacy.PakiTestaDao;
 import it.ltc.database.dao.legacy.StagioniDao;
 import it.ltc.database.dao.legacy.TempCorrDao;
-import it.ltc.database.dao.legacy.bundle.CasseKitDao;
+import it.ltc.database.dao.legacy.bundle.CasseDao;
 import it.ltc.database.model.legacy.ColliPreleva;
 import it.ltc.database.model.legacy.Colori;
 import it.ltc.database.model.legacy.Corrieri;
 import it.ltc.database.model.legacy.Destinatari;
 import it.ltc.database.model.legacy.Fornitori;
 import it.ltc.database.model.legacy.Nazioni;
-import it.ltc.database.model.legacy.Numerata;
+import it.ltc.database.model.legacy.NumerataLegacy;
 import it.ltc.database.model.legacy.PakiArticolo;
 import it.ltc.database.model.legacy.PakiTesta;
 import it.ltc.database.model.legacy.Stagioni;
 import it.ltc.database.model.legacy.TempCorr;
-import it.ltc.database.model.legacy.bundle.CasseKIT;
+import it.ltc.database.model.legacy.bundle.Casse;
 import it.ltc.model.interfaces.exception.ModelPersistenceException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
+import it.ltc.model.interfaces.exception.ProductAlreadyExistentException;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.prodotto.MProdotto;
 import it.ltc.utility.mail.Email;
@@ -70,6 +71,8 @@ public class Import {
 	private static Import instance;
 	
 	private final HashMap<String, MOrdine> mappaOrdini;
+	private final HashMap<String, File> mappaFileTestateOrdini;
+	private final HashMap<String, File> mappaFileRigheOrdini;
 	
 	private final List<String> messaggiInfo;
 	private final List<String> messaggiErrore;
@@ -82,6 +85,8 @@ public class Import {
 		pathCartellaImportErrori = config.getLocalFolderINErrori();
 		pathCartellaImportNonUsati = config.getLocalFolderINNonUsati();
 		mappaOrdini = new HashMap<>();
+		mappaFileTestateOrdini = new HashMap<>();
+		mappaFileRigheOrdini = new HashMap<>();
 		messaggiInfo = new LinkedList<>();
 		messaggiErrore = new LinkedList<>();
 	}
@@ -231,11 +236,11 @@ public class Import {
 	private void importaTaglie(File fileTaglie) {
 		try {
 			ArrayList<String> lines = FileUtility.readLines(fileTaglie);
-			List<Numerata> numerate = ClasseTaglie.parsaTaglie(lines);
+			List<NumerataLegacy> numerate = ClasseTaglie.parsaTaglie(lines);
 			NumerateDao daoNumerate = new NumerateDao(persistenceUnit);
 			//Inserisco quelle nuove
-			for (Numerata numerata : numerate) {
-				Numerata entity = daoNumerate.trovaDaCodice(numerata.getCodice());
+			for (NumerataLegacy numerata : numerate) {
+				NumerataLegacy entity = daoNumerate.trovaDaCodice(numerata.getCodice());
 				if (entity == null) {
 					entity = daoNumerate.inserisci(numerata);
 					if (entity == null) throw new RuntimeException("Impossibile inserire la numerata: " + numerata.toString());
@@ -281,10 +286,10 @@ public class Import {
 	private void importaAssortimenti(File fileAssortimenti) {
 		try {
 			ArrayList<String> lines = FileUtility.readLines(fileAssortimenti);
-			List<CasseKIT> kits = Assortimenti.parsaKitArticoli(lines);
-			CasseKitDao daoKit = new CasseKitDao(persistenceUnit);
-			for (CasseKIT kit : kits) {
-				CasseKIT entity = daoKit.trovaDaSkuBundleEProdotto(kit.getSkuBundle(), kit.getSkuProdotto());
+			List<Casse> kits = Assortimenti.parsaKitArticoli(lines);
+			CasseDao daoKit = new CasseDao(persistenceUnit);
+			for (Casse kit : kits) {
+				Casse entity = daoKit.trovaDaSkuBundleEProdotto(kit.getSkuBundle(), kit.getSkuProdotto());
 				if (entity == null) {
 					entity = daoKit.inserisci(kit);
 					if (entity == null) {
@@ -317,11 +322,11 @@ public class Import {
 				try {
 					controller.valida(articolo);
 					controller.inserisci(articolo);
-				} catch (ModelPersistenceException e) {
+				} catch (ProductAlreadyExistentException e) {
+					//DO NOTHING! Ce li ripassano in continuazione.
+				} catch (ModelValidationException | ModelPersistenceException e) {
 					logger.error(e);
 					messaggiErrore.add(e.getMessage());
-				} catch (ModelValidationException e) {
-					logger.error(e);
 				}
 			}
 			//Sposto il file nella cartella di storico
@@ -508,9 +513,11 @@ public class Import {
 			List<MOrdine> ordini = OrdiniTestata.parsaOrdini(lines);
 			for (MOrdine ordine : ordini) {
 				mappaOrdini.put(ordine.getRiferimentoOrdine(), ordine);
+				//Mi segno il file per spostarlo successivamente, al termine dell'importazione dell'ordine.
+				mappaFileTestateOrdini.put(ordine.getRiferimentoOrdine(), fileTestateOrdini);
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileTestateOrdini);
+			//spostaFileNelloStorico(fileTestateOrdini);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
 			logger.error(e);
@@ -521,9 +528,10 @@ public class Import {
 	private void importaRigheOrdini(File fileRigheOrdini) {
 		try {
 			ArrayList<String> lines = FileUtility.readLines(fileRigheOrdini);
-			OrdiniRighe.parsaRigheOrdine(mappaOrdini, lines);
+			String riferimentoOrdine = OrdiniRighe.parsaRigheOrdine(mappaOrdini, lines);
+			mappaFileRigheOrdini.put(riferimentoOrdine, fileRigheOrdini);
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileRigheOrdini);
+			//spostaFileNelloStorico(fileRigheOrdini);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
 			logger.error(e);
@@ -534,14 +542,23 @@ public class Import {
 	private void inserisciOrdini() {
 		ContollerOrdini controller = new ContollerOrdini();
 		for (MOrdine ordine : mappaOrdini.values()) {
+			//Mi appunto i files da spostare contenenti le info sull'ordine
+			File fileTestata = mappaFileTestateOrdini.get(ordine.getRiferimentoOrdine());
+			File fileRighe = mappaFileRigheOrdini.get(ordine.getRiferimentoOrdine());
 			//Vado in validazione e scrittura
 			try {
 				controller.valida(ordine);
 				controller.inserisci(ordine);
 				messaggiInfo.add("Inserito nuovo ordine " + ordine.getRiferimentoOrdine());
+				//Sposto i files nello storico
+				spostaFileNelloStorico(fileTestata);
+				spostaFileNelloStorico(fileRighe);
 			} catch (Exception e) {
 				messaggiErrore.add(e.getMessage());
 				logger.error(e);
+				//Sposto i files nella cartella errori
+				spostaFileConErrori(fileTestata);
+				spostaFileConErrori(fileRighe);
 			}			
 		}
 	}

@@ -6,15 +6,15 @@ import java.util.List;
 import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.model.legacy.Articoli;
-import it.ltc.database.model.legacy.bundle.CasseKIT;
+import it.ltc.database.model.legacy.bundle.Casse;
 import it.ltc.utility.miscellanea.string.StringParser;
 
 public class Assortimenti {
 	
 	private static final ArticoliDao daoArticoli = new ArticoliDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	
-	public static List<CasseKIT> parsaKitArticoli(List<String> righe) {
-		List<CasseKIT> assortimenti = new LinkedList<>();
+	public static List<Casse> parsaKitArticoli(List<String> righe) {
+		List<Casse> assortimenti = new LinkedList<>();
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);
 		StringParser parser = new StringParser(lines, 507);
@@ -39,7 +39,7 @@ public class Assortimenti {
 						Articoli articolo = daoArticoli.trovaDaSKU(skuBase + "_" + counter);
 						if (articolo == null)
 							throw new RuntimeException("Impossibile trovare l'anagrafica dell'articolo: '" + skuBase + "_" + counter + "'");
-						CasseKIT cassa = new CasseKIT();
+						Casse cassa = new Casse();
 						cassa.setSkuBundle(kit.getIdUniArticolo());
 						cassa.setSkuProdotto(articolo.getIdUniArticolo());
 						cassa.setQuantitaProdotto(qta);

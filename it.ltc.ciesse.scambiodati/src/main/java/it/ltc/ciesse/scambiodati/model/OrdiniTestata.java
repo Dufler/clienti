@@ -1,6 +1,5 @@
 package it.ltc.ciesse.scambiodati.model;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -118,9 +117,9 @@ public class OrdiniTestata {
 				TestataOrdini testata = new TestataOrdini();
 				testata.setCodCliente(cliente);
 				testata.setCorriere(vettore);
-				testata.setDataConsegna(new Timestamp(dataConsegna.getTime()));
-				testata.setDataDoc(new Timestamp(dataDocumento.getTime()));
-				testata.setDataOrdine(new Timestamp(dataDocumento.getTime()));
+				testata.setDataConsegna(new Date(dataConsegna.getTime()));
+				testata.setDataDoc(new Date(dataDocumento.getTime()));
+				testata.setDataOrdine(new Date(dataDocumento.getTime()));
 				testata.setIdDestina(destinatario.getIdDestina());
 				testata.setNote(note);
 				testata.setNrDoc(riferimento);

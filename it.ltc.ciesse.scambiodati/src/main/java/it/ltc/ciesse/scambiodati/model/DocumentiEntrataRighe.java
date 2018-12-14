@@ -54,6 +54,7 @@ public class DocumentiEntrataRighe {
 						riga.setCodArtStr(articolo.getCodArtStr());
 						riga.setCodBarre(articolo.getCodBarre());
 						riga.setCodUnicoArt(articolo.getIdUniArticolo());
+						riga.setIdArticolo(articolo.getIdArticolo());
 						riga.setIdPakiTesta(testata.getIdTestaPaki());
 						riga.setMagazzino(magazzino);
 						riga.setMagazzinoltc("PG1"); //Metto il default.

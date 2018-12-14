@@ -13,7 +13,6 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import it.ltc.clienti.forza.ftp.ManagerAssegnazione;
 import it.ltc.clienti.forza.ftp.ManagerImportazione;
 import it.ltc.clienti.forza.ftp.ManagerMagazzino;
 import it.ltc.clienti.forza.ftp.ManagerScadenze;
@@ -22,6 +21,7 @@ import it.ltc.clienti.forza.ftp.model.LinnworksInvenctoryLine;
 import it.ltc.clienti.forza.ftp.model.LinnworksOrderLine;
 import it.ltc.clienti.forza.ftp.model.LinnworksOrderStatus;
 import it.ltc.clienti.forza.ftp.model.ProdottoInScadenza;
+import it.ltc.database.dao.ordini.ManagerAssegnazione;
 import it.ltc.database.model.legacy.ColliPack;
 import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.model.interfaces.ordine.MOrdine;
@@ -95,7 +95,7 @@ public class MainForza {
 			logger.info(messaggio);
 			sendEmail(messaggio, subjectAlertScadenze, destinatariIT);
 		} else {
-			logger.info("Nessun prodotto in scadenza.");
+			logger.info("Nessun prodotto in scadenza entro " + giorniScandenzaFutura + " giorni.");
 		}
 	}
 	

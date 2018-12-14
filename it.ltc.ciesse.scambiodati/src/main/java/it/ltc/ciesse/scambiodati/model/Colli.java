@@ -1,6 +1,5 @@
 package it.ltc.ciesse.scambiodati.model;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -68,7 +67,7 @@ public class Colli {
 			ColliPreleva collo = new ColliPreleva();		
 			collo.setBarcodeCorriere(colloImballato.getBarCodeImb());
 			collo.setCodiceCorriere(vettore);
-			collo.setDataDistinta(new Timestamp(dataDocumento.getTime()));
+			collo.setDataDistinta(new Date(dataDocumento.getTime()));
 			collo.setKeyColloPre(numeroCollo);
 			collo.setNrColloCliente(0);
 			collo.setNrLista(colloImballato.getNrLista());

@@ -1,7 +1,9 @@
 package it.ltc.clienti.zes;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -39,10 +41,16 @@ public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 	private static final String VALORE_DOGANALE = "valoredoganale";
 	
 	private final String folderPath;
+	private final SimpleDateFormat sdf;
+	private final MailMan postino;
+	private final List<String> destinatari;
 
 	public ImportatoreAnagraficaProdotti(String folderPath, String persistenceUnit) {
 		super(persistenceUnit);
 		this.folderPath = folderPath;
+		this.sdf = new SimpleDateFormat("yyMMddHHmmss");
+		this.postino = ConfigurationUtility.getInstance().getMailMan();
+		this.destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
 	}
 	
 	public void importaAnagrafiche() {
@@ -52,10 +60,7 @@ public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 		for (File file : files) {
 			if (file.isDirectory()) {
 				continue;
-			} else if (file.isFile() && file.getName().matches(regexFileArticoli)) {
-				//Preparo il postino per notificare l'esito dell'importazione
-				MailMan postino = ConfigurationUtility.getInstance().getMailMan();
-				List<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
+			} else if (file.isFile() && file.getName().matches(regexFileArticoli)) {				
 				//Tento di leggere il file
 				try {
 					logger.info("Esamino il file '" + file.getName() + "'");
@@ -101,7 +106,8 @@ public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 	private void spostaFileConErrori(File fileConErrori) {
 		String nomeFile = fileConErrori.getName();
 		String pathFolderErrori = folderPath + "errori\\";
-		File fileDaSpostare = new File(pathFolderErrori + nomeFile);
+		String dataOraLavorazione = sdf.format(new Date());
+		File fileDaSpostare = new File(pathFolderErrori + dataOraLavorazione + "_" + nomeFile);
 		boolean spostato = fileConErrori.renameTo(fileDaSpostare);
 		if (spostato) {
 			logger.info("Spostato il file '" + nomeFile + "' in '" + pathFolderErrori + "'");
@@ -111,7 +117,8 @@ public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 	private void spostaFileNelloStorico(File fileStorico) {
 		String nomeFile = fileStorico.getName();
 		String pathFolderStorico = folderPath + "storico\\";
-		File fileDaSpostare = new File(pathFolderStorico + nomeFile);
+		String dataOraLavorazione = sdf.format(new Date());
+		File fileDaSpostare = new File(pathFolderStorico + dataOraLavorazione + "_" + nomeFile);
 		boolean spostato = fileStorico.renameTo(fileDaSpostare);
 		if (spostato) {
 			logger.info("Spostato il file '" + nomeFile + "' in '" + pathFolderStorico + "'");

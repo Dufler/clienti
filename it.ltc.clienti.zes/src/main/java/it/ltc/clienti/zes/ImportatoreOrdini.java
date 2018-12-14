@@ -2,6 +2,7 @@ package it.ltc.clienti.zes;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,9 +54,16 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 	
 	private final String folderPath;
 	
+	private final MailMan postino;
+	private final List<String> destinatari;
+	private final List<String> destinatariErroriGravi;
+	
 	public ImportatoreOrdini(String folderPath, String persistenceUnit) {
 		super(persistenceUnit);
 		this.folderPath = folderPath;
+		this.postino = ConfigurationUtility.getInstance().getMailMan();
+		this.destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
+		this.destinatariErroriGravi = ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
 	}
 	
 	public void importaOrdini() {
@@ -66,10 +74,7 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 			if (file.isDirectory()) {
 				continue;
 			} else if (file.isFile() && file.getName().matches(regexFileOrdini)) {
-				//Preparo il postino per notificare l'esito dell'importazione
-				MailMan postino = ConfigurationUtility.getInstance().getMailMan();
-				List<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
-				List<String> destinatariErroriGravi = ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
+				//Preparo le liste con i riferimenti per notificare l'esito dell'importazione
 				List<String> riferimentiOrdiniOk = new LinkedList<>();
 				List<String> riferimentiOrdiniConErrori = new LinkedList<>();
 				//Tento di leggere il file
@@ -180,7 +185,8 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 	private void spostaFileConErrori(File fileConErrori) {
 		String nomeFile = fileConErrori.getName();
 		String pathFolderErrori = folderPath + "errori\\";
-		File fileDaSpostare = new File(pathFolderErrori + nomeFile);
+		String dataOraLavorazione = sdf.format(new Date());
+		File fileDaSpostare = new File(pathFolderErrori + dataOraLavorazione + "_" + nomeFile);
 		boolean spostato = fileConErrori.renameTo(fileDaSpostare);
 		if (spostato) {
 			logger.info("Spostato il file '" + nomeFile + "' in '" + pathFolderErrori + "'");
@@ -190,7 +196,8 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 	private void spostaFileNelloStorico(File fileStorico) {
 		String nomeFile = fileStorico.getName();
 		String pathFolderStorico = folderPath + "storico\\";
-		File fileDaSpostare = new File(pathFolderStorico + nomeFile);
+		String dataOraLavorazione = sdf.format(new Date());
+		File fileDaSpostare = new File(pathFolderStorico + dataOraLavorazione + "_" + nomeFile);
 		boolean spostato = fileStorico.renameTo(fileDaSpostare);
 		if (spostato) {
 			logger.info("Spostato il file '" + nomeFile + "' in '" + pathFolderStorico + "'");
@@ -266,8 +273,8 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 			ProdottoOrdinato prodotto = new ProdottoOrdinato();
 			prodotto.setBarcode(csv.getStringa(RIGA_BARCODE));
 			prodotto.setMagazzinoCliente(csv.getStringa(RIGA_MAGAZZINO));
-			prodotto.setQuantita(csv.getIntero(RIGA_QUANTITA));
-			prodotto.setNumeroRiga(csv.getIntero(RIGA_NUMERO));
+			prodotto.setQuantita(csv.getIntero(RIGA_QUANTITA) != null ? csv.getIntero(RIGA_QUANTITA) : -1);
+			prodotto.setNumeroRiga(csv.getIntero(RIGA_NUMERO) != null ? csv.getIntero(RIGA_NUMERO) : 0);
 			ordine.aggiungiProdotto(prodotto);
 		}		
 		return mappaOrdini.values();

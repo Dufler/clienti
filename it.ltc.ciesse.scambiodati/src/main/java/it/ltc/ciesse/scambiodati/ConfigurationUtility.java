@@ -111,7 +111,7 @@ public class ConfigurationUtility {
 	public MailMan getMailMan() {
 		String mailUser = configuration.get("email_mittente_indirizzo");
 		String mailPassword = configuration.get("email_mittente_password");
-		MailMan mm = new MailMan(mailUser, mailPassword);
+		MailMan mm = new MailMan(mailUser, mailPassword, false);
 		return mm;
 	}
 

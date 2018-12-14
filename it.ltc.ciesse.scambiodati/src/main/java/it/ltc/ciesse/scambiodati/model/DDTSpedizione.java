@@ -1,6 +1,5 @@
 package it.ltc.ciesse.scambiodati.model;
 
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -70,7 +69,7 @@ public class DDTSpedizione {
 			TempCorr spedizione = new TempCorr();
 			spedizione.setCodCliente(ordine.getCodCliente());
 			spedizione.setCodcorriere(vettore);
-			spedizione.setDataDocu(new Timestamp(dataDocumento.getTime()));
+			spedizione.setDataDocu(new Date(dataDocumento.getTime()));
 			spedizione.setDivisa(divisaContrassegno);
 			spedizione.setNote(note);
 			spedizione.setNrColli(colli.size());

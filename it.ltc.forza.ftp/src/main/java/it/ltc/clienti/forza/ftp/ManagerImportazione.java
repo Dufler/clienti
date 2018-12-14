@@ -1,8 +1,8 @@
 package it.ltc.clienti.forza.ftp;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -18,10 +18,11 @@ import org.apache.log4j.Logger;
 
 import it.ltc.clienti.forza.ConfigurationUtility;
 import it.ltc.clienti.forza.ftp.model.LinnworksOrderLine;
+import it.ltc.database.dao.legacy.bundle.CasseDao;
 import it.ltc.database.model.centrale.Cap;
 import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.TestataOrdini;
-import it.ltc.database.model.legacy.bundle.CasseKIT;
+import it.ltc.database.model.legacy.bundle.Casse;
 import it.ltc.model.interfaces.exception.ModelPersistenceException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
 import it.ltc.model.interfaces.indirizzo.MIndirizzo;
@@ -38,10 +39,8 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 	private static final String statoDefault = "IMP";
 	private static final String bundle = "BUNDLE";
 	
-	//private final SimpleDateFormat sdf;
 	private final SimpleDateFormat sdfRenamer;
 	
-	//private final Commessa forza;
 	private final String corriere;
 	private final String codicecorriere;
 	private final String servizioCorriere;
@@ -51,9 +50,10 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 	
 	private final List<String> statiErrore;
 	
+	private final CasseDao daoCasse;
+	
 	public ManagerImportazione(String persistenceUnit) {
 		super(persistenceUnit);
-		//sdf = new SimpleDateFormat("dd/MM/yyyy");
 		sdfRenamer = new SimpleDateFormat("yyyyMMddHHmmss");
 		//Configurazione
 		ConfigurationUtility config = ConfigurationUtility.getInstance();
@@ -63,7 +63,7 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		servizioCorriere = config.getServizioCorriere();
 		mittente = config.getMittente();
 		statiErrore = config.getStatiErrore();
-		//forza = config.getCommessaDefault();
+		daoCasse = new CasseDao(persistenceUnit);
 	}
 	
 	/**
@@ -149,7 +149,7 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 	public void saveErrateOrder(MOrdine ordine) {
 		TestataOrdini testata = new TestataOrdini();
 		GregorianCalendar today = new GregorianCalendar();
-		Timestamp timeStamp = new Timestamp(today.getTimeInMillis());
+		Date timeStamp = new Date(today.getTimeInMillis());
 		Integer anno = today.get(Calendar.YEAR);
 		testata.setAnnodoc(anno);
 		testata.setAnnoOrdine(anno);
@@ -166,6 +166,9 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		testata.setValoreDoganale(ordine.getValoreDoganale());
 		testata.setRifOrdineCli(sdfRenamer.format(today.getTime()) + "_" + ordine.getRiferimentoOrdine());
 		testata.setStato("INSE");
+		testata.setTipoDoc("ERRORE");
+		testata.setIdDestina(16);
+		testata.setCodCliente("110358");
 		System.out.println(testata);
 		boolean insert;
 		EntityManager em = getManager();
@@ -214,11 +217,14 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		List<ProdottoOrdinato> lista = new LinkedList<ProdottoOrdinato>();
 		for (LinnworksOrderLine riga : righe) {
 			String sku = riga.getSku();
-			if (isBundle(sku)) {
+			Articoli articolo = daoArticoli.trovaDaSKU(sku);
+			if (articolo == null)
+				throw new ModelPersistenceException("Non è stato trovato un articolo per lo sku '" + sku + "'.");
+			if (isBundle(articolo)) {
 				 //Sembra che se si ordini 1 bundle la quantita' venga passata a 0.
 				int bundleOrdinati = riga.getQuantita();
 				if (bundleOrdinati > 0) {
-					HashMap<String, Integer> mappaProdotti = getBundleComposition(sku);
+					HashMap<String, Integer> mappaProdotti = getBundleComposition(articolo.getIdUniArticolo());
 					for (String skuSingleUnit : mappaProdotti.keySet()) {
 						ProdottoOrdinato prodotto = new ProdottoOrdinato();
 						prodotto.setChiave(skuSingleUnit);
@@ -240,28 +246,31 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		return lista;
 	}
 	
-	private boolean isBundle(String sku) {
-		boolean isBundle = false;
-		Articoli articolo = mappaArticoliPerIDUnivoco.get(mappaIdentificazioneArticoli.get(sku)); //Da testare.
-		if (articolo != null) {
-			String tipoCassa = articolo.getTipoCassa() != null ? articolo.getTipoCassa() : "";
-			isBundle = tipoCassa.equals(bundle);
-		}
+	private boolean isBundle(Articoli articolo) {
+		String tipoCassa = articolo.getTipoCassa() != null ? articolo.getTipoCassa() : "";
+		boolean isBundle = tipoCassa.equals(bundle);
 		return isBundle;
 	}
 	
 	private HashMap<String, Integer> getBundleComposition(String skuBundle) {
 		HashMap<String, Integer> prodotti = new HashMap<>();
-		EntityManager em = getManager();
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<CasseKIT> criteria = cb.createQuery(CasseKIT.class);
-		Root<CasseKIT> member = criteria.from(CasseKIT.class);
-		criteria.select(member).where(cb.equal(member.get("skuBundle"), skuBundle));
-		List<CasseKIT> list = em.createQuery(criteria).getResultList();
-		em.close();
-		for (CasseKIT prodotto : list) {
+		
+		List<Casse> list = daoCasse.trovaDaSKUBundle(skuBundle);
+				
+//		EntityManager em = getManager();
+//		CriteriaBuilder cb = em.getCriteriaBuilder();
+//		CriteriaQuery<Casse> criteria = cb.createQuery(Casse.class);
+//		Root<Casse> member = criteria.from(Casse.class);
+//		criteria.select(member).where(cb.equal(member.get("skuBundle"), skuBundle));
+//		List<Casse> list = em.createQuery(criteria).getResultList();
+//		em.close();
+			
+		for (Casse prodotto : list) {
 			prodotti.put(prodotto.getSkuProdotto(), prodotto.getQuantitaProdotto());
 		}
+		//Controllo aggiuntivo
+		if (prodotti.isEmpty())
+			throw new ModelPersistenceException("Non è stato trovato un bundle per l'ID '" + skuBundle + "'.");
 		return prodotti;
 	}
 

@@ -17,7 +17,6 @@ import org.apache.log4j.Logger;
 import it.ltc.clienti.forza.ftp.model.ProdottoInScadenza;
 import it.ltc.database.dao.Dao;
 import it.ltc.database.model.legacy.ColliPack;
-import it.ltc.database.model.legacy.scadenza.ColliPackConScadenza;
 
 public class ManagerScadenze extends Dao {
 	
@@ -37,14 +36,14 @@ public class ManagerScadenze extends Dao {
 		try {
 			t.begin();
 			CriteriaBuilder cb = em.getCriteriaBuilder();
-	        CriteriaQuery<ColliPackConScadenza> criteria = cb.createQuery(ColliPackConScadenza.class);
-	        Root<ColliPackConScadenza> member = criteria.from(ColliPackConScadenza.class);
+	        CriteriaQuery<ColliPack> criteria = cb.createQuery(ColliPack.class);
+	        Root<ColliPack> member = criteria.from(ColliPack.class);
 	        Predicate condizioneImpegno = cb.equal(member.get("flagimp"), "N");
 	        Predicate condizioneScadenza = cb.lessThan(member.get("dataScadenza"), scadenza.getTime());
 	        Predicate condizioneLotto = cb.isNull(member.get("lotto"));
 	        criteria.select(member).where(cb.and(condizioneImpegno, condizioneScadenza, condizioneLotto));
-	        List<ColliPackConScadenza> lista = em.createQuery(criteria).getResultList();
-			for (ColliPackConScadenza prodotto: lista) {
+	        List<ColliPack> lista = em.createQuery(criteria).getResultList();
+			for (ColliPack prodotto: lista) {
 				prodotto.setLotto("SCADENZA");
 				em.merge(prodotto);
 				ProdottoInScadenza scadente = new ProdottoInScadenza(prodotto.getCodArtStr(), prodotto.getNrIdColloPk(), prodotto.getQta(), prodotto.getDataScadenza());
@@ -68,15 +67,15 @@ public class ManagerScadenze extends Dao {
 		scadenza.add(Calendar.DAY_OF_YEAR, giorniScadenza);
 		EntityManager em = getManager();
 		CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<ColliPackConScadenza> criteria = cb.createQuery(ColliPackConScadenza.class);
-        Root<ColliPackConScadenza> member = criteria.from(ColliPackConScadenza.class);
+        CriteriaQuery<ColliPack> criteria = cb.createQuery(ColliPack.class);
+        Root<ColliPack> member = criteria.from(ColliPack.class);
         Predicate condizioneImpegno = cb.equal(member.get("flagimp"), "N");
         Predicate condizioneScadenza = cb.lessThan(member.get("dataScadenza"), scadenza.getTime());
         criteria.select(member).where(cb.and(condizioneImpegno, condizioneScadenza));
-		List<ColliPackConScadenza> lista = em.createQuery(criteria).getResultList();
+		List<ColliPack> lista = em.createQuery(criteria).getResultList();
 		em.close();
 		List<ProdottoInScadenza> prodotti = new LinkedList<ProdottoInScadenza>();
-		for (ColliPackConScadenza prodotto: lista) {
+		for (ColliPack prodotto: lista) {
 			ProdottoInScadenza scadente = new ProdottoInScadenza(prodotto.getCodArtStr(), prodotto.getNrIdColloPk(), prodotto.getQta(), prodotto.getDataScadenza());
 			prodotti.add(scadente);
 		}
@@ -89,35 +88,15 @@ public class ManagerScadenze extends Dao {
 		scadenza.add(Calendar.DAY_OF_YEAR, giorniScadenza);
 		EntityManager em = getManager();
 		CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<ColliPackConScadenza> criteria = cb.createQuery(ColliPackConScadenza.class);
-        Root<ColliPackConScadenza> member = criteria.from(ColliPackConScadenza.class);
+        CriteriaQuery<ColliPack> criteria = cb.createQuery(ColliPack.class);
+        Root<ColliPack> member = criteria.from(ColliPack.class);
         Predicate condizioneGenerazioneCarico = cb.equal(member.get("flagtc"), 1); //31-05-2018: Ho aggiunto questa condizione perchè hanno contato carichi con merce scaduta che non sono mai stati generati.
         Predicate condizioneImpegno = cb.equal(member.get("flagimp"), "N");
         Predicate condizioneScadenza = cb.lessThan(member.get("dataScadenza"), scadenza.getTime());
         criteria.select(member).where(cb.and(condizioneGenerazioneCarico, condizioneImpegno, condizioneScadenza));
-		List<ColliPackConScadenza> lista = em.createQuery(criteria).getResultList();
+		List<ColliPack> lista = em.createQuery(criteria).getResultList();
 		em.close();
-		List<ColliPack> prodotti = new LinkedList<>();
-		for (ColliPackConScadenza entity : lista) {
-			ColliPack prodotto = converti(entity);
-			prodotti.add(prodotto);
-		}
-		return prodotti;
-	}
-	
-	private ColliPack converti(ColliPackConScadenza entity) {
-		ColliPack prodotto = new ColliPack();
-		prodotto.setCodArtStr(entity.getCodArtStr());
-		prodotto.setCodiceArticolo(entity.getCodiceArticolo());
-		prodotto.setFlagimp(entity.getFlagimp());
-		prodotto.setIdColliPack(entity.getIdColliPack());
-		prodotto.setIdPakiarticolo(entity.getIdPakiarticolo());
-		prodotto.setIdTestaPaki(entity.getIdTestaPaki());
-		prodotto.setMagazzino(entity.getMagazzino());
-		prodotto.setNrIdColloPk(entity.getNrIdColloPk());
-		prodotto.setQta(entity.getQta());
-		prodotto.setQtaimpegnata(entity.getQtaimpegnata());
-		return prodotto;
+		return lista;
 	}
 
 }

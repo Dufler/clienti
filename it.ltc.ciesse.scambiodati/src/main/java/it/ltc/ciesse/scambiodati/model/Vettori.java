@@ -23,7 +23,7 @@ public class Vettori {
 				corriere.setCodice(codiceTreCaratteri);
 				corriere.setCodiceCliente(codice);
 				corriere.setDescrizione(nome);
-				corriere.setPuntoOperatorePartenza("");
+				//corriere.setPuntoOperatorePartenza("");
 				corrieri.add(corriere);
 			}
 		} while (parser.prossimaLinea());

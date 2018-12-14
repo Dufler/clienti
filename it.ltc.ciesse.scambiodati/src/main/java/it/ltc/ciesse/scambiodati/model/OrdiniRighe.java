@@ -17,8 +17,9 @@ public class OrdiniRighe {
 	
 	public static final String CANCELLAZIONE = "ELIMINA";
 	
-	public static void parsaRigheOrdine(HashMap<String, MOrdine> mappaOrdini, List<String> righe) {
+	public static String parsaRigheOrdine(HashMap<String, MOrdine> mappaOrdini, List<String> righe) {
 		//ArticoliDao daoArticoli = new ArticoliDao(Import.persistenceUnit);
+		String riferimento;
 		MagazzinoDao daoMagazzini = new MagazzinoDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);
@@ -27,9 +28,10 @@ public class OrdiniRighe {
 			int operazione = parser.getIntero(0, 1);
 			if (operazione != 1)
 				throw new RuntimeException("Operazione non consentita sulle righe d'ordine. (update/delete)");
-			String riferimento = parser.getStringa(1, 21);
+			riferimento = parser.getStringa(1, 21);
 			MOrdine ordine = mappaOrdini.get(riferimento);
-			if (ordine == null) throw new RuntimeException("Nessun ordine trovato con questo riferimento. (" + riferimento + ")");
+			if (ordine == null) 
+				throw new RuntimeException("Nessun ordine trovato con questo riferimento. (" + riferimento + ")");
 			int numeroRiga = parser.getIntero(21, 31);
 			String codificaMagazzino = parser.getStringa(140, 150);
 			Magazzini magazzino = daoMagazzini.trovaDaCodificaCliente(codificaMagazzino);
@@ -65,6 +67,7 @@ public class OrdiniRighe {
 				counter++;
 			}
 		} while (parser.prossimaLinea());
+		return riferimento;
 	}
 	
 	public static List<String> esportaRigheOrdine(List<RighiOrdine> righeOrdine) {

@@ -13,7 +13,7 @@ import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ColoriDao;
 import it.ltc.database.dao.legacy.NumerateDao;
 import it.ltc.database.model.legacy.Colori;
-import it.ltc.database.model.legacy.Numerata;
+import it.ltc.database.model.legacy.NumerataLegacy;
 import it.ltc.model.interfaces.prodotto.Cassa;
 import it.ltc.model.interfaces.prodotto.MProdotto;
 import it.ltc.utility.miscellanea.string.StringParser;
@@ -28,7 +28,7 @@ public class Articolo {
 	//private static StringUtility utility = new StringUtility();
 	//private static int idUnivoco = 0;
 	
-	private static HashMap<String, Numerata> mappaNumerate = new HashMap<>();
+	private static HashMap<String, NumerataLegacy> mappaNumerate = new HashMap<>();
 	private static NumerateDao daoNumerate = new NumerateDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	
 	private static HashMap<String, Colori> mappaColori = new HashMap<>();
@@ -48,7 +48,7 @@ public class Articolo {
 			if (operazione == 1 || operazione == 2) {
 				String codice = parser.getStringa(1, 53);
 				String taglia = parser.getStringa(53, 83);
-				Numerata numerata = trovaNumerata(taglia);
+				NumerataLegacy numerata = trovaNumerata(taglia);
 				if (numerata == null)
 					throw new RuntimeException("Impossibile trovare la taglia della numerata: '" + taglia + "'");
 				String codiceColore = parser.getStringa(83, 95);
@@ -202,10 +202,10 @@ public class Articolo {
 //		return articoli;
 //	}
 	
-	public static String trovaTaglia(Numerata numerata, int counter) {
+	public static String trovaTaglia(NumerataLegacy numerata, int counter) {
 		String taglia;
 		try {
-			Method m = Numerata.class.getMethod("getTaglia" + counter);
+			Method m = NumerataLegacy.class.getMethod("getTaglia" + counter);
 			Object[] arguments = null;
 			taglia = m.invoke(numerata, arguments).toString();
 		} catch (Exception e) {
@@ -215,15 +215,15 @@ public class Articolo {
 	}
 	
 	public static void trovaTutteNumerate() {
-		List<Numerata> numerate = daoNumerate.trovaTutte();
-		for (Numerata numerata : numerate) {
+		List<NumerataLegacy> numerate = daoNumerate.trovaTutte();
+		for (NumerataLegacy numerata : numerate) {
 			mappaNumerate.put(numerata.getCodice(), numerata);
 		}
 	}
 	
-	public static Numerata trovaNumerata(String taglia) {
+	public static NumerataLegacy trovaNumerata(String taglia) {
 		if (!mappaNumerate.containsKey(taglia)) {
-			Numerata numerata = daoNumerate.trovaDaCodice(taglia);
+			NumerataLegacy numerata = daoNumerate.trovaDaCodice(taglia);
 			mappaNumerate.put(taglia, numerata);
 		}
 		return mappaNumerate.get(taglia);

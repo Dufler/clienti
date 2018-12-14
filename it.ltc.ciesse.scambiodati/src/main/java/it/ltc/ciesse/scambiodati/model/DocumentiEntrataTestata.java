@@ -1,6 +1,5 @@
 package it.ltc.ciesse.scambiodati.model;
 
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -39,14 +38,20 @@ public class DocumentiEntrataTestata {
 				String fornitore = parser.getStringa(79, 99);
 				String reso = parser.getStringa(99, 100);
 				//String vettore = parser.getStringa(100, 120); non utilizzato.
-				Fornitori f = daoFornitore.trovaDaCodice(fornitore);
-				if (f == null) throw new RuntimeException("Il fornitore dichiarato non esiste. (" + fornitore + ")");
-				testata.setCodFornitore(f.getCodiceFornitore());
-				testata.setIdFornitore(f.getIdFornitore());
-				testata.setRagSocFor(f.getRagSoc());
-				testata.setDataPaki(new Timestamp(dataDocumento.getTime()));
+				if (reso.equals("1")) {
+					testata.setCodFornitore("RESO");
+					testata.setIdFornitore(825);
+					testata.setRagSocFor("RESO");
+				} else {
+					Fornitori f = daoFornitore.trovaDaCodice(fornitore);
+					if (f == null) throw new RuntimeException("Il fornitore dichiarato non esiste. (" + fornitore + ")");
+					testata.setCodFornitore(f.getCodiceFornitore());
+					testata.setIdFornitore(f.getIdFornitore());
+					testata.setRagSocFor(f.getRagSoc());
+				}				
+				testata.setDataPaki(new Date(dataDocumento.getTime()));
 				testata.setNrPaki(codice);
-				testata.setDataArrivo(new Timestamp(dataBolla.getTime()));
+				testata.setDataArrivo(new Date(dataBolla.getTime()));
 				testata.setNrDocInterno(bollaFornitore);
 				if (reso.equals("1")) {
 					//Date dataAutorizzazioneReso = parser.getDataSoloGiorno(120, 139);

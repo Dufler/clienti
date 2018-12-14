@@ -3,16 +3,17 @@ package it.ltc.ciesse.scambiodati.model;
 import java.util.LinkedList;
 import java.util.List;
 
-import it.ltc.database.dao.common.NazioneDao;
-import it.ltc.database.model.centrale.Nazione;
+import it.ltc.ciesse.scambiodati.ConfigurationUtility;
+import it.ltc.database.dao.legacy.NazioniDao;
 import it.ltc.database.model.legacy.Destinatari;
+import it.ltc.database.model.legacy.Nazioni;
 import it.ltc.utility.miscellanea.string.StringParser;
 
 public class ClientiDestinatari {
 	
 	public static List<Destinatari> parsaDestinatari(List<String> righe) {
-		//NazioniDao daoNazioni = new NazioniDao(ConfigurationUtility.getInstance().getPersistenceUnit());
-		NazioneDao daoNazioni = new NazioneDao("produzione");
+		NazioniDao daoNazioni = new NazioniDao(ConfigurationUtility.getInstance().getPersistenceUnit());
+		//NazioneDao daoNazioni = new NazioneDao("produzione");
 		List<Destinatari> destinatari = new LinkedList<>();
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);
@@ -23,26 +24,33 @@ public class ClientiDestinatari {
 			if (operazione == 1 || operazione == 2) {
 				String codice = parser.getStringa(1, 21); //Non usato?
 				String nazione = parser.getStringa(21, 71);
+				String telefono = parser.getStringa(291, 311);
+				String email = parser.getStringa(331, 431);
 				String ragioneSociale = parser.getStringa(1483, 1533);//parser.getStringa(71, 121);
 				String indirizzo = parser.getStringa(1533, 1583); //parser.getStringa(121, 171);
 				//String indirizzo2 = parser.getStringa(171, 221);
 				String cap = parser.getStringa(1583, 1593);//parser.getStringa(221, 231);
 				String localita = parser.getStringa(1593, 1643);
 				String provincia = parser.getStringa(1643, 1645);
-				//Nazioni n = daoNazioni.trovaDaNome(nazione);
+				Nazioni n = daoNazioni.trovaDaNome(nazione);
 				//String iso = n != null ? n.getCodIso() : "";
-				Nazione n = daoNazioni.trovaDaCodiceISO2(nazione);				
+				//Nazione n = daoNazioni.trovaDaCodiceISO2(nazione);				
 				Destinatari destinatario = new Destinatari();
 				destinatario.setCodDestina(codice);
+				destinatario.setTipoDestina("DES");
 				destinatario.setCap(cap);
 				destinatario.setCodIso("");
 				destinatario.setIndirizzo(indirizzo);
 				destinatario.setLocalita(localita);
-				destinatario.setCodIso(n != null ? n.getCodiceIsoTre() : "");
-				destinatario.setCodNaz(n != null ? n.getCodiceIsoDue() : "");
+				destinatario.setCodIso(n != null ? n.getCodIso() : "");
+				destinatario.setCodNaz(n != null ? n.getCodIso() : "");
+//				destinatario.setCodIso(n != null ? n.getCodiceIsoTre() : "");
+//				destinatario.setCodNaz(n != null ? n.getCodiceIsoDue() : "");
 				destinatario.setNazione(nazione);
 				destinatario.setProvincia(provincia);
 				destinatario.setRagSoc1(ragioneSociale); //TODO verificare lunghezze massime per tutti i campi.
+				destinatario.setTel(telefono);
+				destinatario.setEmail(email);
 				destinatari.add(destinatario);
 			}			
 		} while (parser.prossimaLinea());
