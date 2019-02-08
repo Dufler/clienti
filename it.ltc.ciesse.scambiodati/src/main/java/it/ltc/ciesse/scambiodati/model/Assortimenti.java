@@ -43,6 +43,9 @@ public class Assortimenti {
 						cassa.setSkuBundle(kit.getIdUniArticolo());
 						cassa.setSkuProdotto(articolo.getIdUniArticolo());
 						cassa.setQuantitaProdotto(qta);
+						cassa.setTipo("STANDARD");
+						cassa.setModello(skuBase);
+						cassa.setCodiceCassa(skuBase);
 						assortimenti.add(cassa);
 					}
 					indexQta += 10;

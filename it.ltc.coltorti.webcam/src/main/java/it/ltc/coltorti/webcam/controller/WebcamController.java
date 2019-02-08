@@ -5,11 +5,15 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import org.apache.log4j.Logger;
+
 import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamPanel;
 import com.github.sarxos.webcam.WebcamResolution;
 
 public class WebcamController {
+	
+	private static final Logger logger = Logger.getLogger(WebcamController.class);
 	
 	private static WebcamController instance;
 	
@@ -46,12 +50,14 @@ public class WebcamController {
 		try {
 			webcam.open();
 			success = ImageIO.write(webcam.getImage(), "PNG", new File(path));
-			if (!success)
-				System.out.println("Impossibile salvare l'immagine nel percoroso specificato. (" + path + ")");
+			if (success)
+				logger.info("Foto salvata: " + path + ".");
+			else
+				logger.error("Impossibile salvare l'immagine nel percoroso specificato. (" + path + ")");
 		} catch (IOException e) {
 			success = false;
 			errorMessage = e.getLocalizedMessage();
-			e.printStackTrace();
+			logger.error(errorMessage, e);
 		}
 		return success;
 	}

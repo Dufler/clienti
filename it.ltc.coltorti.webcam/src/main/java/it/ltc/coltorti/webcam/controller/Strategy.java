@@ -6,6 +6,9 @@ import java.io.IOException;
 
 import javax.swing.JPanel;
 
+import org.apache.log4j.Logger;
+
+import it.ltc.coltorti.webcam.ConfigurationUtility;
 import it.ltc.coltorti.webcam.view.MainFrame;
 
 /**
@@ -15,7 +18,9 @@ import it.ltc.coltorti.webcam.view.MainFrame;
  */
 public abstract class Strategy {
 	
-	protected static final String pathBase = "\\\\192.168.0.14\\Coltorti\\";
+	private static final Logger logger = Logger.getLogger(Strategy.class);
+	
+	protected final String pathBase; // = "\\\\192.168.0.14\\Coltorti\\";
 
 	protected final String lista;
 	protected final String oggetto;
@@ -25,6 +30,7 @@ public abstract class Strategy {
 		this.lista = lista;
 		this.oggetto = oggetto;
 		this.frame = frame;
+		this.pathBase = ConfigurationUtility.getInstance().getFolderPath();
 		controlloCartellaOrdine();
 	}
 	
@@ -82,7 +88,7 @@ public abstract class Strategy {
 		if (!cartellaOrdine.isDirectory()) {
 			boolean success = cartellaOrdine.mkdirs();
 			if (!success) {
-				System.out.println("Impossibile creare la cartella nel percoroso specificato. (" + cartellaOrdine.getAbsolutePath() + ")");
+				logger.error("Impossibile creare la cartella nel percoroso specificato. (" + cartellaOrdine.getAbsolutePath() + ")");
 			}
 		}
 	}
@@ -96,8 +102,7 @@ public abstract class Strategy {
 			File foto = new File(path);
 			Desktop.getDesktop().open(foto);
 		} catch (IOException e) {
-			System.out.println("Impossibile aprire l'immagine specificata. (" + path + ")");
-			e.printStackTrace();
+			logger.error("Impossibile aprire l'immagine specificata. (" + path + ")", e);
 		}
 	}
 	

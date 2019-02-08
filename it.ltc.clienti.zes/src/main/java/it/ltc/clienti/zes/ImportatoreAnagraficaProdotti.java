@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.model.interfaces.exception.ModelAlreadyExistentException;
 import it.ltc.model.interfaces.exception.ModelPersistenceException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
 import it.ltc.model.interfaces.prodotto.Cassa;
@@ -71,25 +72,44 @@ public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 					logger.info("Sono state trovate " + articoli.size() + " anagrafiche nel file.");
 					//li inserisco a sistema.
 					int nuoveAnagrafiche = 0;
+					int anagraficheGiàPresenti = 0;
+					List<String> anagraficheErrate = new LinkedList<>();
 					for (MProdotto articolo : articoli) {
 						try {
 							valida(articolo);
 							inserisci(articolo);
 							nuoveAnagrafiche++;
+						} catch (ModelAlreadyExistentException e) { 
+							logger.error(e.getMessage(), e);
+							anagraficheGiàPresenti++;
 						} catch (ModelValidationException | ModelPersistenceException e) {
-							logger.error(e);
+							anagraficheErrate.add(articolo.getChiaveCliente());
+							logger.error(e.getMessage(), e);
 						}						
 					}
 					spostaFileNelloStorico(file);
 					String subject = "ZeS - Importazione Anagrafica Prodotti";
-					String body = "Sono stati importati " + nuoveAnagrafiche + " nuovi articoli su " + articoli.size() + ".";
-					Email mail = new Email(subject, body);
+					StringBuilder body = new StringBuilder("Sono stati importati " + nuoveAnagrafiche + " nuovi articoli su " + articoli.size() + ".");
+					if (anagraficheGiàPresenti > 0) {
+						body.append("\r\n");
+						body.append(anagraficheGiàPresenti);
+						body.append(" anagrafiche erano già presenti a sistema.");
+					}
+					if (!anagraficheErrate.isEmpty()) {
+						body.append("\r\n");
+						body.append("Le seguenti anagrafiche non sono state importate a causa di problemi:");
+						for (String problema : anagraficheErrate) {
+							body.append("\r\n");
+							body.append(problema);
+						}
+					}
+					Email mail = new Email(subject, body.toString());
 					boolean invio = postino.invia(destinatari, mail);
 					if (!invio) {
 						logger.error("Impossibile inviare la mail con il riepilogo dell'importazione anagrafiche.");
 					}
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error(e.getMessage(), e);
 					spostaFileConErrori(file);
 					String subject = "Alert: ZeS - Importazione Anagrafica Prodotti";
 					String body = "Si sono verificati errori durante l'importazione delle anagrafiche: " + e.getMessage();

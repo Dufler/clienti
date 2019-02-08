@@ -6,48 +6,23 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-
+import it.ltc.clienti.forza.ConfigurationUtility;
 import it.ltc.clienti.forza.ftp.model.LinnworksInvenctoryLine;
-import it.ltc.database.dao.Dao;
+import it.ltc.database.dao.legacy.ArticoliDao;
+import it.ltc.database.dao.legacy.MagaSdDao;
 import it.ltc.database.model.legacy.Articoli;
 import it.ltc.database.model.legacy.MagaSd;
 
-public class ManagerMagazzino extends Dao {
+public class ManagerMagazzino {
 	
 	private final SimpleDateFormat sdf;
+	private final MagaSdDao daoSaldi;
+	private final ArticoliDao daoArticoli;
 	
 	public ManagerMagazzino(String persistenceUnit) {
-		super(persistenceUnit);
 		sdf = new SimpleDateFormat("dd/MM/yyyy");
-	}
-	
-	private Articoli getArticoloDyIDUniArticolo(String idUnivoco) {
-		EntityManager em = getManager();
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<Articoli> criteria = cb.createQuery(Articoli.class);
-		Root<Articoli> member = criteria.from(Articoli.class);
-		Predicate condizioneID = cb.equal(member.get("idUniArticolo"), idUnivoco);
-		criteria.select(member).where(condizioneID);
-		List<Articoli> list = em.createQuery(criteria).setMaxResults(1).getResultList();
-		em.close();
-		Articoli match = list.size() == 1 ? list.get(0) : null;
-		return match;
-	}
-	
-	private List<MagaSd> getSaldi() {
-		EntityManager em = getManager();
-		CriteriaBuilder cb = em.getCriteriaBuilder();
-		CriteriaQuery<MagaSd> criteria = cb.createQuery(MagaSd.class);
-		Root<MagaSd> member = criteria.from(MagaSd.class);
-		criteria.select(member);
-		List<MagaSd> list = em.createQuery(criteria).getResultList();
-		em.close();
-		return list;
+		daoSaldi = new MagaSdDao(persistenceUnit);
+		daoArticoli = new ArticoliDao(persistenceUnit);
 	}
 	
 	public List<LinnworksInvenctoryLine> recuperaGiacenzeDiMagazzino() {
@@ -56,7 +31,7 @@ public class ManagerMagazzino extends Dao {
 		String today = sdf.format(now);
 		List<LinnworksInvenctoryLine> dettagliCarichiDaInviare = new LinkedList<>();
 		HashMap<String, Integer> mappaQuantita = new HashMap<>();
-		List<MagaSd> saldi = getSaldi();
+		List<MagaSd> saldi = daoSaldi.trovaTuttiPerMagazzino(ConfigurationUtility.getInstance().getMagazzinoDefault());
 		for (MagaSd saldo : saldi) {
 			//Se la disponibilità è negativa la faccio diventare 0.
 			int disponibile = saldo.getDisponibile() >= 0 ? saldo.getDisponibile() : 0;
@@ -68,7 +43,7 @@ public class ManagerMagazzino extends Dao {
 		}
 		//Per ognuno degli elementi trovati genero una riga
 		for (String key : mappaQuantita.keySet()) {
-			Articoli articolo = getArticoloDyIDUniArticolo(key);
+			Articoli articolo = daoArticoli.trovaDaIDUnivoco(key);
 			int quantita = mappaQuantita.get(key);
 			if (articolo != null) {
 				String sku = articolo.getCodArtStr();

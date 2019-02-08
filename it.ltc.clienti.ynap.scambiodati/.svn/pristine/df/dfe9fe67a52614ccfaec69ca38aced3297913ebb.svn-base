@@ -1,0 +1,185 @@
+package it.ltc.model.db;
+
+import java.util.Date;
+
+import it.ltc.logica.database.orm.ColumnList;
+import it.ltc.logica.database.orm.Entity;
+
+public class Collo implements Entity {
+
+	private static final String nomeTabella = "dbo.ColliCarico";
+	private static final ColumnList variabili = new ColumnList();
+	
+	private Integer id;
+	private Integer progressivoNumeroCollo;
+	private String numeroCollo;
+	private String barcodeCollo;
+	private Integer anno;
+	private Integer idPackingList;
+	private Date dataLettura;
+	private String barcodeCliente;
+	private String fonteLettura;
+	private String idBox;
+	private String cancellato;
+	private String note;
+	private String distrutto;
+	private String utenteDistruttore;
+	private Date dataDistruzione;
+
+	public String getNomeTabella() {
+		return nomeTabella;
+	}
+
+	public ColumnList getVariabili() {
+		if (variabili.isEmpty()) {
+			variabili.addAutoincrement("IdCollo", "id");
+			variabili.addInt("NrCollo", "progressivoNumeroCollo");
+			variabili.addString("KeyColloCar", "numeroCollo");
+			variabili.addString("Barcode", "barcodeCollo");
+			variabili.addInt("Anno", "anno");
+			variabili.addInt("IdDocumento", "idPackingList");
+			variabili.addDate("DataCrea", "dataLettura");
+			variabili.addString("BarcodeCliente", "barcodeCliente");
+			variabili.addString("FonteLettura", "fonteLettura");
+			variabili.addString("Id_Box", "idBox");
+			variabili.addString("Cancellato", "cancellato");
+			variabili.addString("Note", "note");
+			variabili.addString("Distrutto", "distrutto");
+			variabili.addString("UteDistruzione", "utenteDistruttore");
+			variabili.addDate("DataDistruzione", "dataDistruzione");
+		}
+		return variabili;
+	}
+	
+	public boolean equals(Object obj) {
+		boolean uguali = false;
+		if (obj instanceof Collo) {
+			Collo collo = (Collo) obj;
+			String barcode = collo.getBarcodeCliente();
+			if (barcodeCliente != null && barcodeCliente.equals(barcode))
+				uguali = true;
+		}
+		return uguali;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public Integer getProgressivoNumeroCollo() {
+		return progressivoNumeroCollo;
+	}
+
+	public void setProgressivoNumeroCollo(Integer progressivoNumeroCollo) {
+		this.progressivoNumeroCollo = progressivoNumeroCollo;
+	}
+
+	public String getNumeroCollo() {
+		return numeroCollo;
+	}
+
+	public void setNumeroCollo(String numeroCollo) {
+		this.numeroCollo = numeroCollo;
+	}
+
+	public String getBarcodeCollo() {
+		return barcodeCollo;
+	}
+
+	public void setBarcodeCollo(String barcodeCollo) {
+		this.barcodeCollo = barcodeCollo;
+	}
+
+	public Integer getAnno() {
+		return anno;
+	}
+
+	public void setAnno(Integer anno) {
+		this.anno = anno;
+	}
+
+	public Integer getIdPackingList() {
+		return idPackingList;
+	}
+
+	public void setIdPackingList(Integer idPackingList) {
+		this.idPackingList = idPackingList;
+	}
+
+	public Date getDataLettura() {
+		return dataLettura;
+	}
+
+	public void setDataLettura(Date dataLettura) {
+		this.dataLettura = dataLettura;
+	}
+
+	public String getBarcodeCliente() {
+		return barcodeCliente;
+	}
+
+	public void setBarcodeCliente(String barcodeCliente) {
+		this.barcodeCliente = barcodeCliente;
+	}
+	
+	public String getFonteLettura() {
+		return fonteLettura;
+	}
+
+	public void setFonteLettura(String fonteLettura) {
+		this.fonteLettura = fonteLettura;
+	}
+
+	public String getIdBox() {
+		return idBox;
+	}
+
+	public void setIdBox(String idBox) {
+		this.idBox = idBox;
+	}
+
+	public String getCancellato() {
+		return cancellato;
+	}
+
+	public void setCancellato(String cancellato) {
+		this.cancellato = cancellato;
+	}
+
+	public String getNote() {
+		return note;
+	}
+
+	public void setNote(String note) {
+		this.note = note;
+	}
+
+	public String getDistrutto() {
+		return distrutto;
+	}
+
+	public void setDistrutto(String distrutto) {
+		this.distrutto = distrutto;
+	}
+
+	public String getUtenteDistruttore() {
+		return utenteDistruttore;
+	}
+
+	public void setUtenteDistruttore(String utenteDistruttore) {
+		this.utenteDistruttore = utenteDistruttore;
+	}
+
+	public Date getDataDistruzione() {
+		return dataDistruzione;
+	}
+
+	public void setDataDistruzione(Date dataDistruzione) {
+		this.dataDistruzione = dataDistruzione;
+	}
+
+}

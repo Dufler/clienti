@@ -12,14 +12,6 @@ public class WebcamMain {
 		setup(args);
 		MainFrame frame = new MainFrame(modalita, lista, oggetto);
 		frame.apri();
-//		SwingUtilities.invokeLater(new Runnable() {
-//            
-//            public void run() {
-//            	MainFrame frame = new MainFrame(modalita, lista, oggetto);
-//            	//MainFrame frame = new MainFrame(Modalita.PRODOTTO2, "180000001", "012345678");
-//            	frame.apri();
-//            }
-//        });
 	}
 	
 	private static void setup(String[] args) {

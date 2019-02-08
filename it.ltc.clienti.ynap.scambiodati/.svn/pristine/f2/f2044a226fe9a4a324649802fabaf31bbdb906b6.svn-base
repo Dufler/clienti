@@ -1,0 +1,246 @@
+package it.ltc.model.db;
+
+import java.util.Date;
+
+import it.ltc.logica.database.orm.ColumnList;
+import it.ltc.logica.database.orm.Entity;
+
+public class DettaglioOrdine extends Entity {
+	
+	private static final String nomeTabella = "dbo.RighiOrdine";
+	private static final ColumnList variabili = new ColumnList();
+	
+	private Integer id;
+	private String numeroLista;
+	private Date dataOrdine;
+	private String serialeRFID;
+	private String taglia;
+	private String codiceCliente;
+	private String colore;
+	private String barcode;
+	private String descrizione;
+	private Integer numeroRigaOrdine;
+	private String numeroOrdine;
+	private Integer idDestinatario;
+	private String barcodeEAN;
+	private String barcodeUPC;
+	private String idUnivocoArticolo;
+	private String raggruppamentoStampe;
+	private String note;
+	private Integer quantitàDaSpedire;
+	private Integer quantitàDaUbicare;
+	private Integer quantitàDaImballare;
+	private Integer codificaOggettoNonTrovato;
+	private String noteOggettoNonTrovato;
+	
+	@Override
+	public String getNomeTabella() {
+		return nomeTabella;
+	}
+
+	@Override
+	public ColumnList getVariabili() {
+		if (variabili.isEmpty()) {
+			variabili.addAutoincrement("idRigoOrdine", "id");
+			variabili.addString("NrLista", "numeroLista");
+			variabili.addDate("DataOrdine", "dataOrdine");
+			variabili.addString("CodiceArticolo", "serialeRFID");
+			variabili.addString("Taglia", "taglia");
+			variabili.addString("CodCliente", "codiceCliente");
+			variabili.addString("Colore", "colore");
+			variabili.addString("CodBarre", "barcode");
+			variabili.addString("Descrizione", "descrizione");
+			variabili.addInt("NrRigo", "numeroRigaOrdine");
+			variabili.addString("NrOrdine", "numeroOrdine");
+			variabili.addInt("IdDestina", "idDestinatario");
+			variabili.addString("BarraEAN", "barcodeEAN");
+			variabili.addString("BarraUPC", "barcodeUPC");
+			variabili.addString("IdUnicoArt", "idUnivocoArticolo");
+			variabili.addString("Ragstampe1", "raggruppamentoStampe");
+			variabili.addString("Note", "note");
+			variabili.addInt("QtaSpedizione", "quantitàDaSpedire");
+			variabili.addInt("Qtadaubicare", "quantitàDaUbicare");
+			variabili.addInt("QtaImballata", "quantitàDaImballare");
+			variabili.addInt("CodificaOggettoNonTrovato", "codificaOggettoNonTrovato");
+			variabili.addString("NoteOggettoNonTrovato", "noteOggettoNonTrovato");
+		}
+		return variabili;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getNumeroLista() {
+		return numeroLista;
+	}
+
+	public void setNumeroLista(String numeroLista) {
+		this.numeroLista = numeroLista;
+	}
+
+	public Date getDataOrdine() {
+		return dataOrdine;
+	}
+
+	public void setDataOrdine(Date dataOrdine) {
+		this.dataOrdine = dataOrdine;
+	}
+
+	public String getSerialeRFID() {
+		return serialeRFID;
+	}
+
+	public void setSerialeRFID(String serialeRFID) {
+		this.serialeRFID = serialeRFID;
+	}
+
+	public String getTaglia() {
+		return taglia;
+	}
+
+	public void setTaglia(String taglia) {
+		this.taglia = taglia;
+	}
+
+	public String getCodiceCliente() {
+		return codiceCliente;
+	}
+
+	public void setCodiceCliente(String codiceCliente) {
+		this.codiceCliente = codiceCliente;
+	}
+
+	public String getColore() {
+		return colore;
+	}
+
+	public void setColore(String colore) {
+		this.colore = colore;
+	}
+
+	public String getBarcode() {
+		return barcode;
+	}
+
+	public void setBarcode(String barcode) {
+		this.barcode = barcode;
+	}
+
+	public String getDescrizione() {
+		return descrizione;
+	}
+
+	public void setDescrizione(String descrizione) {
+		this.descrizione = descrizione;
+	}
+
+	public Integer getNumeroRigaOrdine() {
+		return numeroRigaOrdine;
+	}
+
+	public void setNumeroRigaOrdine(Integer numeroRigaOrdine) {
+		this.numeroRigaOrdine = numeroRigaOrdine;
+	}
+
+	public String getNumeroOrdine() {
+		return numeroOrdine;
+	}
+
+	public void setNumeroOrdine(String numeroOrdine) {
+		this.numeroOrdine = numeroOrdine;
+	}
+
+	public Integer getIdDestinatario() {
+		return idDestinatario;
+	}
+
+	public void setIdDestinatario(Integer idDestinatario) {
+		this.idDestinatario = idDestinatario;
+	}
+
+	public String getBarcodeEAN() {
+		return barcodeEAN;
+	}
+
+	public void setBarcodeEAN(String barcodeEAN) {
+		this.barcodeEAN = barcodeEAN;
+	}
+
+	public String getBarcodeUPC() {
+		return barcodeUPC;
+	}
+
+	public void setBarcodeUPC(String barcodeUPC) {
+		this.barcodeUPC = barcodeUPC;
+	}
+
+	public String getIdUnivocoArticolo() {
+		return idUnivocoArticolo;
+	}
+
+	public void setIdUnivocoArticolo(String idUnivocoArticolo) {
+		this.idUnivocoArticolo = idUnivocoArticolo;
+	}
+
+	public String getRaggruppamentoStampe() {
+		return raggruppamentoStampe;
+	}
+
+	public void setRaggruppamentoStampe(String raggruppamentoStampe) {
+		this.raggruppamentoStampe = raggruppamentoStampe;
+	}
+
+	public String getNote() {
+		return note;
+	}
+
+	public void setNote(String note) {
+		this.note = note;
+	}
+
+	public Integer getQuantitàDaSpedire() {
+		return quantitàDaSpedire;
+	}
+
+	public void setQuantitàDaSpedire(Integer quantitàDaSpedire) {
+		this.quantitàDaSpedire = quantitàDaSpedire;
+	}
+
+	public Integer getQuantitàDaUbicare() {
+		return quantitàDaUbicare;
+	}
+
+	public void setQuantitàDaUbicare(Integer quantitàDaUbicare) {
+		this.quantitàDaUbicare = quantitàDaUbicare;
+	}
+
+	public Integer getQuantitàDaImballare() {
+		return quantitàDaImballare;
+	}
+
+	public void setQuantitàDaImballare(Integer quantitàDaImballare) {
+		this.quantitàDaImballare = quantitàDaImballare;
+	}
+
+	public Integer getCodificaOggettoNonTrovato() {
+		return codificaOggettoNonTrovato;
+	}
+
+	public void setCodificaOggettoNonTrovato(Integer codificaOggettoNonTrovato) {
+		this.codificaOggettoNonTrovato = codificaOggettoNonTrovato;
+	}
+
+	public String getNoteOggettoNonTrovato() {
+		return noteOggettoNonTrovato;
+	}
+
+	public void setNoteOggettoNonTrovato(String noteOggettoNonTrovato) {
+		this.noteOggettoNonTrovato = noteOggettoNonTrovato;
+	}
+
+}

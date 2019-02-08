@@ -5,9 +5,7 @@ import java.util.List;
 
 import it.ltc.database.model.centrale.Commessa;
 import it.ltc.model.interfaces.indirizzo.MIndirizzo;
-import it.ltc.utility.configuration.Configuration;
-import it.ltc.utility.ftp.FTP;
-import it.ltc.utility.mail.MailMan;
+import it.ltc.utility.configuration.ConfigurationParserWithUtils;
 
 /**
  * Classe helper che aiuta la nella configurazione dei parametri e restituisce
@@ -16,12 +14,10 @@ import it.ltc.utility.mail.MailMan;
  * @author Damiano
  *
  */
-public class ConfigurationUtility {
+public class ConfigurationUtility extends ConfigurationParserWithUtils {
 
 	private static ConfigurationUtility instance;
 
-	private final Configuration configuration;
-	
 	private final boolean test;
 	private final boolean verbose;
 
@@ -34,16 +30,16 @@ public class ConfigurationUtility {
 	private final String remoteFolder;
 	private final String remoteArchiveFolder;
 	private final String remoteErrorFolder;
-	
-	//Corriere
+
+	// Corriere
 	private final String corriere;
 	private final String codiceClienteCorriere;
 	private final String servizioCorriere;
-	
-	//Persistence Unit
+
+	// Persistence Unit
 	private final String persistenceUnit;
-	
-	//Varie
+
+	// Varie
 	private final String nomeFileStatus;
 	private final String nomeFileOrders;
 	private final String magazzinoDefault;
@@ -52,43 +48,38 @@ public class ConfigurationUtility {
 	private final int avvisoGiorniScadenzaFutura;
 
 	private ConfigurationUtility() {
-		try {
-			configuration = new Configuration("/settings.properties", false);
-			//Test
-			test = Boolean.parseBoolean(configuration.get("test"));
-			//Verbose
-			verbose = Boolean.parseBoolean(configuration.get("verbose"));
-			//Cartelle locali
-			if (test) {
-				localFolderOrders = configuration.get("test_local_folder_orders");
-				localFolderInventory = configuration.get("test_local_folder_inventory");
-				localFolderStatus = configuration.get("test_local_folder_status");
-			} else {
-				localFolderOrders = configuration.get("local_folder_orders");
-				localFolderInventory = configuration.get("local_folder_inventory");
-				localFolderStatus = configuration.get("local_folder_status");
-			}
-			//Cartelle FTP
-			remoteFolder = configuration.get("folder_ftp");
-			remoteArchiveFolder = configuration.get("folder_ftp_archive");
-			remoteErrorFolder = configuration.get("folder_ftp_error");
-			//Persistence Unit
-			persistenceUnit = configuration.get("persistence_unit");
-			//Corriere
-			corriere = configuration.get("corriere");
-			codiceClienteCorriere = configuration.get("corriere_codice_cliente");
-			servizioCorriere = configuration.get("corriere_servizio");
-			//Varie
-			nomeFileStatus = configuration.get("file_name_status");
-			nomeFileOrders = configuration.get("file_name_orders");
-			nomeFileInvectory = configuration.get("file_name_invectory");
-			magazzinoDefault = configuration.get("magazzino_default");
-			avvisoGiorniScadenza = Integer.parseInt(configuration.get("avviso_giorni_scadenza"));
-			avvisoGiorniScadenzaFutura = Integer.parseInt(configuration.get("avviso_giorni_scadenza_futura"));
-		} catch (Exception e) {
-			String errorMessage = "Impossibile caricare i files di configurazione.";
-			throw new RuntimeException(errorMessage);
+		super("/settings.properties");
+		// Test
+		test = Boolean.parseBoolean(configuration.get("test"));
+		// Verbose
+		verbose = Boolean.parseBoolean(configuration.get("verbose"));
+		// Cartelle locali
+		if (test) {
+			localFolderOrders = configuration.get("test_local_folder_orders");
+			localFolderInventory = configuration.get("test_local_folder_inventory");
+			localFolderStatus = configuration.get("test_local_folder_status");
+		} else {
+			localFolderOrders = configuration.get("local_folder_orders");
+			localFolderInventory = configuration.get("local_folder_inventory");
+			localFolderStatus = configuration.get("local_folder_status");
 		}
+		// Cartelle FTP
+		remoteFolder = configuration.get("folder_ftp");
+		remoteArchiveFolder = configuration.get("folder_ftp_archive");
+		remoteErrorFolder = configuration.get("folder_ftp_error");
+		// Persistence Unit
+		persistenceUnit = configuration.get("persistence_unit");
+		// Corriere
+		corriere = configuration.get("corriere");
+		codiceClienteCorriere = configuration.get("corriere_codice_cliente");
+		servizioCorriere = configuration.get("corriere_servizio");
+		// Varie
+		nomeFileStatus = configuration.get("file_name_status");
+		nomeFileOrders = configuration.get("file_name_orders");
+		nomeFileInvectory = configuration.get("file_name_invectory");
+		magazzinoDefault = configuration.get("magazzino_default");
+		avvisoGiorniScadenza = Integer.parseInt(configuration.get("avviso_giorni_scadenza"));
+		avvisoGiorniScadenzaFutura = Integer.parseInt(configuration.get("avviso_giorni_scadenza_futura"));
 	}
 
 	public static ConfigurationUtility getInstance() {
@@ -145,11 +136,11 @@ public class ConfigurationUtility {
 	public String getNomeFileStatus() {
 		return nomeFileStatus;
 	}
-	
+
 	public String getNomeFileOrders() {
 		return nomeFileOrders;
 	}
-	
+
 	public String getNomeFileInvectory() {
 		return nomeFileInvectory;
 	}
@@ -159,58 +150,9 @@ public class ConfigurationUtility {
 	}
 
 	/**
-	 * Restituisce il postino.
+	 * Restituisce la commessa di default per come e' stata impostata nel file di
+	 * configurazione.
 	 * 
-	 * @return un MailMan gia' configurato.
-	 */
-	public MailMan getMailMan() {
-		String mailUser = configuration.get("email_mittente_indirizzo");
-		String mailPassword = configuration.get("email_mittente_password");
-		MailMan mm = new MailMan(mailUser, mailPassword, false);
-		return mm;
-	}
-
-	/**
-	 * Restituisce la lista di indirizzi dei destinatari.
-	 * 
-	 * @return una lista di indirizzi mail a cui verranno spedite le notifiche.
-	 */
-	public List<String> getIndirizziDestinatari() {
-		List<String> destinatari = new LinkedList<String>();
-		String indirizzi = configuration.get("email_destinatari_indirizzi");
-		for (String indirizzo : indirizzi.split(","))
-			destinatari.add(indirizzo);
-		return destinatari;
-	}
-
-	/**
-	 * Restituisce la lista di indirizzi dei destinatari.
-	 * 
-	 * @return una lista di indirizzi mail a cui verranno spedite le notifiche.
-	 */
-	public List<String> getIndirizziResponsabili() {
-		List<String> destinatari = new LinkedList<String>();
-		String indirizzi = configuration.get("email_destinatari_responsabili_indirizzi");
-		for (String indirizzo : indirizzi.split(","))
-			destinatari.add(indirizzo);
-		return destinatari;
-	}
-
-	/**
-	 * Restituisce un client FTP.
-	 * 
-	 * @return un client FTP gia' configurato.
-	 */
-	public FTP getFTPClient() {
-		String ftpHost = configuration.get("ftp_host");
-		String ftpUser = configuration.get("ftp_user");
-		String ftpPassword = configuration.get("ftp_password");
-		FTP client = new FTP(ftpHost, ftpUser, ftpPassword);
-		return client;
-	}
-	
-	/**
-	 * Restituisce la commessa di default per come e' stata impostata nel file di configurazione.
 	 * @return la commessa di default.
 	 */
 	public Commessa getCommessaDefault() {
@@ -223,9 +165,11 @@ public class ConfigurationUtility {
 		commessa.setNomeRisorsa(configuration.get("commessa_nome_risorsa"));
 		return commessa;
 	}
-	
+
 	/**
-	 * Restituisce in maniera dinamica l'indirizzo del mittente in base alle info nella configurazione.
+	 * Restituisce in maniera dinamica l'indirizzo del mittente in base alle info
+	 * nella configurazione.
+	 * 
 	 * @return il model dell'indirizzo del mittente.
 	 */
 	public MIndirizzo getMittente() {
@@ -240,7 +184,7 @@ public class ConfigurationUtility {
 		indirizzo.setTelefono(configuration.get("mittente_telefono"));
 		return indirizzo;
 	}
-	
+
 	public List<String> getStatiErrore() {
 		List<String> statiErrore = new LinkedList<>();
 		String stati = configuration.get("lista_stati_errore");

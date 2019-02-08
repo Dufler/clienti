@@ -28,20 +28,24 @@ import it.ltc.database.model.legacy.PakiArticolo;
 import it.ltc.database.model.legacy.PakiTesta;
 import it.ltc.database.model.legacy.RighiImballo;
 import it.ltc.database.model.legacy.TestataOrdini;
+import it.ltc.utility.mail.Email;
+import it.ltc.utility.mail.MailMan;
 import it.ltc.utility.miscellanea.file.FileUtility;
 
 public class Export {
 	
 	private static final Logger logger = Logger.getLogger(Export.class);
 	
+	private static Export instance;
+	
 	private final String persistenceUnit;
 	
 	private final String pathCartellaExport;
 	private final String pathCartellaExportStorico;
 	
-	private static Export instance;
-
 	private final SimpleDateFormat sdf;
+	
+	private final List<String> messaggiErrore;
 	
 	private Export() {
 		ConfigurationUtility config = ConfigurationUtility.getInstance();
@@ -49,6 +53,7 @@ public class Export {
 		pathCartellaExport = config.getLocalFolderOUT();
 		pathCartellaExportStorico = config.getLocalFolderOUTStorico();
 		sdf = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+		messaggiErrore = new LinkedList<>();
 	}
 
 	public static Export getInstance() {
@@ -59,8 +64,34 @@ public class Export {
 	}
 	
 	public void esportaDati() {
-		esportaCarichi();
-		esportaOrdini();
+		try {
+			esportaCarichi();
+			esportaOrdini();
+		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
+			logger.error(e.getMessage(), e);
+		}
+		inviaMailRiepilogo();
+	}
+	
+	private void inviaMailRiepilogo() {
+		//Vado a fare una mail di riepilogo solo se ci sono messaggi.
+		if (messaggiErrore.size() > 0) {
+			List<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
+			MailMan postino = ConfigurationUtility.getInstance().getMailMan();
+			String subject = "Riepilogo Scambio Dati Ciesse";
+			if (!messaggiErrore.isEmpty()) {
+				subject = "Alert - " + subject;
+				destinatari.addAll(ConfigurationUtility.getInstance().getIndirizziResponsabili());
+			}
+			StringBuilder body = new StringBuilder();
+			for (String message : messaggiErrore) {
+				body.append(message);
+				body.append("\r\n");
+			}
+			Email mail = new Email(subject, body.toString());
+			postino.invia(destinatari, mail);
+		}		
 	}
 	
 	public void esportaMovimentiEGiacenza() {

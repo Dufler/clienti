@@ -1,39 +1,23 @@
 package it.ltc.clienti.coltorti;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.apache.log4j.Logger;
-
-import it.ltc.utility.configuration.Configuration;
+import it.ltc.utility.configuration.ConfigurationParser;
 
 
-public class ConfigurationUtility {
-	
-	private static final Logger logger = Logger.getLogger(ConfigurationUtility.class);
+public class ConfigurationUtility extends ConfigurationParser {
 	
 	private static final String configPath = "/configuration.properties";
 	
 	private static ConfigurationUtility instance;
-	
-	private final Configuration configuration;
 	
 	private final String persistenceUnit;
 	private final String folderPath;
 	private final boolean verbose;
 
 	private ConfigurationUtility() {
-		try {
-			InputStream stream = ConfigurationUtility.class.getResourceAsStream(configPath);
-			configuration = new Configuration(stream, false);
-			verbose = Boolean.parseBoolean(configuration.get("verbose"));
-			persistenceUnit = configuration.get("persistence_unit");
-			folderPath = configuration.get("folder_path");
-		} catch (IOException e) {
-			logger.error(e);
-			String errorMessage = "Impossibile caricare i files di configurazione.";
-			throw new RuntimeException(errorMessage);
-		}
+		super(configPath);
+		verbose = Boolean.parseBoolean(configuration.get("verbose"));
+		persistenceUnit = configuration.get("persistence_unit");
+		folderPath = configuration.get("folder_path");
 	}
 
 	public static ConfigurationUtility getInstance() {

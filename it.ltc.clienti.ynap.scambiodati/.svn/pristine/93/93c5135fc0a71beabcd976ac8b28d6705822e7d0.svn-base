@@ -1,0 +1,52 @@
+package it.ltc.model.db;
+
+import it.ltc.logica.database.orm.ColumnList;
+import it.ltc.logica.database.orm.Entity;
+
+public class Progressivi implements Entity {
+	
+	private static final String nomeTabella = "dbo.Progressivi";
+	private static final ColumnList variabili = new ColumnList();
+	
+	private Integer id;
+	private String tipo;
+	private Integer progressivo;
+
+	public String getNomeTabella() {
+		return nomeTabella;
+	}
+
+	public ColumnList getVariabili() {
+		if (variabili.isEmpty()) {
+			variabili.addAutoincrement("idProg", "id");
+			variabili.addString("Tipo", "tipo");
+			variabili.addInt("NrProg", "progressivo");
+		}
+		return variabili;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getTipo() {
+		return tipo;
+	}
+
+	public void setTipo(String tipo) {
+		this.tipo = tipo;
+	}
+
+	public Integer getProgressivo() {
+		return progressivo;
+	}
+
+	public void setProgressivo(Integer progressivo) {
+		this.progressivo = progressivo;
+	}
+
+}

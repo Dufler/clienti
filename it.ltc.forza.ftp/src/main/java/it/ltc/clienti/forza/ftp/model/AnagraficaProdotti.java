@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 public class AnagraficaProdotti implements Comparable<AnagraficaProdotti> {
 	
-	public enum Composizione { S, B};
+	public enum Composizione { S, B };
 	
 	private final String sku;
 	private final String descrizione;

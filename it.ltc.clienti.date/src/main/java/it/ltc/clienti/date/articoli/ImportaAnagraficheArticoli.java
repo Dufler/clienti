@@ -35,7 +35,7 @@ public class ImportaAnagraficheArticoli extends ControllerProdottoSQLServer {
 						csv.getStringa("");
 					}
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error(e.getMessage(), e);
 					spostaFile(file, folderPath + "errori");
 				}				
 			}

@@ -1,0 +1,132 @@
+package it.ltc.model.db;
+
+import it.ltc.logica.database.orm.ColumnList;
+import it.ltc.logica.database.orm.Entity;
+
+public class Oggetto implements Entity {
+
+	private static final String nomeTabella = "dbo.ColliPack";
+	private static final ColumnList variabili = new ColumnList();
+	
+	private Integer id;
+	private String codiceUnivocoArticolo;
+	private String numeroCollo;
+	private String descrizione;
+	private Integer idPackingList;
+	private Integer idPackingListDettaglio;
+	private String codiceRFID;
+	private String stato;
+	private String flag;
+	private Integer quantità;
+	private String ubicazione;
+
+	public String getNomeTabella() {
+		return nomeTabella;
+	}
+
+	public ColumnList getVariabili() {
+		if (variabili.isEmpty()) {
+			variabili.addAutoincrement("IdColliPack", "id");
+			variabili.addString("CodiceArticolo", "codiceUnivocoArticolo");
+			variabili.addString("NrIdColloPk", "numeroCollo");
+			variabili.addString("Descrizione", "descrizione");
+			variabili.addInt("IdTestaPaki", "idPackingList");
+			variabili.addInt("IdPakiarticolo", "idPackingListDettaglio");
+			variabili.addString("CodArtStr", "codiceRFID");
+			variabili.addString("Stato", "stato");
+			variabili.addString("Flagpre", "flag");
+			variabili.addInt("Qta", "quantità");
+			variabili.addString("KeyUbicaCar", "ubicazione");
+		}
+		return variabili;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getCodiceUnivocoArticolo() {
+		return codiceUnivocoArticolo;
+	}
+
+	public void setCodiceUnivocoArticolo(String codiceUnivocoArticolo) {
+		this.codiceUnivocoArticolo = codiceUnivocoArticolo;
+	}
+
+	public String getNumeroCollo() {
+		return numeroCollo;
+	}
+
+	public void setNumeroCollo(String numeroCollo) {
+		this.numeroCollo = numeroCollo;
+	}
+
+	public String getDescrizione() {
+		return descrizione;
+	}
+
+	public void setDescrizione(String descrizione) {
+		this.descrizione = descrizione;
+	}
+
+	public Integer getIdPackingList() {
+		return idPackingList;
+	}
+
+	public void setIdPackingList(Integer idPackingList) {
+		this.idPackingList = idPackingList;
+	}
+
+	public Integer getIdPackingListDettaglio() {
+		return idPackingListDettaglio;
+	}
+
+	public void setIdPackingListDettaglio(Integer idPackingListDettaglio) {
+		this.idPackingListDettaglio = idPackingListDettaglio;
+	}
+
+	public String getCodiceRFID() {
+		return codiceRFID;
+	}
+
+	public void setCodiceRFID(String codiceRFID) {
+		this.codiceRFID = codiceRFID;
+	}
+
+	public String getStato() {
+		return stato;
+	}
+
+	public void setStato(String stato) {
+		this.stato = stato;
+	}
+
+	public String getFlag() {
+		return flag;
+	}
+
+	public void setFlag(String flag) {
+		this.flag = flag;
+	}
+
+	public Integer getQuantità() {
+		return quantità;
+	}
+
+	public void setQuantità(Integer quantità) {
+		this.quantità = quantità;
+	}
+
+	public String getUbicazione() {
+		return ubicazione;
+	}
+
+	public void setUbicazione(String ubicazione) {
+		this.ubicazione = ubicazione;
+	}
+
+}

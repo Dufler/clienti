@@ -52,7 +52,7 @@ public class ManagerScadenze extends Dao {
 			t.commit();
 		} catch (Exception e) {
 			prodotti = null;
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			if (t != null && t.isActive())
 				t.rollback();
 		} finally {

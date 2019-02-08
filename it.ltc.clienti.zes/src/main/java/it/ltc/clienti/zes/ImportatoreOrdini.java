@@ -13,11 +13,11 @@ import it.ltc.model.interfaces.exception.ModelPersistenceException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
 import it.ltc.model.interfaces.indirizzo.MIndirizzo;
 import it.ltc.model.interfaces.ordine.MContrassegno;
+import it.ltc.model.interfaces.ordine.MInfoSpedizione;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.ordine.ProdottoOrdinato;
 import it.ltc.model.interfaces.ordine.TipoContrassegno;
 import it.ltc.model.interfaces.ordine.TipoIDProdotto;
-import it.ltc.model.interfaces.ordine.TipoOrdine;
 import it.ltc.model.persistence.ordine.ControllerOrdiniSQLServer;
 import it.ltc.utility.csv.FileCSV;
 import it.ltc.utility.mail.Email;
@@ -47,6 +47,7 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 	public static final String RIGA_QUANTITA = "qta";
 	public static final String RIGA_MAGAZZINO = "magazzino";
 	
+	public static final String DOGANA_VALORE = "ValoreDoganale";
 	public static final String CONTRASSEGNO_VALORE = "ValoreContrassegno";
 	public static final String CONTRASSEGNO_TIPO = "TipoContrassegno";
 	
@@ -84,7 +85,7 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 					//Vado ad estrarre le info contenute nel csv
 					FileCSV csv = FileCSV.leggiFile(file);
 					//parso le informazioni sugli ordini
-					Collection<MOrdine> ordini = parsaOrdini(csv);
+					Collection<MOrdineZeS> ordini = parsaOrdini(csv);
 					logger.info("Sono state trovati " + ordini.size() + " ordini nel file.");
 					//li inserisco a sistema.
 					for (MOrdine ordine : ordini) {
@@ -94,7 +95,7 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 							riferimentiOrdiniOk.add(ordine.getRiferimentoOrdine() + " per " + ordine.getDestinatario().getRagioneSociale());
 						} catch (ModelValidationException | ModelPersistenceException e) {
 							importazioneCorretta = false;
-							logger.error(e);
+							logger.error(e.getMessage(), e);
 							riferimentiOrdiniConErrori.add(ordine.getRiferimentoOrdine() + " per " + ordine.getDestinatario().getRagioneSociale() + ", problema: " + e.getMessage());
 						}
 					}
@@ -129,10 +130,7 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 						logger.error("Impossibile inviare la mail con il riepilogo dell'importazione ordini.");
 					}
 				} catch (Exception e) {
-					logger.error(e);
-					for (StackTraceElement element : e.getStackTrace()) {
-						logger.error(element);
-					}
+					logger.error(e.getMessage(), e);
 					spostaFileConErrori(file);
 					String subject = "Alert: ZeS - Importazione Ordini";
 					String body = "Si sono verificati errori durante l'importazione degli ordini: " + e.getMessage();
@@ -144,42 +142,6 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 				}				
 			}
 		}		
-	}
-	
-	@Override
-	protected void checkValiditaCampi(MOrdine ordine) {
-		TipoOrdine tipo = ordine.getTipo();
-		if (tipo == null)
-			throw new ModelValidationException("E' necessario indicare un tipo di ordine.");
-		
-		String riferimentoOrdine = ordine.getRiferimentoOrdine();
-		if (riferimentoOrdine == null || riferimentoOrdine.isEmpty())
-			throw new ModelValidationException("E' necessario indicare un riferimento per l'ordine.");
-		else if (riferimentoOrdine.length() > 40)
-			throw new ModelValidationException("Il riferimento per l'ordine e' troppo lungo. (MAX 40 Caratteri)");
-		
-		//opzionali
-		Integer priorita = ordine.getPriorita();
-		if (priorita != null && (priorita < 1 || priorita > 10))
-			throw new ModelValidationException("Il valore indicato per la priorita' non e' valido. (" + priorita + ", min 1 - MAX 10)");
-		
-		String note = ordine.getNote();
-		if (note != null && note.length() > 250)
-			throw new ModelValidationException("La lunghezza delle note è eccessiva. (MAX 250 caratteri)");
-		
-		MIndirizzo destinatario = ordine.getDestinatario();
-		if (destinatario == null)
-			throw new ModelValidationException("E' necessario indicare il destinatario.");
-		else
-			checkValiditaIndirizzo(destinatario, ordine);
-		
-		MIndirizzo mittente = ordine.getMittente();
-		if (mittente == null)
-			throw new ModelValidationException("E' necessario indicare il mittente.");
-		else
-			checkValiditaIndirizzo(mittente, ordine);
-		
-		checkValiditaContrassegno(ordine);	
 	}
 	
 	private void spostaFileConErrori(File fileConErrori) {
@@ -230,8 +192,8 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 		return destinatario;
 	}
 	
-	private Collection<MOrdine> parsaOrdini(FileCSV csv) {
-		HashMap<String, MOrdine> mappaOrdini = new HashMap<>();
+	private Collection<MOrdineZeS> parsaOrdini(FileCSV csv) {
+		HashMap<String, MOrdineZeS> mappaOrdini = new HashMap<>();
 		while (csv.prossimaRiga()) {
 			//Controllo se ho già l'ordine altrimenti genero la testata
 			String riferimento = csv.getStringa(RIFERIMENTO);
@@ -239,9 +201,7 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 			//riferimento = riferimento.replaceAll("ORSG/", "");
 			riferimento = riferimento.replaceAll(" del.+", "");
 			if (!mappaOrdini.containsKey(riferimento)) {
-				MOrdine ordine = new MOrdine();
-				ordine.setCodiceCorriere("TNT");
-				ordine.setCorriere("TNT");
+				MOrdineZeS ordine = new MOrdineZeS();
 				ordine.setDataConsegna(csv.getData(DATA_CONSEGNA));
 				ordine.setDataDocumento(csv.getData(DATA_DOCUMENTO));
 				ordine.setDataOrdine(csv.getData(DATA_DOCUMENTO));
@@ -249,10 +209,18 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 				ordine.setMittente(getMittente());
 				ordine.setRiferimentoDocumento(riferimento);
 				ordine.setRiferimentoOrdine(riferimento);
-				ordine.setTipo(TipoOrdine.PRN);
+				ordine.setTipo("PRN");
 				ordine.setTipoDocumento("ORDINE");
 				ordine.setTipoIdentificazioneProdotti(TipoIDProdotto.BARCODE);
 				ordine.setNote(csv.getStringa(NOTE));
+				//Info spedizione
+				MInfoSpedizione infoSpedizione = new MInfoSpedizione();
+				infoSpedizione.setCodiceCorriere("TNT");
+				infoSpedizione.setCorriere("TNT");
+				infoSpedizione.setTipoDocumento("DDT");
+				infoSpedizione.setDataDocumento(csv.getData(DATA_DOCUMENTO));
+				infoSpedizione.setServizioCorriere("DEF");
+				infoSpedizione.setValoreDoganale(csv.getNumerico(DOGANA_VALORE));
 				Double valoreContrassegno = csv.getNumerico(CONTRASSEGNO_VALORE);
 				if (valoreContrassegno != null && valoreContrassegno > 0) {
 					TipoContrassegno tipo;
@@ -264,11 +232,12 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 					MContrassegno contrassegno = new MContrassegno();
 					contrassegno.setValore(valoreContrassegno);
 					contrassegno.setTipo(tipo);
-					ordine.setContrassegno(contrassegno);
+					infoSpedizione.setContrassegno(contrassegno);
 				}
+				ordine.setInfoSpedizione(infoSpedizione);
 				mappaOrdini.put(riferimento, ordine);
 			}
-			MOrdine ordine = mappaOrdini.get(riferimento);
+			MOrdineZeS ordine = mappaOrdini.get(riferimento);
 			//Inserisco il prodotto
 			ProdottoOrdinato prodotto = new ProdottoOrdinato();
 			prodotto.setBarcode(csv.getStringa(RIGA_BARCODE));

@@ -26,17 +26,17 @@ import it.ltc.database.model.legacy.bundle.Casse;
 import it.ltc.model.interfaces.exception.ModelPersistenceException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
 import it.ltc.model.interfaces.indirizzo.MIndirizzo;
+import it.ltc.model.interfaces.ordine.MInfoSpedizione;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.ordine.ProdottoOrdinato;
 import it.ltc.model.interfaces.ordine.TipoIDProdotto;
-import it.ltc.model.interfaces.ordine.TipoOrdine;
 import it.ltc.model.persistence.ordine.ControllerOrdiniSQLServer;
 
 public class ManagerImportazione extends ControllerOrdiniSQLServer {
 	
 	private static final Logger logger = Logger.getLogger("ManagerImportazione");
 	
-	private static final String statoDefault = "IMP";
+	private static final String statoDefault = "IMPO";
 	private static final String bundle = "BUNDLE";
 	
 	private final SimpleDateFormat sdfRenamer;
@@ -99,13 +99,6 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 	public MOrdine generateOrder(List<LinnworksOrderLine> righe) {
 		LinnworksOrderLine riga = righe.get(0);
 		MOrdine ordine = new MOrdine();
-		ordine.setAssicurazione(null);
-		ordine.setContrassegno(null);
-		ordine.setParticolarita(null);
-		ordine.setCorriere(corriere);
-		ordine.setCodiceCorriere(codicecorriere);
-		ordine.setServizioCorriere(servizioCorriere);
-		ordine.setDataConsegna(null);
 		ordine.setDataOrdine(riga.getReceivedDate());
 		ordine.setDestinatario(getDestinatario(riga));
 		ordine.setMittente(mittente);
@@ -117,10 +110,17 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		ordine.setRiferimentoDocumento(riga.getOrderId());
 		ordine.setRiferimentoOrdine(riga.getOrderId());
 		ordine.setStato(statoDefault);
-		ordine.setTipo(TipoOrdine.PRS);
+		ordine.setTipo("WEB");
+		//Info sui prodotti
 		ordine.setTipoIdentificazioneProdotti(TipoIDProdotto.CHIAVE);
-		ordine.setValoreDoganale(riga.getCostoTotale());
 		ordine.getProdotti().addAll(getProdotti(righe));
+		//Info sulla spedizione
+		MInfoSpedizione infoSpedizione = new MInfoSpedizione();
+		infoSpedizione.setCorriere(corriere);
+		infoSpedizione.setCodiceCorriere(codicecorriere);
+		infoSpedizione.setServizioCorriere(servizioCorriere);
+		infoSpedizione.setValoreDoganale(riga.getCostoTotale());
+		ordine.setInfoSpedizione(infoSpedizione);
 		return ordine;
 	}
 	
@@ -153,9 +153,10 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		Integer anno = today.get(Calendar.YEAR);
 		testata.setAnnodoc(anno);
 		testata.setAnnoOrdine(anno);
-		testata.setCodiceClienteCorriere(ordine.getCodiceCorriere());
-		testata.setCodCorriere(ordine.getCorriere());
-		testata.setCorriere(ordine.getCorriere());
+		testata.setCodiceClienteCorriere(ordine.getInfoSpedizione().getCodiceCorriere());
+		testata.setCodCorriere(ordine.getInfoSpedizione().getCorriere());
+		testata.setCorriere(ordine.getInfoSpedizione().getCorriere());
+		testata.setValoreDoganale(ordine.getInfoSpedizione().getValoreDoganale());
 		testata.setDataConsegna(timeStamp);
 		testata.setDataDoc(timeStamp);
 		testata.setDataOrdine(timeStamp);
@@ -163,12 +164,12 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		testata.setNrLista(sdfRenamer.format(today.getTime()));
 		testata.setNote(ordine.getNote());
 		testata.setNrOrdine(ordine.getRiferimentoOrdine());
-		testata.setValoreDoganale(ordine.getValoreDoganale());
 		testata.setRifOrdineCli(sdfRenamer.format(today.getTime()) + "_" + ordine.getRiferimentoOrdine());
-		testata.setStato("INSE");
-		testata.setTipoDoc("ERRORE");
+		testata.setStato("ERRO");
+		testata.setTipoDoc("DDT");
 		testata.setIdDestina(16);
 		testata.setCodCliente("110358");
+		testata.setTipoOrdine("ERRORE");
 		System.out.println(testata);
 		boolean insert;
 		EntityManager em = getManager();
@@ -179,9 +180,10 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 			t.commit();
 			insert = true;
 		} catch (Exception e) {
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			insert = false;
-			t.rollback();
+			if (t != null && t.isActive())
+				t.rollback();
 		} finally {
 			em.close();
 		}
@@ -202,11 +204,15 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		//EDIT 30/10/2017: Bisogna(va) gestire solo il traffico Italia.
 		//Apparentemente un'ordine destinato in Svizzera è andato in giacenza perchè la nazione era fissata ad "ITA"
 		String nazione = riga.getIso2NazioneDestinazione();
-		if (nazione == null || nazione.isEmpty())
+		if (nazione == null || nazione.isEmpty()) {
 			nazione = "ITA";
+		}
 		indirizzo.setNazione(nazione);
 		Cap cap = ManagerCap.getInstance().trovaCap(riga.getCapDestinazione());
-		String provincia = cap != null ? cap.getProvincia() : riga.getProvinciaDestinazione(); 
+		String provincia = cap != null ? cap.getProvincia() : riga.getProvinciaDestinazione();
+		if (provincia != null && provincia.length() > 2) {
+			provincia = provincia.substring(0, 2);
+		}
 		indirizzo.setProvincia(provincia);
 		indirizzo.setRagioneSociale(riga.getRagioneSocialeDestinazione());
 		indirizzo.setTelefono(riga.getTelefonoDestinazione());

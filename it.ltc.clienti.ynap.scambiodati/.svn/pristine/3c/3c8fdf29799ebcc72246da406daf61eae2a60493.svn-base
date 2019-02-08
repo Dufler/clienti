@@ -1,0 +1,76 @@
+package it.ltc.model.db;
+
+import java.util.Date;
+
+import it.ltc.logica.database.orm.ColumnList;
+import it.ltc.logica.database.orm.Entity;
+
+public class PackingList extends Entity {
+
+	private static final String nomeTabella = "dbo.PakiTesta";
+	private static final ColumnList variabili = new ColumnList();
+	
+	private Integer id;
+	private String fileID;
+	private Date dataCreazione;
+	private String stato;
+	private String generato;
+
+	@Override
+	public String getNomeTabella() {
+		return nomeTabella;
+	}
+
+	@Override
+	public ColumnList getVariabili() {
+		if (variabili.isEmpty()) {
+			variabili.addAutoincrement("idTestaPaki", "id");
+			variabili.addString("NrPaki", "fileID");
+			variabili.addDate("DataPaki", "dataCreazione");
+			variabili.addString("FlagTra", "stato");
+			variabili.addString("GeneratoMov", "generato");
+		}
+		return variabili;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getFileID() {
+		return fileID;
+	}
+
+	public void setFileID(String fileID) {
+		this.fileID = fileID;
+	}
+
+	public Date getDataCreazione() {
+		return dataCreazione;
+	}
+
+	public void setDataCreazione(Date dataCreazione) {
+		this.dataCreazione = dataCreazione;
+	}
+
+	public String getStato() {
+		return stato;
+	}
+
+	public void setStato(String stato) {
+		this.stato = stato;
+	}
+
+	public String getGenerato() {
+		return generato;
+	}
+
+	public void setGenerato(String generato) {
+		this.generato = generato;
+	}
+
+}

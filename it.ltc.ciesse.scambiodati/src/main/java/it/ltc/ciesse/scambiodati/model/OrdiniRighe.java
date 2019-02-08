@@ -24,8 +24,15 @@ public class OrdiniRighe {
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);
 		StringParser parser = new StringParser(lines, 991);
+		//Check da fare solo sulla prima riga perchè ce li mandano duplicati
+		riferimento = parser.getStringa(1, 21);
+		MOrdine ordineGiaPresente = mappaOrdini.get(riferimento);
+		if (ordineGiaPresente != null && !ordineGiaPresente.getProdotti().isEmpty()) 
+			throw new RuntimeException("Ordine con righe doppie, vado a scartare questo file. (" + riferimento + ")");
 		do {
-			int operazione = parser.getIntero(0, 1);
+			Integer operazione = parser.getIntero(0, 1);
+			if (operazione == null)
+				throw new RuntimeException("Operazione non riconosciuta sulle righe d'ordine. Impossibile continuare.");
 			if (operazione != 1)
 				throw new RuntimeException("Operazione non consentita sulle righe d'ordine. (update/delete)");
 			riferimento = parser.getStringa(1, 21);

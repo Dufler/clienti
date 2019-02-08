@@ -54,7 +54,7 @@ public class EsportaCarichi {
 		logger.info(carichi.isEmpty() ? "Non sono stati trovati carichi da esportare." : "Stanno per essere esportati " + carichi.size() + " carichi.");
 		for (PakiTesta carico : carichi) {
 			//imposto la data, aspetto un secondo per evitare sovrapposizioni
-			try { Thread.sleep(1001); } catch (Exception e) { logger.error(e); }
+			try { Thread.sleep(1001); } catch (Exception e) { logger.error(e.getMessage(), e); }
 			now = new Date();
 			//per ogni carico trovato recupero le righe collegate
 			List<PakiArticolo> righeCarico = daoRighe.trovaRigheDaCarico(carico.getIdTestaPaki());

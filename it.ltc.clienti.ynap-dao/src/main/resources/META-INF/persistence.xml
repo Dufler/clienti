@@ -1,0 +1,1311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+	
+	
+	<!-- DB Centrale di sede LTC Legacy -->
+<!-- 	<persistence-unit name="legacy-centrale" transaction-type="RESOURCE_LOCAL"> -->
+<!-- 		<class>it.ltc.database.model.legacy.centrale.CorrieriPerCliente</class> -->
+<!-- 		<exclude-unlisted-classes>true</exclude-unlisted-classes> -->
+<!-- 		<properties> -->
+<!-- 			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" /> -->
+<!-- 			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://localhost:1433;databaseName=DBLtc" /> -->
+<!-- 			<property name="javax.persistence.jdbc.user" value="ltc" /> -->
+<!-- 			<property name="javax.persistence.jdbc.password" value="ltcpsw" /> -->
+<!-- 			<property name="hibernate.hbm2ddl.auto" value="none" /> -->
+<!-- 			<property name="hibernate.show_sql" value="true" /> -->
+<!-- 			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" /> -->
+<!-- 			<property name="hibernate.default_schema" value="dbo"/> -->
+<!-- 			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-centrale"/> Aggiunta per evitare che vengano create 2 PU -->
+<!-- 			<property name="hibernate.id.new_generator_mappings" value="false"/> -->
+<!-- 			<property name="hibernate.connection.password" value="ltcpsw"/> -->
+<!-- 			<property name="hibernate.connection.username" value="ltc"/> -->
+<!-- 			<property name="hibernate.connection.url" value="jdbc:sqlserver://localhost:1433;databaseName=DBLtc"/> -->
+<!-- 			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/> -->
+<!-- 			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" /> -->
+<!-- 			<property name="hibernate.c3p0.max_size" value="3" /> -->
+<!-- 			<property name="hibernate.c3p0.min_size" value="0" /> -->
+<!-- 			<property name="hibernate.c3p0.acquire_increment" value="1" /> -->
+<!-- 			<property name="hibernate.c3p0.idle_test_period" value="300" /> -->
+<!-- 			<property name="hibernate.c3p0.checkoutTimeout" value="5000" /> -->
+<!-- 			<property name="hibernate.c3p0.max_statements" value="0" /> -->
+<!-- 			<property name="hibernate.c3p0.timeout" value="100" /> -->
+<!-- 		</properties> -->
+<!-- 	</persistence-unit> -->
+	
+	<!-- Stringa di connessione JTDS: jdbc:jtds:<server_type>://<server>[:<port>][/<database>][;<property>=<value>[;...]] -->
+	<!-- 			<property name="javax.persistence.jdbc.driver" value="net.sourceforge.jtds.jdbc.Driver" /> -->
+	<!-- 			<property name="javax.persistence.jdbc.url" value="jdbc:jtds:sqlserver://192.168.0.16:1433/DBTest" /> -->
+	<!-- Schema di default: <property name="hibernate.default_schema" value="dbo"/>  -->
+	
+	<!-- DB di test -->
+	<persistence-unit name="legacy-test" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<!-- Gestione Specifica (Inizio) -->
+		<!-- Gestione Specifica (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBTest" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="true" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-test"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.id.new_generator_mappings" value="false"/>
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBTest"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB Coltorti -->
+	<persistence-unit name="legacy-coltorti" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<!-- Specifici -->
+		<class>it.ltc.database.model.legacy.coltorti.ArticoliColtorti</class>
+		<class>it.ltc.database.model.legacy.seriale.ColliPackConSeriale</class>
+		<class>it.ltc.database.model.legacy.documento.TestaCorrConDocumento</class>
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBColtorti" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-coltorti"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBColtorti"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB Womsh -->
+	<persistence-unit name="legacy-womsh" transaction-type="RESOURCE_LOCAL">
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.8.10:1433;databaseName=DBWOM" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2012Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-womsh"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.8.10:1433;databaseName=DBWOM"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB Privalia a Perugia -->
+<!-- 	<persistence-unit name="legacy-privalia-pg" transaction-type="RESOURCE_LOCAL"> -->
+<!-- 		<class>it.ltc.database.model.legacy.ArtiBar</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.Articoli</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.CatMercGruppi</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.ColliImballo</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.ColliPack</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.ColliPreleva</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.Destinatari</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.Fornitori</class>	 -->
+<!-- 		<class>it.ltc.database.model.legacy.MagaMov</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.MagaSd</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.Magazzini</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.MittentiOrdine</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.PakiArticolo</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.PakiTesta</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.RigaCorr</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.RighiImballo</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.RighiImballoLight</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.RighiOrdine</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.TestaCorr</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.TestataOrdini</class> -->
+<!-- 		<class>it.ltc.database.model.legacy.ColliCarico</class> -->
+<!-- 		<properties> -->
+<!-- 			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" /> -->
+<!-- 			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBPrivalia" /> -->
+<!-- 			<property name="javax.persistence.jdbc.user" value="ltc" /> -->
+<!-- 			<property name="javax.persistence.jdbc.password" value="ltcpsw" /> -->
+<!-- 			<property name="hibernate.hbm2ddl.auto" value="none" /> -->
+<!-- 			<property name="hibernate.show_sql" value="false" /> -->
+<!-- 			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2012Dialect" /> -->
+<!-- 			<property name="hibernate.default_schema" value="dbo"/> -->
+<!-- 			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-privalia-pg"/> Aggiunta per evitare che vengano create 2 PU -->
+<!-- 			<property name="hibernate.connection.password" value="ltcpsw"/> -->
+<!-- 			<property name="hibernate.connection.username" value="ltc"/> -->
+<!-- 			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBPrivalia"/> -->
+<!-- 			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/> -->
+<!-- 			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" /> -->
+<!-- 			<property name="hibernate.c3p0.max_size" value="3" /> -->
+<!-- 			<property name="hibernate.c3p0.min_size" value="0" /> -->
+<!-- 			<property name="hibernate.c3p0.acquire_increment" value="1" /> -->
+<!-- 			<property name="hibernate.c3p0.idle_test_period" value="300" /> -->
+<!-- 			<property name="hibernate.c3p0.max_statements" value="0" /> -->
+<!-- 			<property name="hibernate.c3p0.timeout" value="100" /> -->
+<!-- 		</properties> -->
+<!-- 	</persistence-unit> -->
+	
+	<!-- Forza -->
+	<persistence-unit name="legacy-forza" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBForza" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-forza"/>
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBForza"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- ASH -->
+	<persistence-unit name="legacy-ash" transaction-type="RESOURCE_LOCAL">
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.5.11:1433;databaseName=DBASH" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2012Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-ash"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.5.11:1433;databaseName=DBASH"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- Jelkom -->
+	<persistence-unit name="legacy-jelkom" transaction-type="RESOURCE_LOCAL">
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.Numerata</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.5.11:1433;databaseName=DBJelkcom" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2012Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-jelkom"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.5.11:1433;databaseName=DBJelkcom"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- MOA -->
+	<persistence-unit name="legacy-moa" transaction-type="RESOURCE_LOCAL">
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.5.11:1433;databaseName=DBLab" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2012Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-moa"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.5.11:1433;databaseName=DBLab"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DATE -->
+	<persistence-unit name="legacy-date" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBDATE" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-date"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBDATE"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- Artcraft PG -->
+	<persistence-unit name="legacy-artcraft-pg" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<!-- Specifici (Inizio) -->
+		<class>it.ltc.database.model.legacy.Marchi</class>
+		<!-- Specifici (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.98:1433;databaseName=DBartnew" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-artcraft-pg"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.98:1433;databaseName=DBartnew"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- Artcraft PG -->
+	<persistence-unit name="legacy-igi" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBIgi" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-igi"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBIgi"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- WEDO -->
+	<persistence-unit name="legacy-wedo" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=Dbideam" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-wedo"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=Dbideam"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB Chio -->
+	<persistence-unit name="legacy-chio" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.Numerata</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.6.10:1433;databaseName=DBChio" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2012Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-chio"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.6.10:1433;databaseName=DBChio"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB ZeS Zucchero&Scimmie -->
+	<persistence-unit name="legacy-zes" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBZes" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-zes"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBZes"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB Ciesse -->
+	<persistence-unit name="legacy-ciesse" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.Numerata</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<!-- Gestione Specifica (Inizio) -->
+		<class>it.ltc.database.model.legacy.NumerataLegacy</class>
+		<class>it.ltc.database.model.legacy.Colori</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<!-- Gestione Specifica (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.10.10:1433;databaseName=DBCiesse" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-ciesse"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.10.10:1433;databaseName=DBCiesse"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB di Comest -->
+	<persistence-unit name="legacy-comest" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBComest" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-comest"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.id.new_generator_mappings" value="false"/>
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBComest"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB di A.B -->
+	<persistence-unit name="legacy-ab" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBab" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-ab"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.id.new_generator_mappings" value="false"/>
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBab"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB di Fashion team 62 -->
+	<persistence-unit name="legacy-ft62" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBFashteam" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-ft62"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.id.new_generator_mappings" value="false"/>
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.16:1433;databaseName=DBFashteam"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- DB di Re/done -->
+	<persistence-unit name="legacy-redone" transaction-type="RESOURCE_LOCAL">
+		<!--Gestione Generale (Inizio) -->
+		<class>it.ltc.database.model.legacy.Magazzini</class>
+		<class>it.ltc.database.model.legacy.Stagioni</class>
+		<class>it.ltc.database.model.legacy.Corrieri</class>
+		<class>it.ltc.database.model.legacy.Nazioni</class>
+		<!--Gestione Generale (Fine) -->
+		<!--Gestione Articoli (Inizio) -->
+		<class>it.ltc.database.model.legacy.ArtiBar</class>
+		<class>it.ltc.database.model.legacy.Articoli</class>
+		<class>it.ltc.database.model.legacy.bundle.Casse</class>
+		<class>it.ltc.database.model.legacy.Numerate</class>
+		<class>it.ltc.database.model.legacy.CatMercGruppi</class>
+		<class>it.ltc.database.model.legacy.MagaMov</class>
+		<class>it.ltc.database.model.legacy.MagaSd</class>
+		<!-- Gestione Articoli (Fine) -->
+		<!-- Gestione Ingressi (Inizio) -->
+		<class>it.ltc.database.model.legacy.Fornitori</class>
+		<class>it.ltc.database.model.legacy.ColliPack</class>
+		<class>it.ltc.database.model.legacy.ColliCarico</class>
+		<class>it.ltc.database.model.legacy.PakiArticolo</class>
+		<class>it.ltc.database.model.legacy.PakiTesta</class>
+		<class>it.ltc.database.model.legacy.PakiTestaTipo</class>
+		<class>it.ltc.database.model.legacy.PakiTestaLogStato</class>
+		<!-- Gestione Ingressi (Fine) -->
+		<!-- Gestione Uscite (Inizio) -->
+		<class>it.ltc.database.model.legacy.ColliImballo</class>
+		<class>it.ltc.database.model.legacy.ColliPreleva</class>
+		<class>it.ltc.database.model.legacy.Destinatari</class>
+		<class>it.ltc.database.model.legacy.MittentiOrdine</class>
+		<class>it.ltc.database.model.legacy.RighiPrelievo</class>
+		<class>it.ltc.database.model.legacy.RighiImballo</class>
+		<class>it.ltc.database.model.legacy.RighiImballoLight</class>
+		<class>it.ltc.database.model.legacy.RighiOrdine</class>
+		<class>it.ltc.database.model.legacy.TestaCorr</class>
+		<class>it.ltc.database.model.legacy.RigaCorr</class>
+		<class>it.ltc.database.model.legacy.TestataOrdini</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniLogStato</class>
+		<class>it.ltc.database.model.legacy.TestataOrdiniTipo</class>
+		<class>it.ltc.database.model.legacy.Imballi</class>
+		<class>it.ltc.database.model.legacy.TempCorr</class>
+		<!-- Gestione Uscite (Fine) -->
+		<!-- Gestione Assegnazione Ordini (Inizio) -->
+		<class>it.ltc.database.model.legacy.Righiubicpre</class>
+		<class>it.ltc.database.model.legacy.Ubicazioni</class>
+		<class>it.ltc.database.model.legacy.Scorte</class>
+		<class>it.ltc.database.model.legacy.Scorte2</class>
+		<class>it.ltc.database.model.legacy.ScorteColli</class>
+		<class>it.ltc.database.model.legacy.UbicaColliLog</class>
+		<!-- Gestione Assegnazione Ordini (Fine) -->
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.5.11:1433;databaseName=DBRedone" />
+			<property name="javax.persistence.jdbc.user" value="ltc" />
+			<property name="javax.persistence.jdbc.password" value="ltcpsw" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2008Dialect" />
+			<property name="hibernate.default_schema" value="dbo"/>
+			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-redone"/> <!-- Aggiunta per evitare che vengano create 2 PU -->
+			<property name="hibernate.id.new_generator_mappings" value="false"/>
+			<property name="hibernate.connection.password" value="ltcpsw"/>
+			<property name="hibernate.connection.username" value="ltc"/>
+			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.5.11:1433;databaseName=DBRedone"/>
+			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.acquire_increment" value="1" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" />
+			<property name="hibernate.c3p0.checkoutTimeout" value="5000" />
+			<property name="hibernate.c3p0.max_statements" value="0" />
+			<property name="hibernate.c3p0.timeout" value="100" />
+		</properties>
+	</persistence-unit>
+	
+	<!-- ZEIS, non più usato -->
+<!-- 	<persistence-unit name="legacy-zeis" transaction-type="RESOURCE_LOCAL"> -->
+<!-- 		<class>it.ltc.database.model.legacy.TestaCorr</class> -->
+<!-- 		<properties> -->
+<!-- 			<property name="javax.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" /> -->
+<!-- 			<property name="javax.persistence.jdbc.url" value="jdbc:sqlserver://192.168.0.220:1433;databaseName=DBBik" /> -->
+<!-- 			<property name="javax.persistence.jdbc.user" value="ltc" /> -->
+<!-- 			<property name="javax.persistence.jdbc.password" value="ltcpsw" /> -->
+<!-- 			<property name="hibernate.hbm2ddl.auto" value="none" /> -->
+<!-- 			<property name="hibernate.show_sql" value="false" /> -->
+<!-- 			<property name="hibernate.dialect" value="org.hibernate.dialect.SQLServer2012Dialect" /> -->
+<!-- 			<property name="hibernate.default_schema" value="dbo"/> -->
+<!-- 			<property name="hibernate.ejb.entitymanager_factory_name" value="legacy-zeis"/> Aggiunta per evitare che vengano create 2 PU -->
+<!-- 			<property name="hibernate.connection.password" value="ltcpsw"/> -->
+<!-- 			<property name="hibernate.connection.username" value="ltc"/> -->
+<!-- 			<property name="hibernate.connection.url" value="jdbc:sqlserver://192.168.0.220:1433;databaseName=DBBik"/> -->
+<!-- 			<property name="hibernate.connection.driver_class" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/> -->
+<!-- 			<property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" /> -->
+<!-- 			<property name="hibernate.c3p0.max_size" value="3" /> -->
+<!-- 			<property name="hibernate.c3p0.min_size" value="0" /> -->
+<!-- 			<property name="hibernate.c3p0.acquire_increment" value="1" /> -->
+<!-- 			<property name="hibernate.c3p0.idle_test_period" value="300" /> -->
+<!-- 			<property name="hibernate.c3p0.checkoutTimeout" value="5000" /> -->
+<!-- 			<property name="hibernate.c3p0.max_statements" value="0" /> -->
+<!-- 			<property name="hibernate.c3p0.timeout" value="100" /> -->
+<!-- 			<property name="hibernate.c3p0.acquireRetryAttempts" value="3"/> -->
+<!-- 			<property name="hibernate.c3p0.breakAfterAcquireFailure" value="true"/> -->
+<!-- 		</properties> -->
+<!-- 	</persistence-unit> -->
+	
+</persistence>

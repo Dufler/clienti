@@ -22,7 +22,6 @@ import it.ltc.model.interfaces.indirizzo.MIndirizzo;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.ordine.ProdottoOrdinato;
 import it.ltc.model.interfaces.ordine.TipoIDProdotto;
-import it.ltc.model.interfaces.ordine.TipoOrdine;
 import it.ltc.model.persistence.ordine.ControllerOrdiniSQLServer;
 import it.ltc.utility.miscellanea.string.ObjectParser;
 
@@ -67,7 +66,7 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 							testata.setNote(ordine.getNote());
 							testata.setRiferimentoDocumento(ordine.getNumeroOrdine());
 							testata.setRiferimentoOrdine(ordine.getNumeroOrdine());
-							testata.setTipo(TipoOrdine.PRN);
+							testata.setTipo("ORD");
 							testata.setTipoDocumento(ordine.getTipoDocumento());
 							testata.setTipoIdentificazioneProdotti(TipoIDProdotto.BARCODE);
 							mappaOrdini.put(ordine.getNumeroOrdine(), testata);
@@ -93,7 +92,7 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 					//sposto il file nello storico
 					spostaFile(file, folderPath + "storico\\");
 				} catch (Exception e) {
-					logger.error(e);
+					logger.error(e.getMessage(), e);
 					spostaFile(file, folderPath + "errori\\");
 				}				
 			}

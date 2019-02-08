@@ -44,7 +44,7 @@ public class ClasseTaglie {
 			arguments[0] = taglia;
 			m.invoke(numerata, arguments);
 		} catch (Exception e) {
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 		}
 	}
 

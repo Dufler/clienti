@@ -80,6 +80,7 @@ public class DDTSpedizione {
 			spedizione.setTipoDocu("DDT");
 			spedizione.setTipoIncasso(tipoContrassegno);
 			spedizione.setValContra(contrassegno);
+			spedizione.setGenerato("NO");
 			documenti.add(spedizione);
 		} while (parser.prossimaLinea());
 		return documenti;

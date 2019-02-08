@@ -1,0 +1,62 @@
+package it.ltc.model.db;
+
+import it.ltc.logica.database.orm.ColumnList;
+import it.ltc.logica.database.orm.Entity;
+
+public class SerialiFF implements Entity {
+	
+	private static final String nomeTabella = "dbo.SerialiFF";
+	private static final ColumnList variabili = new ColumnList();
+	
+	private String seriale;
+	private String tipo;
+	private String stato;
+	private String importato;
+
+	public String getNomeTabella() {
+		return nomeTabella;
+	}
+
+	public ColumnList getVariabili() {
+		if (variabili.isEmpty()) {
+			variabili.addString("seriale", "seriale", true, false);
+			variabili.addString("tipo", "tipo");
+			variabili.addString("stato", "stato");
+			variabili.addString("importato", "importato");
+		}
+		return variabili;
+	}
+
+	public String getSeriale() {
+		return seriale;
+	}
+
+	public void setSeriale(String seriale) {
+		this.seriale = seriale;
+	}
+
+	public String getTipo() {
+		return tipo;
+	}
+
+	public void setTipo(String tipo) {
+		this.tipo = tipo;
+	}
+
+	public String getStato() {
+		return stato;
+	}
+
+	public void setStato(String stato) {
+		this.stato = stato;
+	}
+
+	public String getImportato() {
+		return importato;
+	}
+
+	public void setImportato(String importato) {
+		this.importato = importato;
+	}
+
+}

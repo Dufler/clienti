@@ -1,0 +1,63 @@
+package it.ltc.logic;
+
+import java.util.Date;
+import java.util.List;
+
+import it.ltc.logica.database.configuration.Database;
+import it.ltc.logica.database.orm.EntityManager;
+import it.ltc.model.db.Collo;
+import it.ltc.model.db.Oggetto;
+
+public class EliminaColliVuoti {
+	
+	public static final String STATO_OGGETTO_TERMINATO = "T";
+	
+	private static EliminaColliVuoti instance;
+	
+	private EntityManager<Collo> managerColli;
+	private EntityManager<Oggetto> managerOggetti;
+	
+	private EliminaColliVuoti() {
+		setupDB();
+	}
+	
+	public static EliminaColliVuoti getInstance() {
+		if (instance == null)
+			instance = new EliminaColliVuoti();
+		return instance;
+	}
+	
+	private void setupDB() {
+		managerColli = new EntityManager<Collo>(Collo.class, Database.YNAP);
+		managerColli.setDateFormat("dd/MM/yyyy HH:mm:ss");
+		managerOggetti = new EntityManager<Oggetto>(Oggetto.class, Database.YNAP);
+	}
+	
+	public void eliminaColliVuoti() {
+		Date oggi = new Date();
+		Collo filtroColli = new Collo();
+		filtroColli.setCancellato("NO");
+		List<Collo> colli = managerColli.getEntities(filtroColli);
+		for (Collo collo : colli) {
+			Oggetto filtroOggetti = new Oggetto();
+			filtroOggetti.setNumeroCollo(collo.getNumeroCollo());
+			List<Oggetto> listaOggetti = managerOggetti.getEntities(filtroOggetti);
+			boolean tuttiUsciti = true;
+			for (Oggetto oggetto : listaOggetti) {
+				String stato = oggetto.getFlag();
+				if (!STATO_OGGETTO_TERMINATO.equals(stato)) {
+					tuttiUsciti = false;
+					break;
+				}
+			}
+			if (tuttiUsciti) {
+				collo.setCancellato("SI");
+				collo.setDistrutto("SI");
+				collo.setUtenteDistruttore("SRV");
+				collo.setDataDistruzione(oggi);
+				managerColli.update(collo);
+			}
+		}
+	}
+
+}

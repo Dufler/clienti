@@ -49,10 +49,12 @@ import it.ltc.database.model.legacy.Stagioni;
 import it.ltc.database.model.legacy.TempCorr;
 import it.ltc.database.model.legacy.bundle.Casse;
 import it.ltc.model.interfaces.exception.ModelPersistenceException;
+import it.ltc.model.interfaces.exception.ModelSimpleValidationException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
-import it.ltc.model.interfaces.exception.ProductAlreadyExistentException;
+import it.ltc.model.interfaces.exception.ModelAlreadyExistentException;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.prodotto.MProdotto;
+import it.ltc.utility.csv.FileCSV;
 import it.ltc.utility.mail.Email;
 import it.ltc.utility.mail.MailMan;
 import it.ltc.utility.miscellanea.file.FileUtility;
@@ -110,51 +112,57 @@ public class Import {
 	 * I files importati correttamente vengono spostati nella cartella storico, i files che hanno provocato errori vengono spostati nella cartella errori.
 	 */
 	public void importaDati() {
-		//Reset sulla lista di messaggi
-		messaggiInfo.clear();
-		messaggiErrore.clear();
-		//Trovo i files da importare
-		File folder = new File(pathCartellaImport);
-		File[] files = folder.listFiles();
-		List<File> filesDaImportare = new LinkedList<>();
-		for (File file : files) {
-			if (file.isFile()) {
-				filesDaImportare.add(file);
+		try {
+			//Reset sulla lista di messaggi
+			messaggiInfo.clear();
+			messaggiErrore.clear();
+			//Trovo i files da importare
+			File folder = new File(pathCartellaImport);
+			File[] files = folder.listFiles();
+			List<File> filesDaImportare = new LinkedList<>();
+			for (File file : files) {
+				if (file.isFile()) {
+					filesDaImportare.add(file);
+				}
 			}
-		}
-		filesDaImportare.sort(new Ordinatore());
-		//Per ogni file contenuto nella cartella avvio una modalità diversa in base alla sua tipologia.
-		for (File file : filesDaImportare) {
-			if (file.isFile()) {
-				String fileName = file.getName();
-				if (fileName.endsWith("chk")) {
-					importaFileNonConforme(file);
-				} else {
-					String fileType = fileName.split("_|\\d")[0];
-					switch (fileType) {
-						case "Nazioni" : importaNazioni(file); break;
-						case "Stagioni" : importaStagioni(file); break;
-						case "ClasseTaglie" : importaTaglie(file); break;
-						case "Colori" : importaColori(file); break;
-						case "Articoli" : importaArticoli(file); break;
-						case "Assortimenti" : importaAssortimenti(file); break;
-						case "Clienti" : importaDestinatari(file); break;
-						case "Fornitori" : importaFornitori(file); break;
-						case "Vettori" : importaVettori(file); break;
-						case "DocumentiEntrata" : importaTestateCarichi(file); break;
-						case "RigheDocumentiEntrata" : importaRigheCarichi(file); break;
-						case "OrdiniClienti" : importaTestateOrdini(file); break;
-						case "RigheOrdiniClienti" : importaRigheOrdini(file); break;
-						case "Colli" : importaColliDaSpedire(file); break;
-						case "DDTSpedizione" : importaDatiSpedizioni(file); break;
-						default : importaFileNonConforme(file); break;
+			filesDaImportare.sort(new Ordinatore());
+			//Per ogni file contenuto nella cartella avvio una modalità diversa in base alla sua tipologia.
+			for (File file : filesDaImportare) {
+				if (file.isFile()) {
+					String fileName = file.getName();
+					if (fileName.endsWith("chk")) {
+						importaFileNonConforme(file);
+					} else {
+						String fileType = fileName.split("_|\\d")[0];
+						switch (fileType) {
+							case "Nazioni" : importaNazioni(file); break;
+							case "Stagioni" : importaStagioni(file); break;
+							case "ClasseTaglie" : importaTaglie(file); break;
+							case "Colori" : importaColori(file); break;
+							case "Articoli" : importaArticoli(file); break;
+							case "Assortimenti" : importaAssortimenti(file); break;
+							case "Clienti" : importaDestinatari(file); break;
+							case "Fornitori" : importaFornitori(file); break;
+							case "Vettori" : importaVettori(file); break;
+							case "DocumentiEntrata" : importaTestateCarichi(file); break;
+							case "RigheDocumentiEntrata" : importaRigheCarichi(file); break;
+							case "OrdiniClienti" : importaTestateOrdini(file); break;
+							case "RigheOrdiniClienti" : importaRigheOrdini(file); break;
+							case "Colli" : importaColliDaSpedire(file); break;
+							case "DDTSpedizione" : importaDatiSpedizioni(file); break;
+							case "modelliErrati" : correggiModelliErrati(file); break;
+							default : importaFileNonConforme(file); break;
+						}
 					}
 				}
 			}
+			//Se ho ricevuto ordini li inserisco a sistema
+			if (!mappaOrdini.isEmpty())
+				inserisciOrdini();
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			messaggiErrore.add(e.getMessage());
 		}
-		//Se ho ricevuto ordini li inserisco a sistema
-		if (!mappaOrdini.isEmpty())
-			inserisciOrdini();
 		//Invio una mail di riepilogo
 		inviaMailRiepilogo();
 	}
@@ -212,6 +220,38 @@ public class Import {
 		}
 	}
 	
+	private void correggiModelliErrati(File file) {
+		try {
+			FileCSV csv = FileCSV.leggiFile(file);
+			ControllerArticoli controller = new ControllerArticoli();
+			boolean correzione = true;
+			while (csv.prossimaRiga()) {
+				String modelloCorretto = csv.getStringa("id_corretto");
+				String modelloErrato = csv.getStringa("id_errato");
+				try {
+				boolean esito = controller.correggiModelli(modelloCorretto, modelloErrato);
+				if (!esito) {
+					logger.warn("Il modello errato '" + modelloErrato + "' non è stato aggiornato correttamente.");
+					correzione = false;
+				}
+				} catch (Exception e) {
+					logger.warn(e.getMessage());
+					correzione = false;
+				}
+			}
+			if (correzione) {
+				spostaFileNelloStorico(file);
+			} else {
+				logger.warn("Alcuni modelli non sono stati aggiornati correttamente.");
+				spostaFileConErrori(file);
+			}
+		} catch (Exception e) {
+			messaggiErrore.add(e.getMessage());
+			logger.error(e.getMessage(), e);
+			spostaFileConErrori(file);
+		}
+	}
+	
 	private void importaNazioni(File fileNazioni) {
 		try {
 			ArrayList<String> lines = FileUtility.readLines(fileNazioni);
@@ -228,7 +268,7 @@ public class Import {
 			spostaFileNelloStorico(fileNazioni);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileNazioni);
 		}
 	}
@@ -254,7 +294,7 @@ public class Import {
 			spostaFileNelloStorico(fileTaglie);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileTaglie);
 		}
 	}
@@ -278,7 +318,7 @@ public class Import {
 			spostaFileNelloStorico(fileColori);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileColori);
 		}		
 	}
@@ -307,7 +347,7 @@ public class Import {
 			spostaFileNelloStorico(fileAssortimenti);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileAssortimenti);
 		}
 	}
@@ -322,10 +362,10 @@ public class Import {
 				try {
 					controller.valida(articolo);
 					controller.inserisci(articolo);
-				} catch (ProductAlreadyExistentException e) {
+				} catch (ModelAlreadyExistentException e) {
 					//DO NOTHING! Ce li ripassano in continuazione.
 				} catch (ModelValidationException | ModelPersistenceException e) {
-					logger.error(e);
+					logger.error(e.getMessage(), e);
 					messaggiErrore.add(e.getMessage());
 				}
 			}
@@ -335,9 +375,7 @@ public class Import {
 				messaggiInfo.add("Sono stati inseriti a sistema " + prodottiInseriti + " nuovi prodotti.");
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
-			for (StackTraceElement trace : e.getStackTrace())
-				logger.error(trace);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileArticoli);
 		}	
 	}
@@ -348,6 +386,7 @@ public class Import {
 			List<Destinatari> destinatari = ClientiDestinatari.parsaDestinatari(lines);
 			DestinatariDao daoDestinatari = new DestinatariDao(persistenceUnit);
 			for (Destinatari destinatario : destinatari) {
+				destinatario = daoDestinatari.ripulisciCaratteri(destinatario);
 				Destinatari entity = daoDestinatari.trovaDaCodice(destinatario.getCodDestina());
 				if (entity != null) {
 					destinatario.setIdDestina(entity.getIdDestina());
@@ -364,7 +403,7 @@ public class Import {
 			spostaFileNelloStorico(fileDestinatari);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileDestinatari);
 		}	
 	}
@@ -391,7 +430,7 @@ public class Import {
 			spostaFileNelloStorico(fileFornitori);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileFornitori);
 		}
 	}
@@ -418,7 +457,7 @@ public class Import {
 			spostaFileNelloStorico(fileVettori);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileVettori);
 		}
 	}
@@ -445,7 +484,7 @@ public class Import {
 			spostaFileNelloStorico(fileStagioni);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileStagioni);
 		}
 	}
@@ -474,7 +513,7 @@ public class Import {
 			spostaFileNelloStorico(fileTestateCarichi);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileTestateCarichi);
 		}
 	}
@@ -502,7 +541,7 @@ public class Import {
 			spostaFileNelloStorico(fileRigheCarichi);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileRigheCarichi);
 		}
 	}
@@ -520,7 +559,7 @@ public class Import {
 			//spostaFileNelloStorico(fileTestateOrdini);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileTestateOrdini);
 		}
 	}
@@ -534,7 +573,7 @@ public class Import {
 			//spostaFileNelloStorico(fileRigheOrdini);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileRigheOrdini);
 		}
 	}
@@ -553,9 +592,12 @@ public class Import {
 				//Sposto i files nello storico
 				spostaFileNelloStorico(fileTestata);
 				spostaFileNelloStorico(fileRighe);
+			} catch(ModelSimpleValidationException e) {
+				//Skip dell'errore, non è nulla di grave siccome manca uno dei files che dovrebbe arrivarmi al prossimo giro comunque.
+				logger.error(e.getMessage(), e);
 			} catch (Exception e) {
 				messaggiErrore.add(e.getMessage());
-				logger.error(e);
+				logger.error(e.getMessage(), e);
 				//Sposto i files nella cartella errori
 				spostaFileConErrori(fileTestata);
 				spostaFileConErrori(fileRighe);
@@ -586,7 +628,7 @@ public class Import {
 			spostaFileNelloStorico(fileColli);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileColli);
 		}
 	}
@@ -597,6 +639,11 @@ public class Import {
 			ArrayList<String> lines = FileUtility.readLines(fileSpedizioni);
 			List<TempCorr> spedizioni = DDTSpedizione.parsaDDT(lines);
 			for (TempCorr spedizione : spedizioni) {
+				//Verifico se è stato passato il contrassegno
+				boolean valoreContrassegnoPresente = spedizione.getValContra() != null && spedizione.getValContra() > 0;
+				boolean tipoContrassegnoNonPresente = spedizione.getTipoIncasso() == null || spedizione.getTipoIncasso().isEmpty();
+				if (valoreContrassegnoPresente && tipoContrassegnoNonPresente)
+					messaggiErrore.add("Il tipo di contrassegno non è stato indicato per la spedizione " + spedizione.getNrDoc());
 				//Verifico se è già presente oppure no
 				TempCorr entity = daoSpedizioni.trovaDaNumeroLista(spedizione.getNrLista());
 				if (entity == null) {
@@ -616,7 +663,7 @@ public class Import {
 			spostaFileNelloStorico(fileSpedizioni);
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			spostaFileConErrori(fileSpedizioni);
 		}
 	}

@@ -125,9 +125,7 @@ public class ScambioFTP {
 				}
 			}
 		} catch (Exception e) {
-			String message = "Errori durante la copia dei PDF: " + e;
-			System.out.println(message);
-			logger.error(message);
+			logger.error("Errori durante la copia dei PDF: " + e.getMessage(), e);
 			erroriPDF = true;
 		}
 	}
@@ -190,9 +188,7 @@ public class ScambioFTP {
 				}
 			}
 		} catch (Exception e) {
-			String message = "Errori durante il download: " + e;
-			System.out.println(message);
-			logger.error(message);
+			logger.error("Errori durante il download: " + e.getMessage(), e);
 			erroriInDownload = true;
 		}
 		//Aggiunta: non lo invio per email ma lo loggo.
@@ -216,13 +212,10 @@ public class ScambioFTP {
 				success = true;
 			} else {
 				String message = "Impossibile spostare nello storico FTP Artcraft il file: '" + fileName + "', upolad archivio: " + upload + ", cancellazione: " + delete;
-				System.out.println(message);
 				logger.error(message);
 			}
 		} else {
-			String message = "Impossibile scaricare il file: '" + fileName + "'";
-			System.out.println(message);
-			logger.error(message);
+			logger.error("Impossibile scaricare il file: '" + fileName + "'");
 		}
 		return success;
 	}
@@ -260,9 +253,7 @@ public class ScambioFTP {
 				}
 			}
 		} catch (Exception e) {
-			String message = "Errori durante l'upload: " + e;
-			System.out.println(message);
-			logger.error(message);
+			logger.error("Errori durante l'upload: " + e.getMessage(), e);
 			erroriInUpload = true;
 		}
 	}
@@ -281,12 +272,10 @@ public class ScambioFTP {
 				success = true;
 			} else {
 				String message = "Impossibile spostare nello storico locale il file: '" + file + "'";
-				System.out.println(message);
 				logger.error(message);
 			}
 		} else {
 			String message = "Impossibile caricare il file: '" + file + "'";
-			System.out.println(message);
 			logger.error(message);
 		}
 		return success;
@@ -385,7 +374,6 @@ public class ScambioFTP {
 			boolean invio = mailer.invia(destinatari, mail);
 			if (!invio) {
 				String message = "Impossibile inviare la mail di riepilogo.";
-				System.out.println(message);
 				logger.error(message);
 			}
 		}

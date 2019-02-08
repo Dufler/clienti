@@ -195,7 +195,7 @@ public class ControllaDisponibilita {
 			bw.flush();
 			bw.close();
 		} catch (IOException e) {
-			logger.error("Impossibile scrivere il file di output. (" + outputFilePath + ")");
+			logger.error("Impossibile scrivere il file di output. (" + outputFilePath + ")", e);
 		}		
 	}
 

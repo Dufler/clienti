@@ -1,0 +1,74 @@
+package it.ltc.model.db;
+
+import it.ltc.logica.database.orm.ColumnList;
+import it.ltc.logica.database.orm.Entity;
+
+public class Imballo extends Entity {
+	
+	private static final String nomeTabella = "dbo.RighiImballo";
+	private static final ColumnList variabili = new ColumnList();
+	
+	private Integer id;
+	private String numeroLista;
+	private Integer quantitàImballata;
+	private String codiceArticolo;
+	private String idCollo;
+
+	@Override
+	public String getNomeTabella() {
+		return nomeTabella;
+	}
+
+	@Override
+	public ColumnList getVariabili() {
+		if (variabili.isEmpty()) {
+			variabili.addAutoincrement("idRighiImballo", "id");
+			variabili.addString("NrLista", "numeroLista");
+			variabili.addInt("QtaImballata", "quantitàImballata");
+			variabili.addString("CodiceArticolo", "codiceArticolo");
+			variabili.addString("KeyColloSpe", "idCollo");
+		}
+		return variabili;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getNumeroLista() {
+		return numeroLista;
+	}
+
+	public void setNumeroLista(String numeroLista) {
+		this.numeroLista = numeroLista;
+	}
+
+	public Integer getQuantitàImballata() {
+		return quantitàImballata;
+	}
+
+	public void setQuantitàImballata(Integer quantitàImballata) {
+		this.quantitàImballata = quantitàImballata;
+	}
+
+	public String getCodiceArticolo() {
+		return codiceArticolo;
+	}
+
+	public void setCodiceArticolo(String codiceArticolo) {
+		this.codiceArticolo = codiceArticolo;
+	}
+
+	public String getIdCollo() {
+		return idCollo;
+	}
+
+	public void setIdCollo(String idCollo) {
+		this.idCollo = idCollo;
+	}
+
+}

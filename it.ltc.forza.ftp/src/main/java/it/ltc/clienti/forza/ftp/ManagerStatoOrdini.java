@@ -48,9 +48,10 @@ public class ManagerStatoOrdini extends Dao {
 				t.commit();
 				update = true;
 			} catch(Exception e) {
-				logger.error(e);
+				logger.error(e.getMessage(), e);
 				update = false;
-				t.rollback();
+				if (t != null && t.isActive())
+					t.rollback();
 			} finally {
 				em.close();
 			}
@@ -62,8 +63,8 @@ public class ManagerStatoOrdini extends Dao {
 	
 	public List<LinnworksOrderStatus> recuperaStatoOrdini() {
 		List<LinnworksOrderStatus> lista = new LinkedList<LinnworksOrderStatus>();
-		//Recupero tutti gli ordini con errori in stato "INSE"
-		List<TestataOrdini> testateInse = getOrdiniPerStato("INSE");
+		//Recupero tutti gli ordini con errori in stato "ERRO"
+		List<TestataOrdini> testateInse = getOrdiniPerStato("ERRO");
 		//Per ogni ordine trovato genero una riga e specifico il motivo dell'errore con quello che trovo su note.
 		for (TestataOrdini testata : testateInse) {
 			String orderID = testata.getNrOrdine(); //Il campo rifordcli è buono solo per gli ordini correttamente importati.
@@ -72,10 +73,10 @@ public class ManagerStatoOrdini extends Dao {
 			String errors = testata.getNote();
 			LinnworksOrderStatus status = new LinnworksOrderStatus(orderID, Status.ERROR, tracking, servizio, errors);
 			lista.add(status);
-			//Aggiorno lo stato dell'ordine a "ERRO"
-			boolean update = aggiornaStatoOrdine(testata.getIdTestaSped(), "ERRO");
+			//Aggiorno lo stato dell'ordine a "FINE"
+			boolean update = aggiornaStatoOrdine(testata.getIdTestaSped(), "FINE");
 			if (update)
-				logger.info("Aggiornato lo stato dell'ordine '" + testata.getNrOrdine() + "' a ERRO.");
+				logger.info("Aggiornato lo stato dell'ordine '" + testata.getNrOrdine() + "' a FINE.");
 			else
 				logger.error("Impossibile aggiornare lo stato dell'ordine '"+ testata.getNrOrdine() + "'.");
 		}

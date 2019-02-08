@@ -15,15 +15,14 @@ import org.apache.log4j.Logger;
 
 import it.ltc.clienti.forza.ftp.ManagerImportazione;
 import it.ltc.clienti.forza.ftp.ManagerMagazzino;
+import it.ltc.clienti.forza.ftp.ManagerOrdineScaduti;
 import it.ltc.clienti.forza.ftp.ManagerScadenze;
 import it.ltc.clienti.forza.ftp.ManagerStatoOrdini;
 import it.ltc.clienti.forza.ftp.model.LinnworksInvenctoryLine;
 import it.ltc.clienti.forza.ftp.model.LinnworksOrderLine;
 import it.ltc.clienti.forza.ftp.model.LinnworksOrderStatus;
 import it.ltc.clienti.forza.ftp.model.ProdottoInScadenza;
-import it.ltc.database.dao.ordini.ManagerAssegnazione;
 import it.ltc.database.model.legacy.ColliPack;
-import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.utility.csv.FileCSV;
 import it.ltc.utility.ftp.FTP;
@@ -78,7 +77,7 @@ public class MainForza {
 			String message = "Errore imprevisto durante la sincronizzazione dati per Forza Industries.\r\n" + e.getMessage();
 			String subject = "Alert - Sincronizzazione Forza Industries";
 			sendEmail(message, subject, destinatariIT);
-			logger.error(message);
+			logger.error(message, e);
 		}
 		logger.info("Termine procedura.");
 	}
@@ -88,12 +87,22 @@ public class MainForza {
 		ManagerScadenze managerScadenze = new ManagerScadenze(persistenceUnit);
 		List<ProdottoInScadenza> scadenze = managerScadenze.getAvvisoProdottiInScadenza(giorniScandenzaFutura);
 		if (scadenze != null && !scadenze.isEmpty()) {
-			String messaggio = "Sono stati trovati prodotti prossimi alla scadenza: ";
+			//Accorpo i prodotti uguali con la stessa scadenza.
+			HashMap<String, ProdottoInScadenza> mappaScadenze = new HashMap<>();
 			for (ProdottoInScadenza prodotto : scadenze) {
+				String key = prodotto.getSku() + "#" + sdf.format(prodotto.getDataScadenza());
+				int presente = mappaScadenze.containsKey(key) ? mappaScadenze.get(key).getQuantità() : 0;
+				int quantità = prodotto.getQuantità() + presente;					
+				ProdottoInScadenza p = new ProdottoInScadenza(prodotto.getSku(), prodotto.getCollo(), quantità, prodotto.getDataScadenza());
+				mappaScadenze.put(key, p);
+			}
+			//Preparo il messaggio
+			String messaggio = "Sono stati trovati prodotti prossimi alla scadenza:\r\n";
+			for (ProdottoInScadenza prodotto : mappaScadenze.values()) {
 				messaggio += prodotto.getQuantità() + " X " + prodotto.getSku() + " (" + sdf.format(prodotto.getDataScadenza()) + ")\r\n";
 			}
 			logger.info(messaggio);
-			sendEmail(messaggio, subjectAlertScadenze, destinatariIT);
+			sendEmail(messaggio, subjectAlertScadenze, destinatari);
 		} else {
 			logger.info("Nessun prodotto in scadenza entro " + giorniScandenzaFutura + " giorni.");
 		}
@@ -104,11 +113,16 @@ public class MainForza {
 		ManagerScadenze managerScadenze = new ManagerScadenze(persistenceUnit);
 		List<ColliPack> scadenze = managerScadenze.getColliPackInScadenza(giorniScandenza);
 		if (!scadenze.isEmpty()) {
-			ManagerAssegnazione managerAssegnazione = new ManagerAssegnazione(persistenceUnit);
-			TestataOrdini testata = managerAssegnazione.creaOrdineDaProdotti(scadenze);
-			String messaggio = "Sono stati trovati prodotti prossimi alla scadenza ed è stato creato un apposito ordine per prelevarli.\r\nNumero di lista: " + testata.getNrLista() + "\r\nTotale dei pezzi: " + testata.getQtaTotaleSpedire();
-			logger.info(messaggio);
-			sendEmail(messaggio, subjectAlertScadenze, destinatariIT);
+			ManagerOrdineScaduti managerAssegnazione = new ManagerOrdineScaduti(persistenceUnit);
+			MOrdine testata = managerAssegnazione.creaOrdineDaProdotti(scadenze);
+			if (testata != null) {
+				String messaggio = "Sono stati trovati prodotti prossimi alla scadenza ed è stato creato un apposito ordine per prelevarli.\r\nNumero di lista: " + testata.getRiferimentoOrdine() + "\r\nTotale dei pezzi: " + testata.getQuantitaTotaleDaSpedire();
+				logger.info(messaggio);
+				sendEmail(messaggio, subjectAlertScadenze, destinatari);
+			} else {
+				String messaggio = "Impossibile inserire l'ordine con le scadenze, controllare il file di log.";
+				sendEmail(messaggio, subjectAlertScadenze, destinatariIT);
+			}
 		} else {
 			logger.info("Nessun prodotto in scadenza.");
 		}
@@ -150,9 +164,7 @@ public class MainForza {
 				writer.write(sb.toString());
 				writer.flush();
 			} catch (IOException e) {
-				logger.error("Errore durante l'elaborazione del file d'aggiornamento stati.");
-				logger.error(e);
-				e.printStackTrace();
+				logger.error("Errore durante l'elaborazione del file d'aggiornamento stati.", e);
 			}
 			//Upload del file
 			boolean upload = ftpClient.upload(fileUpdate.getPath(), remoteFolder + nomeFileStatus);
@@ -178,9 +190,7 @@ public class MainForza {
 				writer.write(sb.toString());
 				writer.flush();
 			} catch (IOException e) {
-				logger.error("Errore durante l'upload del file dei carichi.");
-				logger.error(e);
-				e.printStackTrace();
+				logger.error("Errore durante l'upload del file dei carichi.", e);
 			}
 			//Upload del file
 			boolean upload = ftpClient.upload(fileUpdate.getPath(), remoteFolder + nomeFileInvenctory);
@@ -310,8 +320,7 @@ public class MainForza {
 				list.add(orderLine);
 			} catch (Exception e) {
 				String message = "Impossibile importare il csv: i nomi delle colonne sono stati cambiati dal cliente.";
-				logger.error(message);
-				logger.error(e);
+				logger.error(message, e);
 				sendEmail(message, subjectAlertErroriRicezione, destinatariIT);
 			}
 		}
@@ -335,14 +344,10 @@ public class MainForza {
 			if (!download)
 				throw new RuntimeException("Impossibile scaricare il file: '" + fileName + "'");
 			File file = new File(localTempFile);
-			csv = FileCSV.leggiFile(file, true, "\\|", "\\|"); //csv = FileCSV.leggiFile(file, true, ",", "\".*\",");
+			csv = FileCSV.leggiFile(file, true, "\\|", "\\|", FileCSV.DEFAULT_DATE_FORMAT); //csv = FileCSV.leggiFile(file, true, ",", "\".*\",");
 		} catch (Exception e) {
 			csv = null;
-			String errorMessage = e.getMessage();
-			for (StackTraceElement element : e.getStackTrace()) {
-				errorMessage += element.toString();
-			}
-			logger.error(errorMessage);
+			logger.error(e.getMessage(), e);
 		}
 		return csv;
 	}

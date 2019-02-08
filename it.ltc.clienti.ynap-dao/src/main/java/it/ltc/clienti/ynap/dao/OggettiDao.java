@@ -1,0 +1,40 @@
+package it.ltc.clienti.ynap.dao;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import it.ltc.clienti.ynap.model.Oggetto;
+import it.ltc.database.dao.CRUDDao;
+import it.ltc.database.dao.CondizioneWhere;
+
+public class OggettiDao extends CRUDDao<Oggetto> {
+
+	public OggettiDao() {
+		super("legacy-ynap", Oggetto.class);
+	}
+
+	@Override
+	protected void updateValues(Oggetto oldEntity, Oggetto entity) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	public List<Oggetto> trovaDaStatoESeriale(String stato, String rfid) {
+		List<CondizioneWhere> conditions = new LinkedList<>();
+		conditions.add(new CondizioneWhere("Stato", stato));
+		conditions.add(new CondizioneWhere("CodArtStr", rfid));
+		List<Oggetto> entities = findAll(conditions);
+		return entities;
+	}
+	
+	public List<Oggetto> trovaPerStato(String stato) {
+		List<Oggetto> entities = findAllEqualTo("Stato", stato);
+		return entities;
+	}
+	
+	public List<Oggetto> trovaPerCollo(String collo) {
+		List<Oggetto> entities = findAllEqualTo("NrIdColloPk", collo);
+		return entities;
+	}
+
+}

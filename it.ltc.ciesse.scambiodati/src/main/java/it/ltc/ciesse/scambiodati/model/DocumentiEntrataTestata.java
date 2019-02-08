@@ -90,7 +90,12 @@ public class DocumentiEntrataTestata {
 		riga.append(sdf.format(testata.getDataArrivo()));
 		riga.append(utility.getFormattedString(testata.getCodFornitore(), 20));
 		riga.append(testata.getTipoDoc().equals("RESO") ? "1" : "0");
+		riga.append(utility.getFormattedString("", 20)); //Codice vettore (non c'è l'ho)
 		//In teoria mancano le info sul reso che vengono salvate nelle note. Non so se può comportare un problema.
+		riga.append(utility.getFormattedString("", 19)); //Data autorizzazione (solo per i resi, non c'è l'ho)
+		riga.append(utility.getFormattedString("", 20)); //Numero autorizzazione (solo per i resi, non c'è l'ho)
+		riga.append(utility.getFormattedString("", 50)); //Autorizzatore (solo per i resi, non c'è l'ho)
+		riga.append(utility.getFormattedString(0, 10)); //Numero colli (solo per i resi, non c'è l'ho)
 		while (riga.length() < 219) {
 			riga.append(" ");
 		}

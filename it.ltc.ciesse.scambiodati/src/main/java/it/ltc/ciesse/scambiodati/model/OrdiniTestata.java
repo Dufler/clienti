@@ -10,9 +10,9 @@ import it.ltc.database.dao.legacy.DestinatariDao;
 import it.ltc.database.model.legacy.Destinatari;
 import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.model.interfaces.indirizzo.MIndirizzo;
+import it.ltc.model.interfaces.ordine.MInfoSpedizione;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.ordine.TipoIDProdotto;
-import it.ltc.model.interfaces.ordine.TipoOrdine;
 import it.ltc.utility.miscellanea.string.StringParser;
 import it.ltc.utility.miscellanea.string.StringUtility;
 
@@ -48,10 +48,6 @@ public class OrdiniTestata {
 				MIndirizzo destinatario = new MIndirizzo();
 				destinatario.setCodice(cliente);
 				MOrdine ordine = new MOrdine();
-				ordine.setAssicurazione(null);
-				ordine.setCodiceCorriere(vettore);
-				ordine.setContrassegno(null);
-				ordine.setCorriere(vettore);
 				ordine.setDataConsegna(dataConsegna);
 				ordine.setDataOrdine(dataDocumento);
 				ordine.setDestinatario(destinatario);
@@ -61,12 +57,18 @@ public class OrdiniTestata {
 				ordine.setPriorita(1);
 				ordine.setRiferimentoDocumento(riferimento);
 				ordine.setRiferimentoOrdine(riferimento);
-				ordine.setServizioCorriere("DEF");
-				ordine.setTipo(TipoOrdine.PRN);
+				
+				ordine.setTipo("PRN");
 				ordine.setTipoIdentificazioneProdotti(TipoIDProdotto.CHIAVE);
-				ordine.setValoreDoganale(0.0);
 				ordine.setDataDocumento(new Date());
 				ordine.setTipoDocumento(tipo);
+				
+				MInfoSpedizione infoSpedizione = new MInfoSpedizione();
+				infoSpedizione.setCodiceCorriere(vettore);
+				infoSpedizione.setCorriere(vettore);
+				infoSpedizione.setServizioCorriere("DEF");
+				ordine.setInfoSpedizione(infoSpedizione);
+				
 				ordini.add(ordine);
 			}
 		} while (parser.prossimaLinea());	

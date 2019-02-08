@@ -1,0 +1,72 @@
+package it.ltc.model.db;
+
+import it.ltc.logica.database.orm.ColumnList;
+import it.ltc.logica.database.orm.Entity;
+
+public class SaldiMagazzino implements Entity {
+	
+	private static final String nomeTabella = "dbo.MagaSd";
+	private static final ColumnList variabili = new ColumnList();
+	
+	private Integer id;
+	private Integer impegnato;
+	private Integer disponibile;
+	private Integer esistenza;
+	private String idUnivocoArticolo;
+
+	public String getNomeTabella() {
+		return nomeTabella;
+	}
+
+	public ColumnList getVariabili() {
+		if (variabili.isEmpty()) {
+			variabili.addAutoincrement("IdMagaSd", "id");
+			variabili.addInt("Impegnato", "impegnato");
+			variabili.addInt("Disponibile", "disponibile");
+			variabili.addInt("Esistenza", "esistenza");
+			variabili.addString("IdUniArticolo", "idUnivocoArticolo");
+		}
+		return variabili;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public Integer getImpegnato() {
+		return impegnato;
+	}
+
+	public void setImpegnato(Integer impegnato) {
+		this.impegnato = impegnato;
+	}
+
+	public Integer getDisponibile() {
+		return disponibile;
+	}
+
+	public void setDisponibile(Integer disponibile) {
+		this.disponibile = disponibile;
+	}
+
+	public Integer getEsistenza() {
+		return esistenza;
+	}
+
+	public void setEsistenza(Integer esistenza) {
+		this.esistenza = esistenza;
+	}
+
+	public String getIdUnivocoArticolo() {
+		return idUnivocoArticolo;
+	}
+
+	public void setIdUnivocoArticolo(String idUnivocoArticolo) {
+		this.idUnivocoArticolo = idUnivocoArticolo;
+	}
+
+}

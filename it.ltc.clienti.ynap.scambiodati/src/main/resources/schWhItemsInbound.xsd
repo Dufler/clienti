@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:b="http://schemas.microsoft.com/BizTalk/2003" xmlns:sql="urn:schemas-microsoft-com:mapping-schema" elementFormDefault="qualified"  xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:annotation>
+    <xs:appinfo>
+      <sql:relationship name="relMovItems" parent="mip_importazione_articoli_testate" parent-key="ID_MovimentiMatricole" child="mip_importazione_articoli_righe" child-key="MovimentiMatricole_ID" xmlns:sql="urn:schemas-microsoft-com:mapping-schema" />
+      <schemaInfo is_envelope="yes" xmlns="http://schemas.microsoft.com/BizTalk/2003" />
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:element sql:mapped="false" name="Movs">
+    <xs:annotation>
+      <xs:documentation>Contains one or more loading order confirmations.</xs:documentation>
+      <xs:appinfo>
+        <recordInfo body_xpath="/*[local-name()='Movs']" xmlns="http://schemas.microsoft.com/BizTalk/2003" />
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="Mov" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element sql:relation="mip_importazione_articoli_testate" name="Mov">
+    <xs:annotation>
+      <xs:documentation>Contains a single loading order confirmation.</xs:documentation>
+      <xs:appinfo>
+        <b:properties xmlns:b="http://schemas.microsoft.com/BizTalk/2003">
+          <b:property distinguished="true" xpath="/*[local-name()='Mov' and namespace-uri()='http://WHExchange.EAI.INT_ITEM.Messaging.Schemas.Warehouse.schWhItemsInbound']/*[local-name()='MOV_ID' and namespace-uri()='http://WHExchange.EAI.INT_ITEM.Messaging.Schemas.Warehouse.schWhItemsInbound']" />
+        </b:properties>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="MOV_ID" />
+        <xs:element ref="MOV_Date" />
+        <xs:element minOccurs="0" ref="MOV_Note2" />
+        <xs:element minOccurs="0" ref="MOV_ConfDate" />
+        <xs:element ref="From" />
+        <xs:element ref="To" />
+        <xs:element ref="Items" />
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+  <xs:element sql:field="ID_MovimentiMatricole" name="MOV_ID" type="xs:int">
+    <xs:annotation>
+      <xs:documentation>Loading order unique identifier.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element sql:mapped="false" name="MOV_Date" type="xs:date">
+    <xs:annotation>
+      <xs:documentation>Date when the loading order was created.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element sql:field="Data_Conferma" name="MOV_ConfDate" type="xs:date">
+    <xs:annotation>
+      <xs:documentation>Loading confirmation date. If the loading failed, the confirmation date must be omitted.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element sql:field="Nota2" name="MOV_Note2">
+    <xs:annotation>
+      <xs:documentation>Message from the destination warehouse to the source warehouse.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="4000" />
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element sql:mapped="false" name="From">
+    <xs:annotation>
+      <xs:documentation>Contains information about the source warehouse.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="From_ID" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element sql:mapped="false" name="From_ID" type="xs:int">
+    <xs:annotation>
+      <xs:documentation>Source warehouse identifier.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element sql:mapped="false" name="To">
+    <xs:annotation>
+      <xs:documentation>Contains information about the destination warehouse.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="To_ID" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element sql:mapped="false" name="To_ID" type="xs:int">
+    <xs:annotation>
+      <xs:documentation>Destination warehouse identifier.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element sql:mapped="false" name="Items">
+    <xs:annotation>
+      <xs:documentation>Contains the list of items loaded into stock.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="Item" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element sql:relation="mip_importazione_articoli_righe" sql:relationship="relMovItems" name="Item">
+    <xs:annotation>
+      <xs:documentation>Contains the confirmation details for a single item.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="IT_RMM_ID" />
+        <xs:element ref="IT_Code" />
+        <xs:choice minOccurs="0">
+          <xs:element minOccurs="0" ref="IT_ConfDate" />
+          <xs:element minOccurs="0" ref="IT_LostReason" />
+        </xs:choice>
+        <xs:element minOccurs="0" ref="IT_LOADLOCATION" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element sql:field="ID_RigheMovimentiMatricole" name="IT_RMM_ID" type="xs:int">
+    <xs:annotation>
+      <xs:documentation>Unique identifier of the loading order row.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element sql:field="CodiceMatricola" name="IT_Code">
+    <xs:annotation>
+      <xs:documentation>Item barcode.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:pattern value="(\w|\d){16,16}" />
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element sql:field="Data_Conferma_Matricola" name="IT_ConfDate" type="xs:date">
+    <xs:annotation>
+      <xs:documentation>Item loading confirmation date. Must not be present if the item was not loaded into stock.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element sql:field="LoadLocation" name="IT_LOADLOCATION">
+    <xs:annotation>
+      <xs:documentation>Code of the destination warehouse where the item was put into stock. Field not currently in use.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="1" />
+        <xs:pattern value="\w{0,1}" />
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="IT_LostReason" type="xs:int" />
+</xs:schema>

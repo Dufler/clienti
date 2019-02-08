@@ -6,8 +6,11 @@ import java.util.List;
 
 import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.database.dao.legacy.ArticoliDao;
+import it.ltc.database.dao.legacy.MagazzinoDao;
+import it.ltc.database.dao.legacy.PakiArticoloDao;
 import it.ltc.database.dao.legacy.PakiTestaDao;
 import it.ltc.database.model.legacy.Articoli;
+import it.ltc.database.model.legacy.Magazzini;
 import it.ltc.database.model.legacy.PakiArticolo;
 import it.ltc.database.model.legacy.PakiTesta;
 import it.ltc.utility.miscellanea.string.StringParser;
@@ -23,22 +26,37 @@ public class DocumentiEntrataRighe {
 	private static final ArticoliDao daoArticoli = new ArticoliDao(ConfigurationUtility.getInstance().getPersistenceUnit());
 	private static final HashMap<String, Articoli> mappaArticoli = new HashMap<>();
 	
+	private static final MagazzinoDao daoMagazzini = new MagazzinoDao(ConfigurationUtility.getInstance().getPersistenceUnit());
+	
+	private static final PakiArticoloDao daoRighe = new PakiArticoloDao(ConfigurationUtility.getInstance().getPersistenceUnit());
+	
 	public static List<PakiArticolo> parsaRigheDocumento(List<String> righe) {
 		List<PakiArticolo> righeDocumento = new LinkedList<>();
 		String[] lines = new String[righe.size()];
 		lines = righe.toArray(lines);
 		StringParser parser = new StringParser(lines, 1001);
+		//Eseguo dei controlli preliminari: 1) esiste la testata dichiarata, 2) non ci sono già altre righe inserite.
+		String riferimentoTestata = parser.getStringa(1, 21);
+		PakiTesta testata = trovaTestata(riferimentoTestata);
+		if (testata == null) 
+			throw new RuntimeException("La testata non esiste, riferimento: '" + riferimentoTestata + "'");
+		List<PakiArticolo> righeGiaPresenti = daoRighe.trovaRigheDaCarico(testata.getIdTestaPaki());
+		if (!righeGiaPresenti.isEmpty()) {
+			throw new RuntimeException("Le righe sono già state inserite per il carico indicato, riferimento: '" + riferimentoTestata + "'");
+		}
 		do {
 			int operazione = parser.getIntero(0, 1);
-			if (operazione == 1 || operazione == 2) {
-				String riferimentoTestata = parser.getStringa(1, 21);
-				PakiTesta testata = trovaTestata(riferimentoTestata);
-				if (testata == null) 
-					throw new RuntimeException("La testata non esiste, riferimento: '" + riferimentoTestata + "'");
+			if (operazione == 1 || operazione == 2) {	
 				int numeroRiga = parser.getIntero(21, 31);
 				String modello = parser.getStringa(31, 83);
 				String sku = parser.getStringa(989, 1000);
-				String magazzino = parser.getStringa(83, 92);
+				String codiceMagazzino = parser.getStringa(83, 92);
+				//Condizione assurda perchè sono degli incapaci
+				if (codiceMagazzino.equals("E"))
+					codiceMagazzino = "E_LTC";
+				Magazzini magazzino = daoMagazzini.trovaDaCodificaCliente(codiceMagazzino);
+				if (magazzino == null) 
+					throw new RuntimeException("Il magazzino indicato non esiste. (Magazzino errato: " + codiceMagazzino + ", Riferimento carico: '" + riferimentoTestata + "'");
 				String stagione = parser.getStringa(91, 141);
 				int indexQta = 183;
 				int counter = 1;
@@ -56,8 +74,8 @@ public class DocumentiEntrataRighe {
 						riga.setCodUnicoArt(articolo.getIdUniArticolo());
 						riga.setIdArticolo(articolo.getIdArticolo());
 						riga.setIdPakiTesta(testata.getIdTestaPaki());
-						riga.setMagazzino(magazzino);
-						riga.setMagazzinoltc("PG1"); //Metto il default.
+						riga.setMagazzino(magazzino.getMagaCliente());
+						riga.setMagazzinoltc(magazzino.getCodiceMag());
 						riga.setStagcarico(stagione.length() > 10 ? stagione.substring(0, 10) : stagione); //Prendo solo i primi 10 caratteri.
 						riga.setNrDispo("");
 						riga.setNrOrdineFor(testata.getNrPaki());
@@ -116,10 +134,14 @@ public class DocumentiEntrataRighe {
 			//1 - dati generali, trovo il primo pakiarticolo non null e li prendo da li.
 			for (PakiArticolo riga : array) {
 				if (riga != null) {
+					//Recupero l'articolo per otterenere il codartold
+					Articoli prodotto = trovaArticolo(riga.getCodArtStr());
+					if (prodotto == null) throw new RuntimeException("Nessun articolo trovato per il codice articolo " + riga.getCodArtStr() + " nella riga di carico ID " + riga.getIdPakiArticolo());
 					datiGenarali.append("2"); //Fisso l'operazione a update
 					datiGenarali.append(utility.getFormattedString(riga.getNrOrdineFor(), 20));
 					datiGenarali.append(utility.getFormattedString(Integer.toString(riga.getRigaPacki()), 10));
-					datiGenarali.append(utility.getFormattedString(riga.getBarcodeCollo(), 52)); //E' salvato in questo campo.
+					//datiGenarali.append(utility.getFormattedString(riga.getBarcodeCollo(), 52)); //E' salvato in questo campo.
+					datiGenarali.append(utility.getFormattedString(prodotto.getCodArtOld(), 52)); //Lo prendo da qui perchè se fanno righe da inserimento non ce lo mettono.
 					datiGenarali.append(utility.getFormattedString(riga.getMagazzino(), 10));
 					datiGenarali.append(utility.getFormattedString(riga.getStagcarico(), 50));
 					datiGenarali.append(utility.getFormattedString("", 10)); //bagno - non mappato e non richiesto

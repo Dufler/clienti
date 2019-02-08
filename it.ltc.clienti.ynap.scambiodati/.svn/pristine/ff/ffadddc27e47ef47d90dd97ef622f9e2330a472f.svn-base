@@ -1,0 +1,788 @@
+package it.ltc.logic;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+
+import org.apache.log4j.Logger;
+
+import it.ltc.logica.database.configuration.Database;
+import it.ltc.logica.database.orm.TransactionManager;
+import it.ltc.model.db.AnagraficaOggetto;
+import it.ltc.model.db.Destinatario;
+import it.ltc.model.db.DettaglioOrdine;
+import it.ltc.model.db.Marchio;
+import it.ltc.model.db.MovimentoMagazzino;
+import it.ltc.model.db.Ordine;
+import it.ltc.model.db.SaldiMagazzino;
+import it.ltc.model.order.out.Invoice;
+import it.ltc.model.order.out.Item;
+import it.ltc.model.order.out.Items;
+import it.ltc.model.order.out.Order;
+import it.ltc.model.order.out.Orders;
+import it.ltc.model.order.out.Receiver;
+import it.ltc.model.order.out.Shipment;
+import it.ltc.model.order.out.SoldTo;
+import it.ltc.utility.mail.Email;
+import it.ltc.utility.mail.MailMan;
+import it.ltc.utility.miscellanea.string.StringUtility;
+
+public class ImportaOrdine {
+
+	private static final Logger logger = Logger.getLogger(ImportaOrdine.class);
+
+	private int progressivo;
+
+	private TransactionManager<AnagraficaOggetto> managerAnagrafica;
+	private TransactionManager<Destinatario> managerDestinatari;
+	private TransactionManager<Ordine> managerOrdini;
+	private TransactionManager<DettaglioOrdine> managerDettaglioOrdini;
+	private TransactionManager<MovimentoMagazzino> managerMovimentoMagazzino;
+	private TransactionManager<SaldiMagazzino> managerSaldiMagazzino;
+	private TransactionManager<Marchio> managerMarchi;
+
+	private List<Marchio> marchi;
+
+	private static ImportaOrdine instance;
+
+	private ImportaOrdine() {
+		// Setup necessari
+		progressivo = -1;
+		setupDB();
+	}
+
+	public static ImportaOrdine getInstance() {
+		if (instance == null)
+			instance = new ImportaOrdine();
+		return instance;
+	}
+
+	private void setupDB() {
+		managerAnagrafica = new TransactionManager<AnagraficaOggetto>(AnagraficaOggetto.class, Database.YNAP);
+		managerDestinatari = new TransactionManager<Destinatario>(Destinatario.class, Database.YNAP);
+		managerOrdini = new TransactionManager<Ordine>(Ordine.class, Database.YNAP);
+		managerDettaglioOrdini = new TransactionManager<DettaglioOrdine>(DettaglioOrdine.class, Database.YNAP);
+		managerMovimentoMagazzino = new TransactionManager<MovimentoMagazzino>(MovimentoMagazzino.class, Database.YNAP);
+		managerSaldiMagazzino = new TransactionManager<SaldiMagazzino>(SaldiMagazzino.class, Database.YNAP);
+		managerMarchi = new TransactionManager<Marchio>(Marchio.class, Database.YNAP);
+		marchi = new ArrayList<Marchio>();
+	}
+
+	private List<String> getFileNamesToImport() {
+		logger.info("Recupero la lista di files da importare");
+		GestoreSFTP gestore = GestoreSFTP.getInstance(GestoreSFTP.STRATEGY_ORDINI);
+		List<String> localCopyNames = gestore.getNomiFiles();
+		return localCopyNames;
+	}
+
+	private void creaPuntoDiRipristino() {
+		logger.info("creo un punto di ripristino nel DB.");
+		managerAnagrafica.createSavePoint();
+		managerDestinatari.createSavePoint();
+		managerOrdini.createSavePoint();
+		managerDettaglioOrdini.createSavePoint();
+		managerMovimentoMagazzino.createSavePoint();
+		managerSaldiMagazzino.createSavePoint();
+		managerMarchi.createSavePoint();
+	}
+
+	private boolean ripristinaDB() {
+		logger.info("avvio la procedura di ripristino del DB sull'ultimo punto di salvataggio.");
+		boolean ripristinoAnagrafica = managerAnagrafica.restoreLastSavePoint();
+		boolean ripristinoDestinatari = managerDestinatari.restoreLastSavePoint();
+		boolean ripristinoOrdini = managerOrdini.restoreLastSavePoint();
+		boolean ripristinoDettaglio = managerDettaglioOrdini.restoreLastSavePoint();
+		boolean ripristinoMovimento = managerMovimentoMagazzino.restoreLastSavePoint();
+		boolean ripristinoSaldi = managerSaldiMagazzino.restoreLastSavePoint();
+		boolean ripristinoMarchi = managerMarchi.restoreLastSavePoint();
+		boolean ripristino = ripristinoAnagrafica && ripristinoDestinatari && ripristinoOrdini && ripristinoDettaglio
+				&& ripristinoMovimento && ripristinoSaldi && ripristinoMarchi;
+		if (ripristino)
+			logger.info("DB ripristinato correttamente");
+		else
+			logger.error("errore durante la procedura di ripristino del DB.");
+		return ripristino;
+	}
+
+	private boolean commitDB() {
+		logger.info("Comincio la finalizzazione della scrittura sul DB.");
+		boolean commitAnagrafica = managerAnagrafica.commit();
+		boolean commitDestinatari = managerDestinatari.commit();
+		boolean commitOrdini = managerOrdini.commit();
+		boolean commitDettaglio = managerDettaglioOrdini.commit();
+		boolean commitMovimento = managerMovimentoMagazzino.commit();
+		boolean commitSaldi = managerSaldiMagazzino.commit();
+		boolean commitMarchi = managerMarchi.commit();
+		boolean commit = commitAnagrafica || commitDestinatari || commitOrdini || commitDettaglio || commitMovimento
+				|| commitSaldi || commitMarchi;
+		if (commit)
+			logger.info("Commit effettuato correttamente");
+		else
+			logger.error("Errore in scrittura nel DB");
+		return commit;
+	}
+
+	private boolean scriviDB(String nomeFile, Orders oggettiDaSpedire) {
+		boolean successo = true;
+		creaPuntoDiRipristino();
+		// Integer fileID = oggettiDaSpedire.getFileID();
+		List<Order> ordini = oggettiDaSpedire.getOrder();
+		Date oggi = new Date();
+		SimpleDateFormat formattaAnno = new SimpleDateFormat("yyyy");
+		String anno = formattaAnno.format(oggi);
+		anno = anno.substring(2);
+		StringUtility utility = new StringUtility('0', '0', true, true);
+		for (Order ordine : ordini) {
+			Ordine nuovoOrdine = new Ordine();
+			// Dati ordine
+			Date dataOrdine = ordine.getORDDate().toGregorianCalendar().getTime();
+			String numeroOrdine = ordine.getORDNum();
+			String noteOrdine = ordine.getORDNote();
+			String numeroLista = anno + utility.getFormattedString(numeroOrdine, 14, '0');
+			int prioritàOrdine = ordine.getORDRef();
+			int tipoOrdine = ordine.getORDType();
+			// Dati destinatario
+			Receiver destinatario = ordine.getReceiver();
+			int idDestinatarioNumerico = destinatario.getRECID();
+			String idDestinatario = Integer.toString(idDestinatarioNumerico);
+			String nomeDestinatario = destinatario.getRECName();
+			String noteDestinatario = destinatario.getRECMess();
+			String indirizzoDestinatario = destinatario.getRECAddr1() + destinatario.getRECAddr2();
+			String cittàDestinatario = destinatario.getRECCity();
+			String codiceISODestinatario = destinatario.getRECCountryCode();
+			String nazioneDestinatario = destinatario.getRECCountryName();
+			String capDestinatario = destinatario.getRECZIP();
+			String provinciaDestinatario = destinatario.getRECProv();
+			String telefonoDestinatario = destinatario.getRECPhone();
+			String faxDestinatario = destinatario.getRECPhone2();
+			String emailDestinatario = destinatario.getRECEmail();
+			// Dati spedizione
+			Shipment spedizione = ordine.getShipment();
+			int idCorriere = spedizione.getSHIPCourierID();
+			//int idPartenza = spedizione.getSHIPFromID(); //NON USATO
+			//int idDestinazione = spedizione.getSHIPToID(); //NON USATO
+			SimpleDateFormat dateParser = new SimpleDateFormat("yyyy-MM-dd");
+			Date dataConsegna = null;
+			try {
+				String dataPrivistaConsegna = spedizione.getSHIPDeliveryDate();
+				if (dataPrivistaConsegna == null || dataPrivistaConsegna.isEmpty())
+					dataPrivistaConsegna = "1900-01-01";
+				dataConsegna = dateParser.parse(dataPrivistaConsegna);
+			} catch (ParseException e) {
+				logger.error(e);
+				e.printStackTrace();
+			}
+			// Dati fatturazione
+			Invoice fatturazione = ordine.getInvoice();
+			//double contrassegno = fatturazione.getINVCODCharge().doubleValue(); //NON USATO
+			// Dati destinatario contabile
+			SoldTo destinatarioContabile = fatturazione.getSoldTo();
+			// String idDestinatarioContabile = "9" + idDestinatario;
+			String idDestinatarioContabile = "C" + idDestinatario;
+			int idDestinatarioContabileNumerico = Integer.parseInt(idDestinatario);
+			String ragioneSocialeDestinatarioContabile = destinatarioContabile.getSTName();
+			String indirizzoDestinatarioContabile = destinatarioContabile.getSTAddr1()
+					+ destinatarioContabile.getSTAddr2();
+			String cittàDestinatarioContabile = destinatarioContabile.getSTCity();
+			String codiceISODestinatarioContabile = destinatarioContabile.getSTCountryCode();
+			String provinciaDestinatarioContabile = destinatarioContabile.getSTProv();
+			String capDestinatarioContabile = destinatarioContabile.getSTZIP();
+			String telefonoDestinatarioContabile = destinatarioContabile.getSTPhone();
+			String emailDestinarioContabile = destinatarioContabile.getSTEmail();
+			// Scrivo i dati recuperati sul destinatario contabile
+			Destinatario contabile = new Destinatario();
+			contabile.setCodiceDestinatario(idDestinatarioContabile);
+			contabile.setCodiceDestinatarioNumerico(idDestinatarioContabileNumerico);
+			contabile.setTipo("CON");
+			contabile.setCap(capDestinatarioContabile);
+			contabile.setCodiceISONazione(codiceISODestinatarioContabile);
+			contabile.setEmail(emailDestinarioContabile);
+			contabile.setIndirizzo(indirizzoDestinatarioContabile);
+			contabile.setLocalità(cittàDestinatarioContabile);
+			contabile.setNazione(codiceISODestinatarioContabile);
+			contabile.setFax(telefonoDestinatarioContabile);
+			contabile.setProvincia(provinciaDestinatarioContabile);
+			contabile.setRagioneSociale1(ragioneSocialeDestinatarioContabile);
+			contabile.setRagioneSociale2(" ");
+			contabile.setCodiceContabile(" ");
+			contabile.setTelefono(telefonoDestinatarioContabile);
+			int idContabileDB = managerDestinatari.insertAndReturnID(contabile);
+			// Scrivo i dati recuperati sul destinatario della merce
+			Destinatario destinatarioMerce = new Destinatario();
+			destinatarioMerce.setCap(capDestinatario);
+			destinatarioMerce.setCodiceContabile(idDestinatarioContabile);
+			destinatarioMerce.setCodiceDestinatario(idDestinatario);
+			destinatarioMerce.setCodiceDestinatarioNumerico(idDestinatarioNumerico);
+			destinatarioMerce.setCodiceISONazione(codiceISODestinatario);
+			destinatarioMerce.setEmail(emailDestinatario);
+			destinatarioMerce.setFax(faxDestinatario);
+			destinatarioMerce.setIdContabile(idContabileDB);
+			destinatarioMerce.setIndirizzo(indirizzoDestinatario);
+			destinatarioMerce.setLocalità(cittàDestinatario);
+			destinatarioMerce.setNazione(nazioneDestinatario);
+			destinatarioMerce.setNote(noteDestinatario);
+			destinatarioMerce.setProvincia(provinciaDestinatario);
+			destinatarioMerce.setRagioneSociale1(nomeDestinatario);
+			destinatarioMerce.setRagioneSociale2("");
+			destinatarioMerce.setTelefono(telefonoDestinatario);
+			destinatarioMerce.setTipo("DES");
+			int idDestinatarioDB = managerDestinatari.insertAndReturnID(destinatarioMerce);
+			// Oggetti in lista
+			Items oggetti = ordine.getItems();
+			List<Item> listaOggetti = oggetti.getItem();
+			// Scrivo i dati recuperati sull'ordine
+			nuovoOrdine.setCodiceCliente(idDestinatario);
+			nuovoOrdine.setCodiceCorriere(Integer.toString(idCorriere));
+			nuovoOrdine.setCorriere(Integer.toString(idCorriere));
+			nuovoOrdine.setDataConsegna(dataConsegna);
+			nuovoOrdine.setDataOrdine(dataOrdine);
+			nuovoOrdine.setIdDestinatario(idDestinatarioDB);
+			// nuovoOrdine.setNomeFile(Integer.toString(fileID));
+			nuovoOrdine.setNomeFile(nomeFile);
+			nuovoOrdine.setNote(noteOrdine);
+			nuovoOrdine.setNumeroLista(numeroLista);
+			nuovoOrdine.setNumeroListaNumerico(getProgressivoNumeroListaArrivato());
+			nuovoOrdine.setNumeroOrdine(numeroOrdine);
+			nuovoOrdine.setQuantitàTotale(listaOggetti.size());
+			nuovoOrdine.setRiferimentoOrdineCliente(numeroOrdine);
+			nuovoOrdine.setRaggruppamentoOrdini(numeroLista);
+			nuovoOrdine.setPriorità(prioritàOrdine);
+			nuovoOrdine.setTipoOrdine(tipoOrdine);
+			nuovoOrdine.setStato("IMPO");
+			boolean inserimento = managerOrdini.insert(nuovoOrdine);
+			if (successo)
+				successo = inserimento;
+			else
+				logger.error("L'inserimento dell'ordine " + nuovoOrdine.getNumeroLista() + " è fallito");
+			// Per ogni oggetto presente nella lista aggiorno l'anagrafica già
+			// esistente e lo inserisco nella lista di picking
+			// Se non è un oggetto già presente sollevo un'eccezione.
+			if (successo)
+			for (Item oggetto : listaOggetti) {
+				// Recupero i dati sull'oggetto
+				//int rigaOrdine = oggetto.getRow(); //NON USATO
+				int rigaOrdineUnivoca = oggetto.getITRMMID();
+				String codiceRFID = oggetto.getITCodiceMatricola();
+				String descrizione = oggetto.getITArtSti();
+				String tagliaColore = oggetto.getITColSize();
+				//String composizioneMateriali = oggetto.getITComp(); //NON USATO
+				//String sesso = oggetto.getITSex(); //NON USATO
+				String descrizioneDogana = oggetto.getITCustoms();
+				String marchio = oggetto.getITMarchio();
+				//String categoria = oggetto.getITMicro(); //NON USATO
+				String colore = oggetto.getITColor();
+				String taglia = oggetto.getITSize();
+				String noteOggetto = oggetto.getITNote();
+				// Recupero l'anagrafica già presente e la aggiorno
+				String codiceUnivocoArticolo = "";
+				AnagraficaOggetto filtro = new AnagraficaOggetto();
+				filtro.setCodiceArticolo(codiceRFID);
+				AnagraficaOggetto daAggiornare = managerAnagrafica.getEntity(filtro);
+				if (daAggiornare != null) {
+					// Recupero l'ID univoco dell'articolo
+					codiceUnivocoArticolo = daAggiornare.getIdUnivocoArticolo();
+					// Aggiorno tutti i campi possibili
+					daAggiornare.setDescrizioneAggiuntiva(descrizioneDogana);
+					daAggiornare.setDescrizione(descrizione);
+					daAggiornare.setModello(codiceRFID);
+					daAggiornare.setMarchio(getMarchio(marchio));
+					if (taglia != null && !taglia.isEmpty()) {
+						daAggiornare.setTaglia(taglia);
+					} else {
+						int index = tagliaColore.lastIndexOf(',');
+						taglia = tagliaColore.substring(index + 1);
+						daAggiornare.setTaglia(taglia);
+					}
+					if (colore != null && !colore.isEmpty()) {
+						daAggiornare.setColore(colore);
+					} else {
+						int index = tagliaColore.lastIndexOf(',');
+						colore = tagliaColore.substring(0, index);
+						daAggiornare.setColore(colore);
+					}
+					managerAnagrafica.update(daAggiornare);
+				} else {
+					logger.error("non sono riuscito ad aggiornare l'anagrafica per il tag: " + codiceRFID);
+				}
+				// Inserisco l'oggetto
+				DettaglioOrdine daInserire = new DettaglioOrdine();
+				daInserire.setBarcode(codiceRFID);
+				daInserire.setBarcodeEAN(codiceRFID);
+				daInserire.setBarcodeUPC(codiceRFID);
+				daInserire.setCodiceCliente(idDestinatario);
+				daInserire.setColore(colore);
+				daInserire.setDataOrdine(dataOrdine);
+				daInserire.setDescrizione(descrizione);
+				daInserire.setIdDestinatario(idDestinatarioDB);
+				daInserire.setIdUnivocoArticolo(codiceUnivocoArticolo);
+				daInserire.setNote(noteOggetto);
+				daInserire.setNumeroLista(numeroLista);
+				daInserire.setNumeroOrdine(numeroOrdine);
+				// daInserire.setNumeroRigaOrdine(rigaOrdine); questo valore o
+				// l'univoco?
+				daInserire.setNumeroRigaOrdine(rigaOrdineUnivoca);
+				daInserire.setRaggruppamentoStampe(numeroLista);
+				daInserire.setSerialeRFID(codiceRFID);
+				daInserire.setTaglia(taglia);
+				daInserire.setQuantitàDaImballare(0);
+				daInserire.setQuantitàDaSpedire(1);
+				daInserire.setQuantitàDaUbicare(1);
+				boolean inserimentoDettaglio = managerDettaglioOrdini.insert(daInserire);
+				if (successo)
+					successo = inserimentoDettaglio;
+				else
+					logger.error("fallimento nell'inserimento di righi ordine, tag: " + daInserire.getSerialeRFID());
+				// Apparentemente non è utilizzato
+				// ITSoldTo acquirente = oggetto.getITSoldTo();
+				// Aggiorno i saldi di magazzino
+				SaldiMagazzino filtroSaldi = new SaldiMagazzino();
+				filtroSaldi.setIdUnivocoArticolo(codiceUnivocoArticolo);
+				SaldiMagazzino saldo = managerSaldiMagazzino.getEntity(filtroSaldi);
+				if (saldo != null) {
+					saldo.setImpegnato(1);
+					saldo.setDisponibile(0);
+					// saldo.setEsistenza(1);
+					managerSaldiMagazzino.update(saldo);
+				} else {
+					logger.error("nessun saldo corrispondente trovato per il codice articolo: " + codiceUnivocoArticolo);
+				}
+				// Aggiorno i movimenti di magazzino
+				MovimentoMagazzino movimento = new MovimentoMagazzino();
+				movimento.setCancellato("NO");
+				movimento.setCategoriaDocumento("O");
+				movimento.setCausale("IOS");
+				movimento.setCollo("0000000000");
+				movimento.setDataMovimento(oggi);
+				movimento.setDataOrdine(dataOrdine);
+				movimento.setDisponibile(0);
+				movimento.setEsistenza(1);
+				movimento.setIdUnivocoArticolo(codiceUnivocoArticolo);
+				movimento.setImpegnato(1);
+				movimento.setNoteDocumento(noteOrdine);
+				movimento.setNumeroLista(numeroLista);
+				SimpleDateFormat ora = new SimpleDateFormat("HHmm");
+				movimento.setOraMovimento(Integer.parseInt(ora.format(oggi)));
+				movimento.setSegno("+");
+				movimento.setSegnoDisponibile("-");
+				movimento.setSegnoEsistenza("N");
+				movimento.setSegnoImpegnato("+");
+				movimento.setTipo("IP");
+				movimento.setTipoDocumento("ORD");
+				movimento.setTotali("NO");
+				movimento.setTrasmesso("NO");
+				movimento.setUtente("SRV");
+				boolean inserimentoMovimenti = managerMovimentoMagazzino.insert(movimento);
+				if (successo)
+					successo = inserimentoMovimenti;
+				else
+					logger.error("fallimento nell'inseirmento dei movimenti di magazzino per l'articolo: "
+							+ movimento.getIdUnivocoArticolo());
+			}
+		}
+		return successo;
+	}
+
+	private Integer getProgressivoNumeroListaArrivato() {
+		if (progressivo == -1) {
+			List<Ordine> listaOrdini = managerOrdini.getEntities();
+			progressivo = 1;
+			for (Ordine ordine : listaOrdini) {
+				if (progressivo < ordine.getNumeroListaNumerico())
+					progressivo = ordine.getNumeroListaNumerico();
+			}
+			progressivo += 1;
+		} else {
+			progressivo += 1;
+		}
+		return progressivo;
+	}
+
+	private Integer getMarchio(String nomeMarchio) {
+		nomeMarchio = nomeMarchio.toUpperCase();
+		int id = -1;
+		if (marchi.isEmpty()) {
+			marchi = managerMarchi.getEntities();
+		}
+		Marchio trovato = null;
+		for (Marchio marchio : marchi) {
+			if (nomeMarchio.equals(marchio.getNome())) {
+				trovato = marchio;
+				break;
+			}
+		}
+		if (trovato == null) {
+			trovato = new Marchio();
+			trovato.setNome(nomeMarchio);
+			int codice = marchi.size() + 1;
+			trovato.setCodice(codice);
+			int idDB = managerMarchi.insertAndReturnID(trovato);
+			if (idDB > 0) {
+				trovato.setId(idDB);
+				marchi.add(trovato);
+				id = codice;
+			}
+		} else {
+			id = trovato.getCodice();
+		}
+		return id;
+	}
+
+//	private boolean segnaComeImportati() {
+//		boolean importazione = false;
+//		logger.info("segno tutti gli ordini inseriti come importati.");
+//		Ordine filtro = new Ordine();
+//		filtro.setStato("INSE");
+//		List<Ordine> corrispondenze = managerOrdini.getEntities(filtro);
+//		for (Ordine ordine : corrispondenze) {
+//			ordine.setStato("IMPO");
+//			importazione = managerOrdini.update(ordine);
+//			if (!importazione)
+//				logger.warn("Impossibile aggiornare lo stato dell'ordine '" + ordine.getNumeroLista() + "'");
+//		}
+//		return importazione;
+//	}
+
+	public void importaOrdini() {
+		List<String> nomiFile = getFileNamesToImport();
+		logger.info("sono stati trovati " + nomiFile.size() + " files da importare.");
+		int importati = 0;
+		int conErrori = 0;
+		for (String nomeFile : nomiFile) {
+			try {
+				File file = new File(nomeFile);
+				JAXBContext jaxbContext = JAXBContext.newInstance(Orders.class);
+				Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+				Orders oggettiDaSpedire = (Orders) jaxbUnmarshaller.unmarshal(file);
+				boolean successo = scriviDB(nomeFile, oggettiDaSpedire);
+				if (successo) {
+					GestoreSFTP gestore = GestoreSFTP.getInstance(GestoreSFTP.STRATEGY_ORDINI);
+					boolean aggiornamentoStato = gestore.aggiornaFileSentinella(nomeFile);
+					if (!aggiornamentoStato)
+						logger.error("Impossibile aggiornare il file sentinella: " + nomeFile);
+					boolean commit = commitDB();
+					if (commit) {
+						creaPuntoDiRipristino();
+						importati += 1;
+					} else {
+						conErrori += 1;
+					}
+				} else {
+					conErrori += 1;
+					ripristinaDB();
+				}
+			} catch (JAXBException e) {
+				logger.error(e);
+				e.printStackTrace();
+			}
+		}
+		//Metodo inutile su SQL Server, il commit da parte del DB avviene troppo tardi.
+		//Gli ordini vengono ora già segnati in stato IMPO invece di INSE.
+		//segnaComeImportati();
+		inviaResoconto(importati, conErrori);
+	}
+
+	private void inviaResoconto(int importati, int conErrori) {
+		if (importati != 0 || conErrori != 0) {
+			String oggettoMail = "Riepilogo importazione degli ordini YNAP";
+			String messaggio = "Sono stati importati correttemente " + importati + " files.";
+			if (conErrori > 0)
+				messaggio += " " + conErrori
+						+ " non sono stati importati a causa di errori, controllare il file di log.";
+			Email mail = new Email(oggettoMail, messaggio);
+			List<String> destinatariDaAvvisare = new ArrayList<String>();
+			destinatariDaAvvisare.add("barbara@ltc-logistics.it");
+			destinatariDaAvvisare.add("support@ltc-logistics.it");
+			String emailMittente = "sysinfo@ltc-logistics.it";
+			String passwordMittente = "ltc10183";
+			MailMan postino = new MailMan(emailMittente, passwordMittente, true);
+			boolean invio = postino.invia(destinatariDaAvvisare, mail);
+			if (invio)
+				logger.info("mail di riepilogo inviata con successo.");
+			else
+				logger.error("non è stato possibile inviare la mail di riepilogo");
+		}
+	}
+	
+	public void aggiornaDescrizione() throws Exception {
+		int modificati = 0;
+		List<String> oggetti = new LinkedList<String>();
+		FileReader stream = new FileReader("C:/Users/Damiano/Desktop/SS15.csv");
+		BufferedReader reader = new BufferedReader(stream);
+		String line = reader.readLine();
+		while (line != null) {
+			oggetti.add(line);
+			line = reader.readLine();
+		}
+		reader.close();
+		for (String oggetto : oggetti) {
+			// Recupero i dati sull'oggetto
+			String[] dati = oggetto.split(";");
+			String codiceRFID = dati[3];
+			String marchio = dati[5];
+			String categoria = dati[7];
+			String colore = dati[10];
+			String taglia = dati[15];
+			String descrizione = marchio + " " + categoria + " " + colore + " " + taglia;
+//			DettaglioOrdine daModificare = new DettaglioOrdine();
+//			daModificare.setDescrizione(descrizione);
+//			DettaglioOrdine condizioni = new DettaglioOrdine();
+//			condizioni.setNumeroLista("1700000020170308");
+//			condizioni.setSerialeRFID(codiceRFID);
+//			modificati += managerDettaglioOrdini.update(daModificare, condizioni);
+			AnagraficaOggetto filtro = new AnagraficaOggetto();
+			filtro.setCodiceArticolo(codiceRFID);
+			AnagraficaOggetto daAggiornare = managerAnagrafica.getEntity(filtro, true);
+			if (daAggiornare != null) {
+				daAggiornare.setDescrizione(descrizione);
+				boolean update = managerAnagrafica.update(daAggiornare);
+				if (update)
+					modificati += 1;
+			}
+		}
+		managerDettaglioOrdini.commit();
+		System.out.println("Record modificati: " + modificati);
+	}
+
+	public void importaOrdiniManualmente() throws Exception {
+		StringUtility utility = new StringUtility('0', '0', true, true);
+		int oggettiInseriti = 0;
+		int movimentiInseriti = 0;
+		int saldiAggiornati = 0;
+		List<String> oggetti = new LinkedList<String>();
+		FileReader stream = new FileReader("C:/Users/Damiano/Desktop/SS15.csv");
+		BufferedReader reader = new BufferedReader(stream);
+		String line = reader.readLine();
+		while (line != null) {
+			oggetti.add(line);
+			line = reader.readLine();
+		}
+		System.out.println("Sarà per essere importato un ordine con " + oggetti.size() + " articoli.");
+		Ordine nuovoOrdine = new Ordine();
+		// Dati ordine
+		Date dataOrdine = new Date();
+		SimpleDateFormat formattaAnno = new SimpleDateFormat("yyyyMMdd");
+		String dataOrdineStringa = formattaAnno.format(dataOrdine);
+		String anno = dataOrdineStringa.substring(2, 4);
+		String numeroOrdine = dataOrdineStringa;
+		String nomeFile = "integrazione campionario SS15 regular.xls";
+		String noteOrdine = "Showroom TJX SS15 Regular";
+		String numeroLista = anno + utility.getFormattedString(numeroOrdine, 14, '0');
+		int prioritàOrdine = 1;
+		int tipoOrdine = 1;
+		// Dati destinatario
+		String idDestinatario = dataOrdineStringa;
+		String nomeDestinatario = "Showroom Acqualagna";
+		String noteDestinatario = noteOrdine;
+		String indirizzoDestinatario = "Showroom";
+		String cittàDestinatario = "Acqualagna";
+		String codiceISODestinatario = "IT";
+		String nazioneDestinatario = "IT";
+		String capDestinatario = "61041";
+		String provinciaDestinatario = "PU";
+		String telefonoDestinatario = "0721.700089";
+		String faxDestinatario = "0721.700097";
+		String emailDestinatario = "barbara@ltc-logistics.it";
+		// Dati destinatario contabile
+		String idDestinatarioContabile = "C" + idDestinatario;
+		int idDestinatarioContabileNumerico = Integer.parseInt(idDestinatario);
+		String ragioneSocialeDestinatarioContabile = "L & T.C. srl Filiale Marche";
+		String indirizzoDestinatarioContabile = "Loc. Casenuove, 2";
+		String cittàDestinatarioContabile = "Acqualagna";
+		String codiceISODestinatarioContabile = "IT";
+		String provinciaDestinatarioContabile = "PU";
+		String capDestinatarioContabile = "61041";
+		String telefonoDestinatarioContabile = "0721.700089";
+		String emailDestinarioContabile = "barbara@ltc-logistics.it";
+		// Scrivo i dati recuperati sul destinatario contabile
+		Destinatario contabile = new Destinatario();
+		contabile.setCodiceDestinatario(idDestinatarioContabile);
+		contabile.setCodiceDestinatarioNumerico(idDestinatarioContabileNumerico);
+		contabile.setTipo("CON");
+		contabile.setCap(capDestinatarioContabile);
+		contabile.setCodiceISONazione(codiceISODestinatarioContabile);
+		contabile.setEmail(emailDestinarioContabile);
+		contabile.setIndirizzo(indirizzoDestinatarioContabile);
+		contabile.setLocalità(cittàDestinatarioContabile);
+		contabile.setNazione(codiceISODestinatarioContabile);
+		contabile.setFax(telefonoDestinatarioContabile);
+		contabile.setProvincia(provinciaDestinatarioContabile);
+		contabile.setRagioneSociale1(ragioneSocialeDestinatarioContabile);
+		contabile.setRagioneSociale2(" ");
+		contabile.setCodiceContabile(" ");
+		contabile.setTelefono(telefonoDestinatarioContabile);
+		int idContabileDB = managerDestinatari.insertAndReturnID(contabile);
+		// Scrivo i dati recuperati sul destinatario della merce
+		Destinatario destinatarioMerce = new Destinatario();
+		destinatarioMerce.setCap(capDestinatario);
+		destinatarioMerce.setCodiceContabile(idDestinatarioContabile);
+		destinatarioMerce.setCodiceDestinatario(idDestinatario);
+		destinatarioMerce.setCodiceDestinatarioNumerico(idDestinatarioContabileNumerico);
+		destinatarioMerce.setCodiceISONazione(codiceISODestinatario);
+		destinatarioMerce.setEmail(emailDestinatario);
+		destinatarioMerce.setFax(faxDestinatario);
+		destinatarioMerce.setIdContabile(idContabileDB);
+		destinatarioMerce.setIndirizzo(indirizzoDestinatario);
+		destinatarioMerce.setLocalità(cittàDestinatario);
+		destinatarioMerce.setNazione(nazioneDestinatario);
+		destinatarioMerce.setNote(noteDestinatario);
+		destinatarioMerce.setProvincia(provinciaDestinatario);
+		destinatarioMerce.setRagioneSociale1(nomeDestinatario);
+		destinatarioMerce.setRagioneSociale2("");
+		destinatarioMerce.setTelefono(telefonoDestinatario);
+		destinatarioMerce.setTipo("DES");
+		int idDestinatarioDB = managerDestinatari.insertAndReturnID(destinatarioMerce);
+		// Scrivo i dati recuperati sull'ordine
+		nuovoOrdine.setCodiceCliente(idDestinatario);
+		nuovoOrdine.setCodiceCorriere("NA");
+		nuovoOrdine.setCorriere("NA");
+		nuovoOrdine.setDataConsegna(dataOrdine);
+		nuovoOrdine.setDataOrdine(dataOrdine);
+		nuovoOrdine.setIdDestinatario(idDestinatarioDB);
+		// nuovoOrdine.setNomeFile(Integer.toString(fileID));
+		nuovoOrdine.setNomeFile(nomeFile);
+		nuovoOrdine.setNote(noteOrdine);
+		nuovoOrdine.setNumeroLista(numeroLista);
+		nuovoOrdine.setNumeroListaNumerico(getProgressivoNumeroListaArrivato());
+		nuovoOrdine.setNumeroOrdine(numeroOrdine);
+		nuovoOrdine.setQuantitàTotale(oggetti.size());
+		nuovoOrdine.setRiferimentoOrdineCliente(numeroOrdine);
+		nuovoOrdine.setRaggruppamentoOrdini(numeroLista);
+		nuovoOrdine.setPriorità(prioritàOrdine);
+		nuovoOrdine.setTipoOrdine(tipoOrdine);
+		nuovoOrdine.setStato("INSE");
+		managerOrdini.insert(nuovoOrdine);
+		int rigaOrdine = 0;
+		for (String oggetto : oggetti) {
+			rigaOrdine += 1;
+			// Recupero i dati sull'oggetto
+			String[] dati = oggetto.split(";");
+			String codiceRFID = dati[3];
+			String descrizione = dati[12];
+			if (descrizione.length() > 40)
+				descrizione = descrizione.substring(0, 40);
+			String tagliaColore = dati[15];
+			//String composizioneMateriali = dati[11]; //NON USATO
+			//String sesso = dati[9]; //NON USATO
+			String descrizioneDogana = dati[12];
+			String marchio = dati[5];
+			// String categoria = dati[7]; //NON USATO
+			String colore = dati[10];
+			String taglia = dati[15];
+			String noteOggetto = "";
+			// Recupero l'anagrafica già presente e la aggiorno
+			String codiceUnivocoArticolo = "";
+			AnagraficaOggetto filtro = new AnagraficaOggetto();
+			filtro.setCodiceArticolo(codiceRFID);
+			AnagraficaOggetto daAggiornare = managerAnagrafica.getEntity(filtro);
+			if (daAggiornare != null) {
+				// Recupero l'ID univoco dell'articolo
+				codiceUnivocoArticolo = daAggiornare.getIdUnivocoArticolo();
+				// Aggiorno tutti i campi possibili
+				daAggiornare.setDescrizioneAggiuntiva(descrizioneDogana);
+				daAggiornare.setDescrizione(descrizione);
+				daAggiornare.setModello(codiceRFID);
+				daAggiornare.setMarchio(getMarchio(marchio));
+				if (taglia != null && !taglia.isEmpty()) {
+					daAggiornare.setTaglia(taglia);
+				} else {
+					int index = tagliaColore.lastIndexOf(',');
+					taglia = tagliaColore.substring(index + 1);
+					daAggiornare.setTaglia(taglia);
+				}
+				if (colore != null && !colore.isEmpty()) {
+					daAggiornare.setColore(colore);
+				} else {
+					int index = tagliaColore.lastIndexOf(',');
+					colore = tagliaColore.substring(0, index);
+					daAggiornare.setColore(colore);
+				}
+				managerAnagrafica.update(daAggiornare);
+			} else {
+				logger.error("non sono riuscito ad aggiornare l'anagrafica per il tag: " + codiceRFID);
+			}
+			// Inserisco l'oggetto
+			DettaglioOrdine daInserire = new DettaglioOrdine();
+			daInserire.setBarcode(codiceRFID);
+			daInserire.setBarcodeEAN(codiceRFID);
+			daInserire.setBarcodeUPC(codiceRFID);
+			daInserire.setCodiceCliente(idDestinatario);
+			daInserire.setColore(colore);
+			daInserire.setDataOrdine(dataOrdine);
+			daInserire.setDescrizione(descrizione);
+			daInserire.setIdDestinatario(idDestinatarioDB);
+			daInserire.setIdUnivocoArticolo(codiceUnivocoArticolo);
+			daInserire.setNote(noteOggetto);
+			daInserire.setNumeroLista(numeroLista);
+			daInserire.setNumeroOrdine(numeroOrdine);
+			// daInserire.setNumeroRigaOrdine(rigaOrdine); questo valore o
+			// l'univoco?
+			daInserire.setNumeroRigaOrdine(rigaOrdine);
+			daInserire.setRaggruppamentoStampe(numeroLista);
+			daInserire.setSerialeRFID(codiceRFID);
+			daInserire.setTaglia(taglia);
+			daInserire.setQuantitàDaImballare(0);
+			daInserire.setQuantitàDaSpedire(1);
+			daInserire.setQuantitàDaUbicare(1);
+			boolean inserimentoDettaglio = managerDettaglioOrdini.insert(daInserire);
+			if (inserimentoDettaglio)
+				oggettiInseriti += 1;
+			// Aggiorno i saldi di magazzino
+			if (codiceUnivocoArticolo != null && !codiceUnivocoArticolo.isEmpty()) {
+				SaldiMagazzino filtroSaldi = new SaldiMagazzino();
+				filtroSaldi.setIdUnivocoArticolo(codiceUnivocoArticolo);
+				SaldiMagazzino saldo = managerSaldiMagazzino.getEntity(filtroSaldi);
+				if (saldo != null) {
+					saldo.setImpegnato(1);
+					saldo.setDisponibile(0);
+					// saldo.setEsistenza(1);
+					boolean aggiornamento = managerSaldiMagazzino.update(saldo);
+					if (aggiornamento)
+						saldiAggiornati += 1;
+				} else {
+					logger.error("nessun saldo corrispondente trovato per il codice articolo: " + codiceUnivocoArticolo);
+				}
+			}
+			// Aggiorno i movimenti di magazzino
+			MovimentoMagazzino movimento = new MovimentoMagazzino();
+			movimento.setCancellato("NO");
+			movimento.setCategoriaDocumento("O");
+			movimento.setCausale("IOS");
+			movimento.setCollo("0000000000");
+			movimento.setDataMovimento(dataOrdine);
+			movimento.setDataOrdine(dataOrdine);
+			movimento.setDisponibile(0);
+			movimento.setEsistenza(1);
+			movimento.setIdUnivocoArticolo(codiceUnivocoArticolo);
+			movimento.setImpegnato(1);
+			movimento.setNoteDocumento(noteOrdine);
+			movimento.setNumeroLista(numeroLista);
+			SimpleDateFormat ora = new SimpleDateFormat("HHmm");
+			movimento.setOraMovimento(Integer.parseInt(ora.format(dataOrdine)));
+			movimento.setSegno("+");
+			movimento.setSegnoDisponibile("-");
+			movimento.setSegnoEsistenza("N");
+			movimento.setSegnoImpegnato("+");
+			movimento.setTipo("IP");
+			movimento.setTipoDocumento("ORD");
+			movimento.setTotali("NO");
+			movimento.setTrasmesso("NO");
+			movimento.setUtente("SRV");
+			boolean inserimentoMovimenti = managerMovimentoMagazzino.insert(movimento);
+			if (inserimentoMovimenti)
+				movimentiInseriti += 1;
+		}
+		commitDB();
+		System.out.println("Riepilogo inserimento. articoli: " + oggettiInseriti + ", movimenti: " + movimentiInseriti + ", saldi: " + saldiAggiornati + ", totale iniziali: " + oggetti.size());
+	}
+
+}

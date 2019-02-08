@@ -1,0 +1,267 @@
+package it.ltc.logic;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+
+import org.apache.log4j.Logger;
+
+import it.ltc.logica.database.configuration.Database;
+import it.ltc.logica.database.orm.EntityManager;
+import it.ltc.model.db.AnagraficaOggetto;
+import it.ltc.model.db.BarcodeOggetto;
+import it.ltc.model.db.PackingList;
+import it.ltc.model.db.PackingListDettaglio;
+import it.ltc.model.item.out.Item;
+import it.ltc.model.item.out.Mov;
+import it.ltc.model.item.out.Movs;
+import it.ltc.utility.mail.Email;
+import it.ltc.utility.mail.MailMan;
+
+public class ImportaListaCarico {
+
+	private static final Logger logger = Logger.getLogger(ImportaListaCarico.class);
+
+	private EntityManager<PackingList> managerPackingList;
+	private EntityManager<PackingListDettaglio> managerDettagli;
+	private EntityManager<AnagraficaOggetto> managerAnagrafica;
+	private EntityManager<BarcodeOggetto> managerBarcode;
+
+	private static ImportaListaCarico instance;
+
+	private SimpleDateFormat formatter;
+	private Date now;
+	private boolean logDettagliato;
+
+	public static ImportaListaCarico getInstance() {
+		if (instance == null)
+			instance = new ImportaListaCarico();
+		return instance;
+	}
+
+	private ImportaListaCarico() {
+		setupDB();
+		formatter = new SimpleDateFormat("yyyyMMdd");
+	}
+
+	private void setupDB() {
+		managerPackingList = new EntityManager<PackingList>(PackingList.class, Database.YNAP);
+		managerDettagli = new EntityManager<PackingListDettaglio>(PackingListDettaglio.class, Database.YNAP);
+		managerAnagrafica = new EntityManager<AnagraficaOggetto>(AnagraficaOggetto.class, Database.YNAP);
+		managerBarcode = new EntityManager<BarcodeOggetto>(BarcodeOggetto.class, Database.YNAP);
+		logDettagliato = true;
+	}
+
+	public void elaboraXMLRicevuti() {
+		logger.info("Avvio la procedura di importazione degli XML del carico in arrivo.");
+		now = new Date();
+		List<String> fileNames = getFileNamesToImport();
+		int fileImportati = 0;
+		for (String fileName : fileNames) {
+			try {
+				// Per ognuno degli xml recuperati ne leggo il contenuto
+				logger.info("Procedo con: " + fileName);
+				File file = new File(fileName);
+				JAXBContext jaxbContext = JAXBContext.newInstance(Movs.class);
+				Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+				Movs oggettiInArrivo = (Movs) jaxbUnmarshaller.unmarshal(file);
+				// Log del contenuto del file
+				stampa(oggettiInArrivo);
+				// Scrittura del file
+				Mov listaOggettiInArrivo = oggettiInArrivo.getMov().get(0);
+				boolean successo = scriviDB(listaOggettiInArrivo);
+				if (successo) {
+					fileImportati += 1;
+					aggiornaFileSentinella(fileName);
+					logger.info("File " + fileName + " importato correttamente.");
+				} else {
+					logger.error("File " + fileName + " non è stato importato.");
+				}
+			} catch (JAXBException e) {
+				logger.error(e);
+				e.printStackTrace();
+			}
+		}
+		int fileConErrori = fileNames.size() - fileImportati;
+		if (fileImportati > 0 || fileConErrori > 0) {
+			String messaggioDiRiepilogo = "Sono stati importati correttemente " + fileImportati + " files.";
+			if (fileConErrori > 0)
+				messaggioDiRiepilogo += " " + fileConErrori
+						+ " non sono stati importati a causa di errori, controllare il file di log.";
+			logger.info(messaggioDiRiepilogo);
+			inviaMessaggioDiRiepilogo(messaggioDiRiepilogo);
+		}
+	}
+
+	private void inviaMessaggioDiRiepilogo(String messaggio) {
+		String oggettoMail = "Riepilogo importazione del carico YNAP";
+		Email mail = new Email(oggettoMail, messaggio);
+		List<String> destinatariDaAvvisare = new ArrayList<String>();
+		destinatariDaAvvisare.add("barbara@ltc-logistics.it");
+		destinatariDaAvvisare.add("support@ltc-logistics.it");
+		String emailMittente = "sysinfo@ltc-logistics.it";
+		String passwordMittente = "ltc10183";
+		MailMan postino = new MailMan(emailMittente, passwordMittente, true);
+		boolean invio = postino.invia(destinatariDaAvvisare, mail);
+		if (invio)
+			logger.info("mail di riepilogo inviata con successo.");
+		else
+			logger.error("non è stato possibile inviare la mail di riepilogo");
+	}
+
+	private List<String> getFileNamesToImport() {
+		// TODO - Inoltre verifico che non abbia già letto questo file.
+		logger.info("Recupero i files da importare");
+		GestoreSFTP gestore = GestoreSFTP.getInstance(GestoreSFTP.STRATEGY_LISTA_DI_CARICO);
+		List<String> localCopyNames = gestore.getNomiFiles();
+		return localCopyNames;
+	}
+
+	private void aggiornaFileSentinella(String fileDaAggiornare) {
+		logger.info("Aggiorno il relativo file sentinella.");
+		GestoreSFTP gestore = GestoreSFTP.getInstance(GestoreSFTP.STRATEGY_LISTA_DI_CARICO);
+		gestore.aggiornaFileSentinella(fileDaAggiornare);
+	}
+
+	private boolean scriviDB(Mov movimento) {
+		logger.info("Scrivo su DB il movimento: " + movimento.getMOVID());
+		boolean successo = true;
+		// Controllo se ho già inserito questo packing list:
+		// se ce l'ho già restituisco l'id e lo uso per inserire i dettagli
+		// se non ce l'ho ancora lo inserisco nel DB e uso il nuovo id per i
+		// dettagli
+		int idPackingList = elaboraPackingList(movimento);
+		// Elaboro il resto delle informazioni
+		Date dataMovimento = movimento.getMOVDate().toGregorianCalendar().getTime();
+		// Se il flusso proviene dalla fonte 138 elimino i primi 2 caratteri.
+		int tipoMovimento = movimento.getMOVType();
+		String idCollo = movimento.getMOVUDC();
+		if (tipoMovimento == 138 && idCollo != null) {
+			idCollo = idCollo.substring(2);
+		}
+		int idMovimento = movimento.getMOVID();
+		int idTrasportatore = movimento.getMOVCarrierID();
+		int idUtenteYNAP = movimento.getMOVUser();
+		String note = movimento.getMOVNote1();
+		int codiceDA = movimento.getFrom().getFromID();
+		int codiceA = movimento.getTo().getToID();
+		List<Item> oggetti = movimento.getItems().getItem();
+		for (Item item : oggetti) {
+			// Anagrafica
+			String idUnivocoArticolo = eleboraAnagrafica(item);
+			// Oggetto
+			PackingListDettaglio articolo = new PackingListDettaglio();
+			articolo.setIdPackingList(idPackingList);
+			articolo.setCodiceUnivocoArticolo(idUnivocoArticolo);
+			articolo.setDataMovimento(dataMovimento);
+			articolo.setIdCollo(idCollo);
+			articolo.setIdMovimento(idMovimento);
+			articolo.setIdTrasportatore(idTrasportatore);
+			articolo.setIdUtenteYNAP(idUtenteYNAP);
+			articolo.setNote(note);
+			articolo.setTipoMovimento(tipoMovimento);
+			articolo.setCodiceDA(codiceDA);
+			articolo.setCodiceA(codiceA);
+			articolo.setCodiceRFID(item.getITCode());
+			articolo.setIdRigaOrdine(item.getITRMMID());
+			articolo.setStato("INSERITO");
+			articolo.setQuantitàVerificata(0);
+			articolo.setDescrizione(item.getITDescr());
+			boolean inserimento = managerDettagli.insert(articolo);
+			if (successo) {
+				successo = inserimento;
+			} else {
+				logger.error("errore nell'inserimento del seriale: " + item.getITCode());
+			}
+		}
+		return successo;
+	}
+
+	/**
+	 * Fix rispetto alla documentazione, non ci passano l'ID del movimento
+	 * corretto. Originariamente potevo utilizzare come ID del movimento il
+	 * campo MOVID. Ora i movimenti vengono raggruppati sulla data di
+	 * importazione.
+	 * 
+	 * @param movimento
+	 * @return l'ID del pakiTesta
+	 */
+	private int elaboraPackingList(Mov movimento) {
+		int id;
+		Date dataMovimento = movimento.getMOVDate().toGregorianCalendar().getTime();
+		PackingList listaOggettiInArrivo = new PackingList();
+		String idMovimento = formatter.format(now);
+		listaOggettiInArrivo.setFileID(idMovimento);
+		PackingList listaOggettiRecuperata = managerPackingList.getEntity(listaOggettiInArrivo);
+		if (listaOggettiRecuperata != null) {
+			id = listaOggettiRecuperata.getId();
+		} else {
+			listaOggettiInArrivo.setDataCreazione(dataMovimento);
+			listaOggettiInArrivo.setGenerato("NO");
+			listaOggettiInArrivo.setStato("N");
+			id = managerPackingList.insertAndReturnID(listaOggettiInArrivo);
+			if (id == -1)
+				logger.error("Inserimento del nuovo carico fallito. Il MOVID indicato è: " + movimento.getMOVID());
+			else
+				logger.info("Inserito il nuovo carico " + idMovimento + ", l'ID nel DB è: " + id);
+		}
+		return id;
+	}
+
+	private String eleboraAnagrafica(Item item) {
+		// Far restituire l'ID univoco articolo dell'oggetto, se già presente.
+		String idUnivocoArticolo;
+		String codiceRFID = item.getITCode();
+		AnagraficaOggetto filtro = new AnagraficaOggetto();
+		filtro.setCodiceArticolo(codiceRFID);
+		AnagraficaOggetto anagrafica = managerAnagrafica.getEntity(filtro, true);
+		if (anagrafica == null) {
+			// Anagrafica non ancora presente per il dato seriale, la inserisco
+			idUnivocoArticolo = AnagraficaOggetto.getNextIDUnivoArticolo();
+			anagrafica = new AnagraficaOggetto();
+			anagrafica.setIdUnivocoArticolo(idUnivocoArticolo);
+			anagrafica.setDescrizione(item.getITDescr());
+			anagrafica.setTipologiaMerce(item.getITAS());
+			anagrafica.setStagione(item.getITSeason());
+			anagrafica.setCodiceArticolo(codiceRFID);
+			anagrafica.setTaglia("UNI");
+			boolean inserimentoAnagrafica = managerAnagrafica.insert(anagrafica);
+			if (!inserimentoAnagrafica)
+				logger.error("L'inserimento dell'anagrafica è fallito per il tag: " + codiceRFID);
+			// Inserisco anche il barcode
+			BarcodeOggetto barcode = new BarcodeOggetto();
+			barcode.setIdUnivocoArticolo(idUnivocoArticolo);
+			barcode.setBarcodeEAN(codiceRFID);
+			barcode.setBarcodeUPC(codiceRFID);
+			barcode.setCodiceArticolo(codiceRFID);
+			boolean inserimentoBarcode = managerBarcode.insert(barcode);
+			if (!inserimentoBarcode)
+				logger.error("L'inserimento del barcode è fallito per il tag: " + codiceRFID);
+		} else {
+			idUnivocoArticolo = anagrafica.getIdUnivocoArticolo();
+		}
+		return idUnivocoArticolo;
+	}
+
+	private void stampa(Movs movs) {
+		logger.info("File YNAP n°: " + movs.getFileID());
+		for (Mov m : movs.getMov()) {
+			logger.info("Lista di carico n°: " + m.getMOVID());
+			logger.info("Data di arrivo: " + m.getMOVDate());
+			logger.info("Lista degli oggetti: ");
+			if (logDettagliato) {
+				for (Item i : m.getItems().getItem()) {
+					logger.info("RFID: " + i.getITCode());
+					logger.info("Descrizione: " + i.getITDescr());
+				}
+			}
+		}
+	}
+
+}

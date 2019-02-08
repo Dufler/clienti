@@ -45,8 +45,18 @@
 			<version>1.0</version>
 		</dependency>
 		<dependency>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>configuration-extra</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>it.ltc.model</groupId>
 			<artifactId>persistence</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>csv</artifactId>
 			<version>1.0</version>
 		</dependency>
 	</dependencies>

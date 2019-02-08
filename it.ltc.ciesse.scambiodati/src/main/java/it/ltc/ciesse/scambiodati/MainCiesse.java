@@ -2,6 +2,7 @@ package it.ltc.ciesse.scambiodati;
 
 import it.ltc.ciesse.scambiodati.logic.Export;
 import it.ltc.ciesse.scambiodati.logic.Import;
+import it.ltc.ciesse.scambiodati.logic.RipulitoreIndirizzi;
 
 /**
  * Main dello scambio dati, viene accettata una stringa di argomenti che corrispondono alle funzioni da eseguire:
@@ -23,6 +24,7 @@ public class MainCiesse {
 				case "i" : importaDati(); break;
 				case "e" : esportaDati(); break;
 				case "mg" : esportaMovimentiEGiacenza(); break;
+				case "ri" : sistemaIndirizzi(); break;
 				default : throw new UnsupportedOperationException("Opzione non riconosciuta: '" + arg + "', le opzioni valide sono: 'i' (importazione dati), 'e', (esportazione dati), 'mg' (esportazione movimenti e giacenza)");
 			}
 		}		
@@ -44,6 +46,11 @@ public class MainCiesse {
 	public static void esportaMovimentiEGiacenza() {
 		Export esportatore = Export.getInstance();
 		esportatore.esportaMovimentiEGiacenza();
+	}
+	
+	public static void sistemaIndirizzi() {
+		RipulitoreIndirizzi fixer = new RipulitoreIndirizzi();
+		fixer.ripulisciIndirizzi();
 	}
 
 }

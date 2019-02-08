@@ -1,0 +1,209 @@
+package it.ltc.model.db;
+
+import java.util.Date;
+
+import it.ltc.logica.database.orm.ColumnList;
+import it.ltc.logica.database.orm.Entity;
+
+public class PackingListDettaglio implements Entity {
+
+	private static final String nomeTabella = "dbo.PakiArticolo";
+	private static final ColumnList variabili = new ColumnList();
+	
+	private Integer id;
+	private Integer idPackingList;
+	private String codiceUnivocoArticolo;
+	private Integer idMovimento; //MOV_ID
+	private Date dataMovimento; //MOV_Date
+	private Integer idUtenteYNAP; //MOV_User
+	private String note; //MOV_Note1
+	private Integer tipoMovimento; //MOV_Type
+	private Integer idTrasportatore; //Mov_CarrierId
+	private String idCollo; //Mov_UDC
+	private Integer codiceDA; //From_ID
+	private Integer codiceA; //To_ID
+	private Integer idRigaOrdine; //IT_RMM_ID
+	private String codiceRFID; //IT_Code
+	private String stato;
+	private Integer quantitàVerificata;
+	//private Integer quantitàPrelevata;
+	private String descrizione;
+	
+	@Override
+	public String toString() {
+		return codiceRFID;
+	}
+
+	public String getNomeTabella() {
+		return nomeTabella;
+	}
+
+	public ColumnList getVariabili() {
+		if (variabili.isEmpty()) {
+			variabili.addAutoincrement("idPakiArticolo", "id");
+			variabili.addInt("IdPakiTesta", "idPackingList");
+			variabili.addString("CodUnicoArt", "codiceUnivocoArticolo");
+			variabili.addInt("NrDispo", "idMovimento");
+			variabili.addDate("DataAgg", "dataMovimento");
+			variabili.addInt("IDUtenteYNAP", "idUtenteYNAP");
+			variabili.addString("Note", "note");
+			variabili.addInt("TipoMovimento", "tipoMovimento");
+			variabili.addInt("IDTrasportatore", "idTrasportatore");
+			variabili.addString("NrColloFornitore", "idCollo");
+			variabili.addInt("CodiceDA", "codiceDA");
+			variabili.addInt("CodiceA", "codiceA");
+			variabili.addInt("IDRigaOrdine", "idRigaOrdine");
+			variabili.addString("SerialeRFID", "codiceRFID");
+			variabili.addString("Stato", "stato");
+			variabili.addInt("QtaVerificata", "quantitàVerificata");
+			//variabili.add(new Column("QtaPrelevata", Column.INT, "quantitàPrelevata"));
+			variabili.addString("Descrizione", "descrizione");
+		}
+		return variabili;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public Integer getIdPackingList() {
+		return idPackingList;
+	}
+
+	public void setIdPackingList(Integer idPackingList) {
+		this.idPackingList = idPackingList;
+	}
+
+	public String getCodiceUnivocoArticolo() {
+		return codiceUnivocoArticolo;
+	}
+
+	public void setCodiceUnivocoArticolo(String codiceUnivocoArticolo) {
+		this.codiceUnivocoArticolo = codiceUnivocoArticolo;
+	}
+
+	public Integer getIdMovimento() {
+		return idMovimento;
+	}
+
+	public void setIdMovimento(Integer idMovimento) {
+		this.idMovimento = idMovimento;
+	}
+
+	public Date getDataMovimento() {
+		return dataMovimento;
+	}
+
+	public void setDataMovimento(Date dataMovimento) {
+		this.dataMovimento = dataMovimento;
+	}
+
+	public Integer getIdUtenteYNAP() {
+		return idUtenteYNAP;
+	}
+
+	public void setIdUtenteYNAP(Integer idUtenteYNAP) {
+		this.idUtenteYNAP = idUtenteYNAP;
+	}
+
+	public String getNote() {
+		return note;
+	}
+
+	public void setNote(String note) {
+		this.note = note;
+	}
+
+	public Integer getTipoMovimento() {
+		return tipoMovimento;
+	}
+
+	public void setTipoMovimento(Integer tipoMovimento) {
+		this.tipoMovimento = tipoMovimento;
+	}
+
+	public Integer getIdTrasportatore() {
+		return idTrasportatore;
+	}
+
+	public void setIdTrasportatore(Integer idTrasportatore) {
+		this.idTrasportatore = idTrasportatore;
+	}
+
+	public String getIdCollo() {
+		return idCollo;
+	}
+
+	public void setIdCollo(String idCollo) {
+		this.idCollo = idCollo;
+	}
+
+	public Integer getCodiceDA() {
+		return codiceDA;
+	}
+
+	public void setCodiceDA(Integer codiceDA) {
+		this.codiceDA = codiceDA;
+	}
+
+	public Integer getCodiceA() {
+		return codiceA;
+	}
+
+	public void setCodiceA(Integer codiceA) {
+		this.codiceA = codiceA;
+	}
+
+	public Integer getIdRigaOrdine() {
+		return idRigaOrdine;
+	}
+
+	public void setIdRigaOrdine(Integer idRigaOrdine) {
+		this.idRigaOrdine = idRigaOrdine;
+	}
+
+	public String getCodiceRFID() {
+		return codiceRFID;
+	}
+
+	public void setCodiceRFID(String codiceRFID) {
+		this.codiceRFID = codiceRFID;
+	}
+
+	public String getStato() {
+		return stato;
+	}
+
+	public void setStato(String stato) {
+		this.stato = stato;
+	}
+
+	public Integer getQuantitàVerificata() {
+		return quantitàVerificata;
+	}
+
+	public void setQuantitàVerificata(Integer quantità) {
+		this.quantitàVerificata = quantità;
+	}
+
+	public String getDescrizione() {
+		return descrizione;
+	}
+
+	public void setDescrizione(String descrizione) {
+		this.descrizione = descrizione;
+	}
+
+//	public Integer getQuantitàPrelevata() {
+//		return quantitàPrelevata;
+//	}
+//
+//	public void setQuantitàPrelevata(Integer quantitàPrelevata) {
+//		this.quantitàPrelevata = quantitàPrelevata;
+//	}
+
+}

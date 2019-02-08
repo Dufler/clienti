@@ -1,0 +1,182 @@
+package it.ltc.logic;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+
+import it.ltc.logica.database.configuration.Database;
+import it.ltc.logica.database.orm.EntityManager;
+import it.ltc.model.db.CausaleMovimentoMagazzino;
+import it.ltc.model.db.MovimentoMagazzino;
+import it.ltc.model.db.SaldiMagazzino;
+import it.ltc.utility.Configuration;
+
+public class GestoreMovimentiMagazzino {
+	
+	public static final int SUCCESSO = 0;
+	public static final int PERMESSO_NEGATO = 1;
+	public static final int ERRORE_GENERICO = 2;
+	public static final int ARTICOLO_NON_TROVATO = 3;
+	public static final int MAGAZZINO_NON_DISPONIBILE = 4;
+	public static final int CLIENTE_NON_DISPONIBILE = 5;
+	public static final int CAUSALE_NON_ESISTENTE = 6;
+	
+	private static final String CHIAVE_MAGAZZINI = "magazzini";
+	
+	private static HashMap<String, GestoreMovimentiMagazzino> instances = new HashMap<String, GestoreMovimentiMagazzino>();
+	private static HashMap<String, Configuration> configurazioniClienti = new HashMap<String, Configuration>();
+	
+	private final String utente;
+	private final EntityManager<CausaleMovimentoMagazzino> managerCausali;
+	private final EntityManager<MovimentoMagazzino> managerMovimenti;
+	private final EntityManager<SaldiMagazzino> managerSaldi;
+	
+	private GestoreMovimentiMagazzino(String u) {
+		utente = u;
+		managerCausali = new EntityManager<CausaleMovimentoMagazzino>(CausaleMovimentoMagazzino.class, Database.YNAP);
+		managerMovimenti = new EntityManager<MovimentoMagazzino>(MovimentoMagazzino.class, Database.YNAP);
+		managerSaldi = new EntityManager<SaldiMagazzino>(SaldiMagazzino.class, Database.YNAP);
+	}
+	
+	public static GestoreMovimentiMagazzino getInstance(String utente) {
+		GestoreMovimentiMagazzino instance;
+		if (!instances.containsKey(utente)) {
+			instance = new GestoreMovimentiMagazzino(utente);
+			instances.put(utente, instance);
+		} else {
+			instance = instances.get(utente);
+		}			
+		return instance;
+	}
+	
+	public String getUtente() {
+		return utente;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		boolean uguali = false;
+		if (o instanceof GestoreMovimentiMagazzino) {
+			GestoreMovimentiMagazzino gestore = (GestoreMovimentiMagazzino) o;
+			String utenteGestore = gestore.getUtente();
+			if (utente.equals(utenteGestore))
+				uguali = true;
+		}
+		return uguali;
+	}
+	
+	public int eseguiMovimento(String causale, int quantità, String idUnivocoArticolo, String magazzino, String cliente, Date dataDocumento, String numeroDocumento, String note) {
+		int returnCode = 0;
+		Configuration settings = getConfiguration(cliente);
+		if (settings != null) {
+			if (isMagazzinoDisponibile(settings, magazzino)) {
+				CausaleMovimentoMagazzino filtro = new CausaleMovimentoMagazzino();
+				filtro.setCausale(causale);
+				List<CausaleMovimentoMagazzino> corrispondenze = managerCausali.getEntities(filtro);
+				if (corrispondenze.size() == 1) {
+					CausaleMovimentoMagazzino causaleMovimento = corrispondenze.get(0);
+					//Tento di recuperarlo, se possibile
+					SaldiMagazzino saldo = new SaldiMagazzino();
+					saldo.setIdUnivocoArticolo(idUnivocoArticolo);
+					List<SaldiMagazzino> saldi = managerSaldi.getEntities(saldo);
+					if (!saldi.isEmpty()) {
+						saldo = saldi.get(0);
+					}
+					//Disponibile
+					int disponibile = saldo.getDisponibile();
+					String operazioneDisponibile = causaleMovimento.getOperazioneDisponibile();
+					if (operazioneDisponibile.equals(CausaleMovimentoMagazzino.ADDIZIONE))
+						disponibile += quantità;
+					else if (operazioneDisponibile.equals(CausaleMovimentoMagazzino.SOTTRAZIONE))
+						disponibile -= quantità;
+					saldo.setDisponibile(disponibile);
+					//Impegnato
+					int impegnato = saldo.getImpegnato();
+					String operazioneImpegnato = causaleMovimento.getOperazioneImpegnato();
+					if (operazioneImpegnato.equals(CausaleMovimentoMagazzino.ADDIZIONE))
+						impegnato += quantità;
+					else if (operazioneImpegnato.equals(CausaleMovimentoMagazzino.SOTTRAZIONE))
+						impegnato -= quantità;
+					saldo.setImpegnato(impegnato);
+					//Esistenza
+					int esistenza = saldo.getEsistenza();
+					String operazioneEsistenza = causaleMovimento.getOperazioneEsistenza();
+					if (operazioneEsistenza.equals(CausaleMovimentoMagazzino.ADDIZIONE))
+						esistenza += quantità;
+					else if (operazioneEsistenza.equals(CausaleMovimentoMagazzino.SOTTRAZIONE))
+						esistenza -= quantità;
+					saldo.setEsistenza(esistenza);
+					if (saldo.getId() > 0)
+						managerSaldi.update(saldo);
+					else
+						managerSaldi.insert(saldo);
+					//Passo ai movimenti
+					MovimentoMagazzino movimento = new MovimentoMagazzino();
+					movimento.setCausale(causale);
+					movimento.setSegnoDisponibile(operazioneDisponibile);
+					movimento.setSegnoEsistenza(causaleMovimento.getOperazioneEsistenza());
+					movimento.setSegnoImpegnato(causaleMovimento.getOperazioneImpegnato());
+					movimento.setCancellato("NO");
+					movimento.setCollo("0000000000");
+					movimento.setDataMovimento(new Date());
+					movimento.setDataOrdine(dataDocumento);
+					movimento.setDisponibile(saldo.getDisponibile());
+					movimento.setEsistenza(saldo.getEsistenza());
+					movimento.setIdUnivocoArticolo(idUnivocoArticolo);
+					movimento.setImpegnato(saldo.getImpegnato());
+					movimento.setNoteDocumento(note);
+					movimento.setNumeroLista(numeroDocumento);
+					movimento.setOraMovimento(0); //TODO
+					String segno = causaleMovimento.getSegnoInOut();
+					movimento.setSegno(segno);
+					movimento.setTipo("XX");
+					movimento.setTipoDocumento(causaleMovimento.getTipoCausale());
+					if (segno.equals(CausaleMovimentoMagazzino.ADDIZIONE) || segno.equals(CausaleMovimentoMagazzino.SOTTRAZIONE))
+						movimento.setTotali("SI");
+					else
+						movimento.setTotali("NO");
+					movimento.setTrasmesso("NO");
+					movimento.setUtente(utente);
+					managerMovimenti.insert(movimento);
+				} else {
+					returnCode = CAUSALE_NON_ESISTENTE;
+				}
+			} else {
+				returnCode = MAGAZZINO_NON_DISPONIBILE;
+			}
+		} else {
+			returnCode = CLIENTE_NON_DISPONIBILE;
+		}
+		return returnCode;
+	}
+	
+	private boolean isMagazzinoDisponibile(Configuration settings, String magazzino) {
+		boolean presente = false;
+		String listaMagazzini = settings.get(CHIAVE_MAGAZZINI);
+		if (listaMagazzini != null && !listaMagazzini.isEmpty()) {
+			String[] magazzini = listaMagazzini.split(",");
+			for (String nomeMagazzino : magazzini) {
+				if(nomeMagazzino.equals(magazzino)) {
+					presente = true;
+					break;
+				}
+			}
+		}
+		return presente;
+	}
+	
+	private Configuration getConfiguration(String cliente) {
+		if (!configurazioniClienti.containsKey(cliente)) {
+			String configurationPath = "/resources/" + cliente + ".properties";
+			try {
+				Configuration settings = new Configuration(configurationPath, false);
+				configurazioniClienti.put(cliente, settings);
+			} catch (IOException e) {
+				configurazioniClienti.put(cliente, null);
+			}
+		}
+		return configurazioniClienti.get(cliente);
+	}
+
+}
