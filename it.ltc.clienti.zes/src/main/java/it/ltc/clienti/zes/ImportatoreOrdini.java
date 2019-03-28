@@ -192,6 +192,15 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 		return destinatario;
 	}
 	
+	private boolean checkContrassegno(Double valore, String tipo, String riferimento) throws ModelValidationException {
+		boolean valoreValido = valore != null && valore > 0;
+		boolean tipoValido = tipo != null && !tipo.isEmpty();
+		if ((valoreValido && !tipoValido) || (!valoreValido && tipoValido)) {
+			throw new ModelValidationException("I valori inseriti per il contrassegno non sono validi. (ordine: " + riferimento + ")");
+		}
+		return valoreValido && tipoValido;
+	}
+	
 	private Collection<MOrdineZeS> parsaOrdini(FileCSV csv) {
 		HashMap<String, MOrdineZeS> mappaOrdini = new HashMap<>();
 		while (csv.prossimaRiga()) {
@@ -222,12 +231,14 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 				infoSpedizione.setServizioCorriere("DEF");
 				infoSpedizione.setValoreDoganale(csv.getNumerico(DOGANA_VALORE));
 				Double valoreContrassegno = csv.getNumerico(CONTRASSEGNO_VALORE);
-				if (valoreContrassegno != null && valoreContrassegno > 0) {
+				String tipoContrassegno = csv.getStringa(CONTRASSEGNO_TIPO);
+				//check ulteriore perchè sono proprio idioti
+				if (checkContrassegno(valoreContrassegno, tipoContrassegno, riferimento)) {
 					TipoContrassegno tipo;
 					try {
-						tipo = TipoContrassegno.valueOf(csv.getStringa(CONTRASSEGNO_TIPO));
+						tipo = TipoContrassegno.valueOf(tipoContrassegno);
 					} catch (Exception e) {
-						tipo = null;
+						throw new ModelValidationException("Il tipo di contrassegno indicato non è valido. (ordine: " + riferimento + ")");
 					}					
 					MContrassegno contrassegno = new MContrassegno();
 					contrassegno.setValore(valoreContrassegno);

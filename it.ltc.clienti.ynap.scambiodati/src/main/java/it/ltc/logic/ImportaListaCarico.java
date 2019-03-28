@@ -26,6 +26,7 @@ import it.ltc.clienti.ynap.model.BarcodeOggetto;
 import it.ltc.clienti.ynap.model.PackingList;
 import it.ltc.clienti.ynap.model.PackingListDettaglio;
 import it.ltc.database.dao.Dao;
+import it.ltc.logic.GestoreSFTP.Strategy;
 import it.ltc.model.item.out.Item;
 import it.ltc.model.item.out.Mov;
 import it.ltc.model.item.out.Movs;
@@ -73,9 +74,11 @@ public class ImportaListaCarico extends Dao {
 	}
 
 	public void elaboraXMLRicevuti() {
-		logger.info("Avvio la procedura di importazione degli XML del carico in arrivo.");
+		logger.info("Avvio la procedura di importazione degli XML di carichi in arrivo.");
 		now = new Date();
 		List<String> fileNames = getFileNamesToImport();
+		if (fileNames.isEmpty())
+			logger.info("Nessun documento di carico trovato.");
 		int fileImportati = 0;
 		for (String fileName : fileNames) {
 			try {
@@ -85,7 +88,7 @@ public class ImportaListaCarico extends Dao {
 				JAXBContext jaxbContext = JAXBContext.newInstance(Movs.class);
 				Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 				Movs oggettiInArrivo = (Movs) jaxbUnmarshaller.unmarshal(file);
-				// Log del contenuto del file
+				// Log di debug del contenuto del file
 				stampa(oggettiInArrivo);
 				// Scrittura del file
 				Mov listaOggettiInArrivo = oggettiInArrivo.getMov().get(0);
@@ -98,16 +101,14 @@ public class ImportaListaCarico extends Dao {
 					logger.error("File " + fileName + " non è stato importato.");
 				}
 			} catch (JAXBException e) {
-				logger.error(e);
-				e.printStackTrace();
+				logger.error(e.getMessage(), e);
 			}
 		}
 		int fileConErrori = fileNames.size() - fileImportati;
 		if (fileImportati > 0 || fileConErrori > 0) {
 			String messaggioDiRiepilogo = "Sono stati importati correttemente " + fileImportati + " files.";
 			if (fileConErrori > 0)
-				messaggioDiRiepilogo += " " + fileConErrori
-						+ " non sono stati importati a causa di errori, controllare il file di log.";
+				messaggioDiRiepilogo += " " + fileConErrori	+ " non sono stati importati a causa di errori, controllare il file di log.";
 			logger.info(messaggioDiRiepilogo);
 			inviaMessaggioDiRiepilogo(messaggioDiRiepilogo);
 		}
@@ -127,10 +128,10 @@ public class ImportaListaCarico extends Dao {
 	
 	//Questo metodo è stato usato per fare test in locale senza SFTP.
 //	private List<String> getFileNamesToImport() {
-//		String folderPath = "C:\\Users\\Damiano\\Desktop\\ynap\\corretti\\";
+//		String folderPath = "C:\\Users\\Damiano\\Desktop\\ynap\\carico\\";
 //		File folder = new File(folderPath);
 //		String[] array = folder.list();
-//		List<String> list = new ArrayList<>();
+//		List<String> list = new LinkedList<>();
 //		for (String file : array) {
 //			list.add(folderPath + file);
 //		}
@@ -138,16 +139,15 @@ public class ImportaListaCarico extends Dao {
 //	}
 
 	private List<String> getFileNamesToImport() {
-		// TODO - Inoltre verifico che non abbia già letto questo file.
 		logger.info("Recupero i files da importare");
-		GestoreSFTP gestore = GestoreSFTP.getInstance(GestoreSFTP.STRATEGY_LISTA_DI_CARICO);
+		GestoreSFTP gestore = new GestoreSFTP(Strategy.LISTA_DI_CARICO);
 		List<String> localCopyNames = gestore.getNomiFiles();
 		return localCopyNames;
 	}
 
 	private void aggiornaFileSentinella(String fileDaAggiornare) {
 		logger.info("Aggiorno il relativo file sentinella.");
-		GestoreSFTP gestore = GestoreSFTP.getInstance(GestoreSFTP.STRATEGY_LISTA_DI_CARICO);
+		GestoreSFTP gestore = new GestoreSFTP(Strategy.LISTA_DI_CARICO);
 		gestore.aggiornaFileSentinella(fileDaAggiornare);
 	}
 
@@ -160,19 +160,6 @@ public class ImportaListaCarico extends Dao {
 		// dettagli
 		PackingList packingList = elaboraPackingList(movimento);
 		// Elaboro il resto delle informazioni
-//		Date dataMovimento = movimento.getMOVDate().toGregorianCalendar().getTime();
-		// Se il flusso proviene dalla fonte 138 elimino i primi 2 caratteri.
-//		int tipoMovimento = movimento.getMOVType();
-//		String idCollo = movimento.getMOVUDC();
-//		if (tipoMovimento == 138 && idCollo != null) {
-//			idCollo = idCollo.substring(2);
-//		}
-//		int idMovimento = movimento.getMOVID();
-//		int idTrasportatore = movimento.getMOVCarrierID();
-//		int idUtenteYNAP = movimento.getMOVUser();
-//		String note = movimento.getMOVNote1();
-//		int codiceDA = movimento.getFrom().getFromID();
-//		int codiceA = movimento.getTo().getToID();
 		List<Item> oggetti = movimento.getItems().getItem();
 		//Edit 30-01-2018: YNAP ha introdotto un bug per cui gli stessi seriali arrivano più volte su file diversi.
 		//prima di procedere all'importazione elimino tutti i seriali che sono già presenti in pakiarticolo
@@ -220,6 +207,7 @@ public class ImportaListaCarico extends Dao {
 	
 	private PackingListDettaglio getDettaglio(Mov movimento, Item item, String idUnivocoArticolo) {
 		String idCollo = movimento.getMOVUDC();
+		//Se il flusso proviene dalla fonte 138 elimino i primi 2 caratteri.
 		if (movimento.getMOVType() == 138 && idCollo != null) {
 			idCollo = idCollo.substring(2);
 		}
@@ -262,6 +250,8 @@ public class ImportaListaCarico extends Dao {
 		//Se lo trovo restituisco quello, i movimenti saranno accorpati li altrimenti ne genero uno.
 		if (listaOggetti == null) {
 			listaOggetti = new PackingList();
+			listaOggetti.setFileID(riferimento);
+			listaOggetti.setQualita(tipologiaQualitaMovimento);
 			Date dataMovimento = movimento.getMOVDate().toGregorianCalendar().getTime();
 			listaOggetti.setDataCreazione(dataMovimento);
 			listaOggetti.setGenerato("NO");
@@ -299,7 +289,7 @@ public class ImportaListaCarico extends Dao {
 		CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<AnagraficaOggetto> criteria = cb.createQuery(AnagraficaOggetto.class);
         Root<AnagraficaOggetto> member = criteria.from(AnagraficaOggetto.class);
-        criteria.select(member).where(cb.equal(member.get("CodArtStr"), codiceRFID));
+        criteria.select(member).where(cb.equal(member.get("codiceArticolo"), codiceRFID));
         List<AnagraficaOggetto> lista = em.createQuery(criteria).setMaxResults(1).getResultList();
 		AnagraficaOggetto anagrafica = lista.isEmpty()? null : lista.get(0);
 		if (anagrafica == null) {
@@ -332,15 +322,15 @@ public class ImportaListaCarico extends Dao {
 	}
 
 	private void stampa(Movs movs) {
-		logger.info("File YNAP n°: " + movs.getFileID());
+		logger.debug("File YNAP n°: " + movs.getFileID());
 		for (Mov m : movs.getMov()) {
-			logger.info("Lista di carico n°: " + m.getMOVID());
-			logger.info("Data di arrivo: " + m.getMOVDate());
-			logger.info("Lista degli oggetti: ");
+			logger.debug("Lista di carico n°: " + m.getMOVID());
+			logger.debug("Data di arrivo: " + m.getMOVDate());
 			if (logDettagliato) {
+				logger.debug("Lista degli oggetti: ");
 				for (Item i : m.getItems().getItem()) {
-					logger.info("RFID: " + i.getITCode());
-					logger.info("Descrizione: " + i.getITDescr());
+					logger.debug("RFID: " + i.getITCode());
+					logger.debug("Descrizione: " + i.getITDescr());
 				}
 			}
 		}

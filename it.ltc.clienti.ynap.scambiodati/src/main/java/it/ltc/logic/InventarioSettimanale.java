@@ -12,7 +12,6 @@ import org.apache.log4j.Logger;
 
 import it.ltc.clienti.ynap.dao.OggettiDao;
 import it.ltc.clienti.ynap.model.Oggetto;
-import it.ltc.utility.configuration.Configuration;
 import it.ltc.utility.ftp.SFTP;
 
 public class InventarioSettimanale {
@@ -31,20 +30,19 @@ public class InventarioSettimanale {
 	private BufferedWriter writer;
 	private String data;
 	
-	private Configuration configuration;
-	private SFTP ftpClient;
+	private final SFTP ftpClient;
 	
-	private String host;
-	private String username;
-	private String password;
-	private String outgoingPath;
-	private String localTempFolder;
+	private final String outgoingPath;
+	private final String localTempFolder;
 	private File fileInventario;
 	
 	private static InventarioSettimanale instance;
 	
 	private InventarioSettimanale() {
-		setupFTP();
+		ConfigurationUtility configuration = ConfigurationUtility.getInstance();
+		outgoingPath = configuration.getPathFTPOut();
+		localTempFolder = configuration.getPathInventario();
+		ftpClient = configuration.getSFTPClient();
 		setup();
 		
 		managerOggetti = new OggettiDao();
@@ -64,20 +62,6 @@ public class InventarioSettimanale {
 			FileWriter stream = new FileWriter(fileInventario);
 			writer = new BufferedWriter(stream);
 		} catch(IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void setupFTP() {
-		try {
-			configuration = new Configuration("/resources/configuration.properties", false);
-			host = configuration.get("sftp_host");
-			username = configuration.get("sftp_username");
-			password = configuration.get("sftp_password");
-			outgoingPath = configuration.get("outgoing_path");
-			localTempFolder = configuration.get("app_inv_path");
-			ftpClient = new SFTP(host, username, password);
-		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}

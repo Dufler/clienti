@@ -18,7 +18,7 @@ public class OrdineDao extends CRUDDao<Ordine> {
 	}
 	
 	public List<Ordine> trovaOrdiniDaStato(String stato) {
-		List<Ordine> entities = findAllEqualTo("Stato", stato);
+		List<Ordine> entities = findAllEqualTo("stato", stato);
 		return entities;
 	}
 

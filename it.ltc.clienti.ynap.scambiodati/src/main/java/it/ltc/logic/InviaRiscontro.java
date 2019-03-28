@@ -1,7 +1,6 @@
 package it.ltc.logic;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -35,8 +34,9 @@ import it.ltc.model.item.in.Items;
 import it.ltc.model.item.in.Mov;
 import it.ltc.model.item.in.Movs;
 import it.ltc.model.item.in.To;
-import it.ltc.utility.configuration.Configuration;
 import it.ltc.utility.ftp.SFTP;
+import it.ltc.utility.mail.Email;
+import it.ltc.utility.mail.MailMan;
 
 public class InviaRiscontro extends Dao {
 
@@ -45,12 +45,8 @@ public class InviaRiscontro extends Dao {
 	private final PackingListDao managerPackingList;
 	private final PackingListDettagliDao managerDettagli;
 
-	private Configuration configuration;
 	private SFTP ftpClient;
 
-	private String host;
-	private String username;
-	private String password;
 	private String outgoingPath;
 	private String localTempFolder;
 
@@ -61,7 +57,11 @@ public class InviaRiscontro extends Dao {
 	private InviaRiscontro() {
 		super("legacy-ynap");
 		setupConfiguration();
-		setupFTP();
+		
+		ConfigurationUtility configuration = ConfigurationUtility.getInstance();
+		outgoingPath = configuration.getPathFTPOut();
+		localTempFolder = configuration.getPathCarichiOut();
+		ftpClient = configuration.getSFTPClient();
 		
 		managerPackingList = new PackingListDao();
 		managerDettagli = new PackingListDettagliDao();
@@ -77,23 +77,7 @@ public class InviaRiscontro extends Dao {
 		try {
 			factory = DatatypeFactory.newInstance();
 		} catch (DatatypeConfigurationException e) {
-			logger.error(e);
-			e.printStackTrace();
-		}
-	}
-
-	private void setupFTP() {
-		try {
-			configuration = new Configuration("/resources/configuration.properties", false);
-			host = configuration.get("sftp_host");
-			username = configuration.get("sftp_username");
-			password = configuration.get("sftp_password");
-			outgoingPath = configuration.get("outgoing_path");
-			localTempFolder = configuration.get("app_carichi_out_path");
-			ftpClient = new SFTP(host, username, password);
-		} catch (IOException e) {
-			logger.error(e);
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		}
 	}
 
@@ -172,7 +156,15 @@ public class InviaRiscontro extends Dao {
 				if (!update)
 					logger.error("Impossibile aggiornare lo stato di trasmissione del carico ID " + documento.getId());
 			} else {
-				logger.info("Attenzione! Il documento " + documento.getFileID() + " ha generato errori.");
+				String errorMessage = "Attenzione! Il documento " + documento.getFileID() + " ha generato errori.";
+				logger.error(errorMessage);
+				String oggettoMail = "Alert: eccezione nell'invio dell'evasione del carico YNAP";
+				List<String> destinatariDaAvvisare = ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
+				Email mail = new Email(oggettoMail, errorMessage);
+				MailMan postino = ConfigurationUtility.getInstance().getMailMan();
+				boolean invio = postino.invia(destinatariDaAvvisare, mail);
+				if (!invio)
+					logger.error("Impossibile inviare la mail di notifica dell'errore.");
 			}
 		}
 	}
@@ -220,9 +212,7 @@ public class InviaRiscontro extends Dao {
 			jaxbMarshaller.marshal(articoliRiscontrati, file);
 			successo = ftpClient.upload(file.getAbsolutePath(), outgoingPath);
 		} catch (JAXBException e) {
-			logger.error(e);
-			e.printStackTrace();
-			// TODO - manda una mail a support
+			logger.error(e.getMessage(), e);
 		}
 		return successo;
 	}

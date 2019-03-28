@@ -38,25 +38,25 @@ public class ManagerStatoOrdini extends Dao {
 	private boolean aggiornaStatoOrdine(int idOrdine, String stato) {
 		boolean update;
 		EntityManager em = getManager();
-		TestataOrdini testata = em.find(TestataOrdini.class, idOrdine);
-		if (testata != null) {
-			testata.setStato(stato);
-			EntityTransaction t = em.getTransaction();
-			try {
-				t.begin();
+		EntityTransaction t = em.getTransaction();
+		try {
+			t.begin();
+			TestataOrdini testata = em.find(TestataOrdini.class, idOrdine);
+			if (testata != null) {
+				testata.setStato(stato);
 				em.merge(testata);
-				t.commit();
 				update = true;
-			} catch(Exception e) {
-				logger.error(e.getMessage(), e);
+			} else {
 				update = false;
-				if (t != null && t.isActive())
-					t.rollback();
-			} finally {
-				em.close();
-			}
-		} else {
+			}			
+			t.commit();
+		} catch(Exception e) {
+			logger.error(e.getMessage(), e);
 			update = false;
+			if (t != null && t.isActive())
+				t.rollback();
+		} finally {
+			em.close();
 		}
 		return update;
 	}

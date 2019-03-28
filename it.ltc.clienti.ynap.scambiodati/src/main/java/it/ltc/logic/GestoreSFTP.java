@@ -1,52 +1,30 @@
 package it.ltc.logic;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import it.ltc.utility.configuration.Configuration;
 import it.ltc.utility.ftp.SFTP;
 
 public class GestoreSFTP {
 	
-	public static final int STRATEGY_LISTA_DI_CARICO = 1;
-	public static final int STRATEGY_ORDINI = 2;
+	public enum Strategy { LISTA_DI_CARICO, ORDINI }
 	
-	private final int strategy;
-	private Configuration configuration;
-	private SFTP ftpClient;
-	private String host;
-	private String username;
-	private String password;
-	private String remotePath;
-	private String localTempFolder;
+	private final Strategy strategy;
+	private final ConfigurationUtility configuration;
+	private final SFTP ftpClient;
+	private final String remotePath;
+	private final String localTempFolder;
 	
-	private GestoreSFTP(int strategia) {
+	public GestoreSFTP(Strategy strategia) {
 		strategy = strategia;
-		try {
-			configuration = new Configuration("/resources/configuration.properties", false);
-			host = configuration.get("sftp_host");
-			username = configuration.get("sftp_username");
-			password = configuration.get("sftp_password");
-			remotePath = configuration.get("ingoing_path");
-			if (strategy == STRATEGY_LISTA_DI_CARICO)
-				localTempFolder = configuration.get("app_carichi_in_path");
-			else if (strategy == STRATEGY_ORDINI)
-				localTempFolder = configuration.get("app_ordini_in_path");
-			ftpClient = new SFTP(host, username, password);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public static GestoreSFTP getInstance(int strategia) {
-		GestoreSFTP gestore;
-		switch(strategia) {
-			case STRATEGY_LISTA_DI_CARICO : gestore = new GestoreSFTP(strategia); break;
-			case STRATEGY_ORDINI : gestore = new GestoreSFTP(strategia); break;
+		configuration = ConfigurationUtility.getInstance();
+		ftpClient = configuration.getSFTPClient();
+		remotePath = configuration.getPathFTPIn();
+		switch (strategy) {
+			case LISTA_DI_CARICO : localTempFolder = configuration.getPathCarichiIn(); break;
+			case ORDINI : localTempFolder = configuration.getPathOrdiniIn(); break;
 			default : throw new IllegalArgumentException("Scegli una strategia valida!");
-		}
-		return gestore;
+		}		
 	}
 	
 	public List<String> getNomiFiles() {
@@ -70,7 +48,6 @@ public class GestoreSFTP {
 				}
 			}
 		}
-		// TODO - Inoltre verifico che non abbia già letto questo file.
 		return localCopyNames;
 	}
 	
@@ -94,9 +71,9 @@ public class GestoreSFTP {
 	public String getFilter() {
 		String filter;
 		switch(strategy) {
-			case STRATEGY_LISTA_DI_CARICO : filter = "items"; break;
-			case STRATEGY_ORDINI : filter = "order"; break;
-			default : filter = "zzz"; //Qualcosa non va, non deve filtrare.
+			case LISTA_DI_CARICO : filter = "items"; break;
+			case ORDINI : filter = "order"; break;
+			default : filter = "XXX"; //Qualcosa non va, non deve filtrare.
 		}
 		return filter;
 	}

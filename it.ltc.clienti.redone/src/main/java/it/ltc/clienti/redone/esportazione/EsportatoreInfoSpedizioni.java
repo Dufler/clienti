@@ -19,10 +19,16 @@ public class EsportatoreInfoSpedizioni extends EsportatoreInfoSpedizioniSQLServe
 
 	@Override
 	protected boolean esportaOrdine(TestataOrdini testata) {
+		//Il tracking number probabilmente non viene mai aggiornato, ne metto uno fasullo se non lo trovo.
+		String trackingNumber = testata.getNrLetteraVettura();
+		if (trackingNumber == null || trackingNumber.isEmpty()) {
+			trackingNumber = testata.getNrLista();
+		}
+		//Compilo le info.
 		ShipmentInfo csv = new ShipmentInfo();
 		csv.setIdentifier(testata.getRifOrdineCli());
 		csv.setDocument(testata.getNrDoc());
-		csv.setTrackingNumber(testata.getNrLetteraVettura());
+		csv.setTrackingNumber(trackingNumber);
 		String exportPath = getFileExportPath();
 		CSVObjectExporter<ShipmentInfo> csvExporter = new CSVObjectExporter<>("|", CSVObjectExporter.DEFAULT_NEW_LINE, ShipmentInfo.class);
 		boolean export = csvExporter.esportaOggetto(exportPath, csv);

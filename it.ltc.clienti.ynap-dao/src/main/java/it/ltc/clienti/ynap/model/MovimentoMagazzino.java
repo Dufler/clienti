@@ -4,12 +4,14 @@ import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
-//@Entity
-//@Table(name="MagaMov")
+@Entity
+@Table(name="MagaMov")
 public class MovimentoMagazzino implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
@@ -19,57 +21,73 @@ public class MovimentoMagazzino implements Serializable {
 	@Column(name="IdMagaMov", unique=true, nullable=false)
 	private int id;
 	
+	@Column(name="Causale", nullable=false, length=3, columnDefinition="char(3)")
 	private String causale;
+	
+	@Column(name="DataMovMag", columnDefinition="datetime")
 	private Date dataMovimento;
-	private int oraMovimento;
+	
+	@Column(name="OraMovMag")
+	private Integer oraMovimento;
+	
+	@Column(name="IdUniArticolo", nullable=false, length=25, columnDefinition="varchar(25)")
 	private String idUnivocoArticolo;
+	
+	@Column(name="DocData", columnDefinition="datetime")
 	private Date dataOrdine;
+	
+	@Column(name="DocCat", length=1, columnDefinition="char(1)")
 	private String categoriaDocumento;
+	
+	@Column(name="DocTipo", length=3, columnDefinition="char(3)")
 	private String tipoDocumento;
+	
+	@Column(name="DocNr", length=40, columnDefinition="varchar(40)")
 	private String numeroLista;
+	
+	@Column(name="DocNote", length=40, columnDefinition="varchar(40)")
 	private String noteDocumento;
+	
+	@Column(name="Segno", length=1, columnDefinition="char(1)")
 	private String segno;
+	
+	@Column(name="Tipo", length=1, columnDefinition="char(1)")
 	private String tipo;
+	
+	@Column(name="Utente", length=20, columnDefinition="varchar(20)")
 	private String utente;
+	
+	@Column(name="KeyCollo", length=20, columnDefinition="varchar(20)")
 	private String collo;
+	
+	@Column(name="SegnoEsi", length=1, columnDefinition="char(1)")
 	private String segnoEsistenza;
+	
+	@Column(name="SegnoImp", length=1, columnDefinition="char(1)")
 	private String segnoImpegnato;
+	
+	@Column(name="SegnoDis", length=1, columnDefinition="char(1)")
 	private String segnoDisponibile;
+	
+	@Column(name="IncTotali", length=2, columnDefinition="char(2)")
 	private String totali;
+	
+	@Column(name="Cancellato", nullable=false, length=2, columnDefinition="char(2)")
 	private String cancellato;
+	
+	@Column(name="Esistenzamov", nullable=false)
 	private int esistenza;
+	
+	@Column(name="disponibilemov", nullable=false)
 	private int disponibile;
+	
+	@Column(name="impegnatomov", nullable=false)
 	private int impegnato;
+	
+	@Column(name="trasmesso", nullable=false, length=2, columnDefinition="char(2)")
 	private String trasmesso;
 
-//	public ColumnList getVariabili() {
-//		if (variabili.isEmpty()) {
-//			variabili.addAutoincrement("IdMagaSd", "id");
-//			variabili.addString("Causale", "causale");
-//			variabili.addDate("DataMovMag", "dataMovimento");
-//			variabili.addInt("OraMovMag", "oraMovimento");
-//			variabili.addString("IdUniArticolo", "idUnivocoArticolo");
-//			variabili.addDate("DocData", "dataOrdine");
-//			variabili.addString("DocCat", "categoriaDocumento");
-//			variabili.addString("DocTipo", "tipoDocumento");
-//			variabili.addString("DocNr", "numeroLista");
-//			variabili.addString("DocNote", "noteDocumento");
-//			variabili.addString("Segno", "segno");
-//			variabili.addString("Tipo", "tipo");
-//			variabili.addString("Utente", "utente");
-//			variabili.addString("KeyCollo", "collo");
-//			variabili.addString("SegnoEsi", "segnoEsistenza");
-//			variabili.addString("SegnoImp", "segnoImpegnato");
-//			variabili.addString("SegnoDis", "segnoDisponibile");
-//			variabili.addString("IncTotali", "totali");
-//			variabili.addString("Cancellato", "cancellato");
-//			variabili.addInt("Esistenzamov", "esistenza");
-//			variabili.addInt("disponibilemov", "disponibile");
-//			variabili.addInt("impegnatomov", "impegnato");
-//			variabili.addString("trasmesso", "trasmesso");
-//		}
-//		return variabili;
-//	}
+	public MovimentoMagazzino() {}
 
 	public int getId() {
 		return id;

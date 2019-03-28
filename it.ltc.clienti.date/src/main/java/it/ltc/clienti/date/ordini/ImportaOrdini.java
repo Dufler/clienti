@@ -19,6 +19,7 @@ import it.ltc.database.model.legacy.Nazioni;
 import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.model.interfaces.exception.ModelValidationException;
 import it.ltc.model.interfaces.indirizzo.MIndirizzo;
+import it.ltc.model.interfaces.ordine.MInfoSpedizione;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.ordine.ProdottoOrdinato;
 import it.ltc.model.interfaces.ordine.TipoIDProdotto;
@@ -29,7 +30,9 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 	
 	private static final Logger logger = Logger.getLogger(ImportaOrdini.class);
 	
-	private final String folderPath;
+	private final String folderImportPath;
+	private final String folderStoricoPath;
+	private final String folderErroriPath;
 	private final String regexNomeFileOrdini;
 	
 	private final NazioniDao daoNazioni;
@@ -37,14 +40,16 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 	public ImportaOrdini(String persistenceUnit) {
 		super(persistenceUnit);
 		ConfigurationUtility config = ConfigurationUtility.getInstance();
-		this.folderPath = config.getFolderPathImport();
+		this.folderImportPath = config.getFolderPathImport();
+		this.folderStoricoPath = config.getFolderPathStorico();
+		this.folderErroriPath = config.getFolderPathErrori();
 		this.regexNomeFileOrdini = config.getRegexOrdini();
 		this.daoNazioni = new NazioniDao(persistenceUnit);
 	}
 	
 	public void importa() {
 		//recupero i files con gli ordini
-		File folder = new File(folderPath);
+		File folder = new File(folderImportPath);
 		for (File file : folder.listFiles()) {
 			//Controllo ogni file per vedere se contiene ordini.
 			if (file.isFile() && file.getName().toUpperCase().matches(regexNomeFileOrdini)) {
@@ -67,8 +72,16 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 							testata.setRiferimentoDocumento(ordine.getNumeroOrdine());
 							testata.setRiferimentoOrdine(ordine.getNumeroOrdine());
 							testata.setTipo("ORD");
-							testata.setTipoDocumento(ordine.getTipoDocumento());
+							testata.setTipoDocumento("DDT");
 							testata.setTipoIdentificazioneProdotti(TipoIDProdotto.BARCODE);
+							testata.setNomeFile(file.getName());
+							//Aggiungo le info sulla spedizione
+							MInfoSpedizione spedizione = new MInfoSpedizione();
+							spedizione.setCorriere("DHL");
+							spedizione.setTipoDocumento("DDT");
+							spedizione.setDataDocumento(ordine.getDataOrdine());
+							spedizione.setRiferimentoDocumento(ordine.getNumeroOrdine());
+							testata.setInfoSpedizione(spedizione);
 							mappaOrdini.put(ordine.getNumeroOrdine(), testata);
 						}
 						//Aggiungo la riga se contiene oggetti
@@ -79,7 +92,9 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 							prodotto.setMagazzinoLTC("PG1");
 							prodotto.setMagazzinoCliente("LP1");
 							prodotto.setNumeroRiga(ordine.getNumeroRiga());
-							prodotto.setQuantita(ordine.getQuantità());
+							//prodotto.setQuantita(ordine.getQuantità());
+							prodotto.setQuantita(parsaQuantità(ordine.getQuantitàPerTaglia(), ordine.getTipoAssortimento(), ordine.getQuantità()));
+							ordine.getQuantitàPerTaglia();
 							prodotto.setNote(ordine.getNoteRiga());
 							testata.aggiungiProdotto(prodotto);
 						}						
@@ -90,13 +105,30 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 						inserisci(ordine);
 					}
 					//sposto il file nello storico
-					spostaFile(file, folderPath + "storico\\");
+					spostaFile(file, folderStoricoPath);
 				} catch (Exception e) {
 					logger.error(e.getMessage(), e);
-					spostaFile(file, folderPath + "errori\\");
+					spostaFile(file, folderErroriPath);
 				}				
 			}
 		}		
+	}
+	
+	private int parsaQuantità(String quantitàPerTaglia, String tipoAssortimento, int quantità) {
+		int totale = 0;
+		for (int index = 0; index < 88; index +=4) {
+			try {
+				totale += Integer.parseInt(quantitàPerTaglia.substring(index, index + 4));
+			} catch (Exception e) { 
+				logger.error(e.getMessage(), e);
+				totale = -1;
+				break;
+			}
+		}
+		if (tipoAssortimento.equals("C")) {
+			totale = totale / quantità;
+		}
+		return totale;
 	}
 	
 	/**

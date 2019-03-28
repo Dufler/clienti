@@ -10,6 +10,8 @@ public class ConfigurationUtility extends ConfigurationParser {
 
 	private final String persistenceUnit;
 	private final String folderPathImport;
+	private final String folderPathStorico;
+	private final String folderPathErrori;
 	private final String folderPathExport;
 	private final String regexOrdini;
 	private final String regexArticoli;
@@ -20,6 +22,8 @@ public class ConfigurationUtility extends ConfigurationParser {
 		verbose = Boolean.parseBoolean(configuration.get("verbose"));
 		persistenceUnit = configuration.get("persistence_unit");
 		folderPathImport = configuration.get("folder_path_import");
+		folderPathStorico = configuration.get("folder_path_storico");
+		folderPathErrori = configuration.get("folder_path_errori");
 		folderPathExport = configuration.get("folder_path_export");
 		regexOrdini = configuration.get("regex_nome_file_ordini");
 		regexArticoli = configuration.get("regex_nome_file_anagrafiche");
@@ -38,6 +42,14 @@ public class ConfigurationUtility extends ConfigurationParser {
 
 	public String getFolderPathImport() {
 		return folderPathImport;
+	}
+	
+	public String getFolderPathStorico() {
+		return folderPathStorico;
+	}
+
+	public String getFolderPathErrori() {
+		return folderPathErrori;
 	}
 
 	public String getFolderPathExport() {

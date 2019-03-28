@@ -1,7 +1,6 @@
 package it.ltc.logic;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,7 +39,6 @@ import it.ltc.model.order.in.Order;
 import it.ltc.model.order.in.Orders;
 import it.ltc.model.order.in.Packages;
 import it.ltc.model.order.in.Shipment;
-import it.ltc.utility.configuration.Configuration;
 import it.ltc.utility.ftp.SFTP;
 import it.ltc.utility.mail.Email;
 import it.ltc.utility.mail.MailMan;
@@ -61,12 +59,8 @@ public class InviaEvasioneOrdine extends Dao {
 	private final UbicazioneOggettoDao managerUbicazioni;
 	private final OggettiDao managerOggetti;
 
-	private Configuration configuration;
 	private SFTP ftpClient;
 
-	private String host;
-	private String username;
-	private String password;
 	private String outgoingPath;
 	private String localTempFolder;
 
@@ -79,7 +73,12 @@ public class InviaEvasioneOrdine extends Dao {
 	private InviaEvasioneOrdine() {
 		super("legacy-ynap");
 		setupConfiguration();
-		setupFTP();
+
+		ConfigurationUtility configuration = ConfigurationUtility.getInstance();
+		outgoingPath = configuration.getPathFTPOut();
+		localTempFolder = configuration.getPathOrdiniOut();
+		ftpClient = configuration.getSFTPClient();
+		
 		oggettiDaAggiornare = new ArrayList<Oggetto>();
 		
 		managerOrdini = new OrdineDao();
@@ -93,21 +92,7 @@ public class InviaEvasioneOrdine extends Dao {
 		try {
 			factory = DatatypeFactory.newInstance();
 		} catch (DatatypeConfigurationException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void setupFTP() {
-		try {
-			configuration = new Configuration("/resources/configuration.properties", false);
-			host = configuration.get("sftp_host");
-			username = configuration.get("sftp_username");
-			password = configuration.get("sftp_password");
-			outgoingPath = configuration.get("outgoing_path");
-			localTempFolder = configuration.get("app_ordini_out_path");
-			ftpClient = new SFTP(host, username, password);
-		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		}
 	}
 
@@ -211,8 +196,7 @@ public class InviaEvasioneOrdine extends Dao {
 							codificaOggettoNonTrovato = 1;
 							// TODO - Inserito un valore di default (non
 							// trovato) perchè sul gestionale non sono pronti.
-							logger.error("l'ordine: " + ordine.getNumeroOrdine()
-									+ " ha un errore in righi ordine per il tag " + dettaglio.getSerialeRFID());
+							logger.error("l'ordine: " + ordine.getNumeroOrdine() + " ha un errore in righi ordine per il tag " + dettaglio.getSerialeRFID());
 							// throw new RuntimeException(riferimento +
 							// ERRORE_RIGHI_ORDINE);
 						}
@@ -262,13 +246,15 @@ public class InviaEvasioneOrdine extends Dao {
 			}
 		} catch (RuntimeException e) {
 			// Notifico l'eccezione.
-			logger.error(e);
+			logger.error(e.getMessage(), e);
 			String oggettoMail = "Alert: eccezione nell'invio dell'evasione dell'ordine YNAP";
 			String corpoMail = "Errore riscontrato: " + e.getMessage();
 			List<String> destinatariDaAvvisare = ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
 			Email mail = new Email(oggettoMail, corpoMail);
 			MailMan postino = ConfigurationUtility.getInstance().getMailMan();
-			postino.invia(destinatariDaAvvisare, mail);
+			boolean invio = postino.invia(destinatariDaAvvisare, mail);
+			if (!invio)
+				logger.error("Impossibile inviare la mail di notifica dell'errore.");
 		}
 	}
 

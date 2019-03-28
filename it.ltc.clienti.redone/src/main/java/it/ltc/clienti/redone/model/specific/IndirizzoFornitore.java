@@ -35,10 +35,10 @@ public class IndirizzoFornitore extends MIndirizzo {
 		else if (provincia.length() != 2)
 			throw new ModelValidationException("La provincia non è valida. Es. PG. Indicare XX per l'estero.");
 		//Nazione
-		if (nazione == null || nazione.isEmpty())
-			throw new ModelValidationException("Bisogna specificare la nazione.");
-		else if (nazione.length() != 3)
-			throw new ModelValidationException("La nazione specificata non è valida. Utilizzare il codice ISO a 3 caratteri. Es. ITA");
+//		if (nazione == null || nazione.isEmpty())
+//			throw new ModelValidationException("Bisogna specificare la nazione.");
+//		else if (nazione.length() != 3)
+//			throw new ModelValidationException("La nazione specificata non è valida. Utilizzare il codice ISO a 3 caratteri. Es. ITA");
 		//Telefono
 		if (telefono != null && telefono.length() > 30)
 			throw new ModelValidationException("Il numero di telefono specificato e' troppo lungo. (Max 30 caratteri) contattare il reparto IT di LTC");

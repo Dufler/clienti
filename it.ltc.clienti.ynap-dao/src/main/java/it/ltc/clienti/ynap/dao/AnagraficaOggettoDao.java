@@ -18,7 +18,7 @@ public class AnagraficaOggettoDao extends CRUDDao<AnagraficaOggetto> {
 	}
 	
 	public AnagraficaOggetto trovaDaRFID(String rfid) {
-		AnagraficaOggetto entity = findOnlyOneEqualTo("CodArtStr", rfid);
+		AnagraficaOggetto entity = findOnlyOneEqualTo("codiceArticolo", rfid);
 		return entity;
 	}
 	

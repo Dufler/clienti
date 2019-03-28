@@ -27,6 +27,9 @@ public class DettaglioOrdine implements Serializable {
 	@Column(name="idRigoOrdine", unique=true, nullable=false)
 	private int id;
 	
+	@Column(name="IdTestataOrdine", nullable=false)
+	private int idTestataOrdine;
+	
 	@Column(name="NrLista", length=21, columnDefinition="varchar(21)")
 	private String numeroLista;
 	
@@ -84,8 +87,8 @@ public class DettaglioOrdine implements Serializable {
 	@Column(name="QtaImballata")
 	private int quantitàDaImballare;
 	
-	@Column(name="QtaSpedizione")
-	private int codificaOggettoNonTrovato;
+	@Column(name="CodificaOggettoNonTrovato")
+	private Integer codificaOggettoNonTrovato;
 	
 	@Column(name="NoteOggettoNonTrovato", length=200, columnDefinition="varchar(200)")
 	private String noteOggettoNonTrovato;
@@ -105,6 +108,14 @@ public class DettaglioOrdine implements Serializable {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public int getIdTestataOrdine() {
+		return idTestataOrdine;
+	}
+
+	public void setIdTestataOrdine(int idTestataOrdine) {
+		this.idTestataOrdine = idTestataOrdine;
 	}
 
 	public String getNumeroLista() {
@@ -259,11 +270,11 @@ public class DettaglioOrdine implements Serializable {
 		this.quantitàDaImballare = quantitàDaImballare;
 	}
 
-	public int getCodificaOggettoNonTrovato() {
+	public Integer getCodificaOggettoNonTrovato() {
 		return codificaOggettoNonTrovato;
 	}
 
-	public void setCodificaOggettoNonTrovato(int codificaOggettoNonTrovato) {
+	public void setCodificaOggettoNonTrovato(Integer codificaOggettoNonTrovato) {
 		this.codificaOggettoNonTrovato = codificaOggettoNonTrovato;
 	}
 

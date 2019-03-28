@@ -21,9 +21,9 @@ public class ImballoDao extends CRUDDao<Imballo> {
 	
 	public Imballo trovaPezzoImballato(String numeroLista, String rfid) {
 		List<CondizioneWhere> conditions = new LinkedList<>();
-		conditions.add(new CondizioneWhere("NrLista", numeroLista));
-		conditions.add(new CondizioneWhere("CodiceArticolo", rfid));
-		conditions.add(new CondizioneWhere("QtaImballata", 1));
+		conditions.add(new CondizioneWhere("numeroLista", numeroLista));
+		conditions.add(new CondizioneWhere("codiceArticolo", rfid));
+		conditions.add(new CondizioneWhere("quantitàImballata", 1));
 		Imballo entity = findJustOne(conditions);
 		return entity;
 	}

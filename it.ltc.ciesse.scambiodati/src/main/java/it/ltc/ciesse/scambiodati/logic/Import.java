@@ -104,7 +104,7 @@ public class Import {
 	 * Scarica i files dal server FTP e li deposita nella cartella di importazione.
 	 */
 	public void scaricaFiles() {
-		
+		//DO NOTHING! Il server FTP è il nostro.
 	}
 	
 	/**
@@ -190,6 +190,13 @@ public class Import {
 			postino.invia(destinatari, mail);
 		}		
 	}
+	
+	private void gestisciErrore(File file, Exception e) {
+		String message = e.getMessage() + " (file: " + file.getName() + ")";
+		messaggiErrore.add(message);
+		logger.error(message, e);
+		spostaFileConErrori(file);
+	}
 
 	private void spostaFileConErrori(File fileConErrori) {
 		String nomeFile = fileConErrori.getName();
@@ -246,15 +253,13 @@ public class Import {
 				spostaFileConErrori(file);
 			}
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(file);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaNazioni(File fileNazioni) {
+	private void importaNazioni(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileNazioni);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<Nazioni> nazioni = NazioneCliente.parsaNazioni(lines);
 			NazioniDao daoNazioni = new NazioniDao(persistenceUnit);
 			for (Nazioni nazione : nazioni) {
@@ -265,17 +270,15 @@ public class Import {
 				}				
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileNazioni);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileNazioni);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaTaglie(File fileTaglie) {
+	private void importaTaglie(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileTaglie);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<NumerataLegacy> numerate = ClasseTaglie.parsaTaglie(lines);
 			NumerateDao daoNumerate = new NumerateDao(persistenceUnit);
 			//Inserisco quelle nuove
@@ -291,17 +294,15 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileTaglie);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileTaglie);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaColori(File fileColori) {
+	private void importaColori(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileColori);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<Colori> colori = Colore.parseColori(lines);
 			ColoriDao daoColori = new ColoriDao(persistenceUnit);
 			for (Colori colore : colori) {
@@ -315,21 +316,19 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileColori);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileColori);
+			gestisciErrore(file, e);
 		}		
 	}
 	
-	private void importaAssortimenti(File fileAssortimenti) {
+	private void importaAssortimenti(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileAssortimenti);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<Casse> kits = Assortimenti.parsaKitArticoli(lines);
 			CasseDao daoKit = new CasseDao(persistenceUnit);
 			for (Casse kit : kits) {
-				Casse entity = daoKit.trovaDaSkuBundleEProdotto(kit.getSkuBundle(), kit.getSkuProdotto());
+				Casse entity = daoKit.trovaDaCassaEProdotto(kit.getIdCassa(), kit.getIdProdotto());
 				if (entity == null) {
 					entity = daoKit.inserisci(kit);
 					if (entity == null) {
@@ -344,17 +343,15 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileAssortimenti);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileAssortimenti);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaArticoli(File fileArticoli) {
+	private void importaArticoli(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileArticoli);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<MProdotto> articoli = Articolo.parsaArticoli(lines);
 			ControllerArticoli controller = new ControllerArticoli();
 			int prodottiInseriti = 0;
@@ -370,19 +367,17 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileArticoli);
+			spostaFileNelloStorico(file);
 			if (prodottiInseriti > 0)
 				messaggiInfo.add("Sono stati inseriti a sistema " + prodottiInseriti + " nuovi prodotti.");
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileArticoli);
+			gestisciErrore(file, e);
 		}	
 	}
 	
-	private void importaDestinatari(File fileDestinatari) {
+	private void importaDestinatari(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileDestinatari);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<Destinatari> destinatari = ClientiDestinatari.parsaDestinatari(lines);
 			DestinatariDao daoDestinatari = new DestinatariDao(persistenceUnit);
 			for (Destinatari destinatario : destinatari) {
@@ -400,17 +395,15 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileDestinatari);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileDestinatari);
+			gestisciErrore(file, e);
 		}	
 	}
 	
-	private void importaFornitori(File fileFornitori) {
+	private void importaFornitori(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileFornitori);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<Fornitori> fornitori = Fornitore.parsaFornitori(lines);
 			FornitoreDao daoFornitori = new FornitoreDao(persistenceUnit);
 			for (Fornitori fornitore : fornitori) {
@@ -427,17 +420,15 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileFornitori);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileFornitori);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaVettori(File fileVettori) {
+	private void importaVettori(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileVettori);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<Corrieri> vettori = Vettori.parsaCorrieri(lines);
 			CorrieriDao daoVettori = new CorrieriDao(persistenceUnit);
 			for (Corrieri vettore : vettori) {
@@ -454,17 +445,15 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileVettori);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileVettori);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaStagioni(File fileStagioni) {
+	private void importaStagioni(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileStagioni);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<Stagioni> stagioni = Stagione.parsaStagioni(lines);
 			StagioniDao daoStagioni = new StagioniDao(persistenceUnit);
 			for (Stagioni stagione : stagioni) {
@@ -481,17 +470,15 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileStagioni);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileStagioni);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaTestateCarichi(File fileTestateCarichi) {
+	private void importaTestateCarichi(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileTestateCarichi);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<PakiTesta> testate = DocumentiEntrataTestata.parsaTestate(lines);
 			PakiTestaDao daoTestate = new PakiTestaDao(persistenceUnit);
 			for (PakiTesta testata : testate) {
@@ -510,17 +497,15 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileTestateCarichi);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileTestateCarichi);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaRigheCarichi(File fileRigheCarichi) {
+	private void importaRigheCarichi(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileRigheCarichi);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<PakiArticolo> righe = DocumentiEntrataRighe.parsaRigheDocumento(lines);
 			PakiArticoloDao daoRighe = new PakiArticoloDao(persistenceUnit);
 			for (PakiArticolo riga : righe) {
@@ -538,43 +523,35 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileRigheCarichi);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileRigheCarichi);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaTestateOrdini(File fileTestateOrdini) {
+	private void importaTestateOrdini(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileTestateOrdini);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<MOrdine> ordini = OrdiniTestata.parsaOrdini(lines);
 			for (MOrdine ordine : ordini) {
 				mappaOrdini.put(ordine.getRiferimentoOrdine(), ordine);
 				//Mi segno il file per spostarlo successivamente, al termine dell'importazione dell'ordine.
-				mappaFileTestateOrdini.put(ordine.getRiferimentoOrdine(), fileTestateOrdini);
+				mappaFileTestateOrdini.put(ordine.getRiferimentoOrdine(), file);
 			}
-			//Sposto il file nella cartella di storico
-			//spostaFileNelloStorico(fileTestateOrdini);
+			//Il file nello storico lo sposto dopo.
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileTestateOrdini);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaRigheOrdini(File fileRigheOrdini) {
+	private void importaRigheOrdini(File file) {
 		try {
-			ArrayList<String> lines = FileUtility.readLines(fileRigheOrdini);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			String riferimentoOrdine = OrdiniRighe.parsaRigheOrdine(mappaOrdini, lines);
-			mappaFileRigheOrdini.put(riferimentoOrdine, fileRigheOrdini);
-			//Sposto il file nella cartella di storico
-			//spostaFileNelloStorico(fileRigheOrdini);
+			mappaFileRigheOrdini.put(riferimentoOrdine, file);
+			//Il file nello storico lo sposto dopo
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileRigheOrdini);
+			gestisciErrore(file, e);
 		}
 	}
 	
@@ -596,8 +573,9 @@ public class Import {
 				//Skip dell'errore, non è nulla di grave siccome manca uno dei files che dovrebbe arrivarmi al prossimo giro comunque.
 				logger.error(e.getMessage(), e);
 			} catch (Exception e) {
-				messaggiErrore.add(e.getMessage());
-				logger.error(e.getMessage(), e);
+				String message = e.getMessage() + "(files: " + fileTestata.getName() + ", " + fileRighe.getName() + ")";
+				messaggiErrore.add(message);
+				logger.error(message, e);
 				//Sposto i files nella cartella errori
 				spostaFileConErrori(fileTestata);
 				spostaFileConErrori(fileRighe);
@@ -605,10 +583,10 @@ public class Import {
 		}
 	}
 	
-	private void importaColliDaSpedire(File fileColli) {
+	private void importaColliDaSpedire(File file) {
 		try {
 			ColliPrelevaDao daoColli = new ColliPrelevaDao(persistenceUnit);
-			ArrayList<String> lines = FileUtility.readLines(fileColli);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<ColliPreleva> colli = Colli.importaColli(lines);
 			for (ColliPreleva collo : colli) {
 				//Verifico se è già presente oppure no
@@ -625,18 +603,16 @@ public class Import {
 				}				
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileColli);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileColli);
+			gestisciErrore(file, e);
 		}
 	}
 	
-	private void importaDatiSpedizioni(File fileSpedizioni) {
+	private void importaDatiSpedizioni(File file) {
 		try {
 			TempCorrDao daoSpedizioni = new TempCorrDao(persistenceUnit);
-			ArrayList<String> lines = FileUtility.readLines(fileSpedizioni);
+			ArrayList<String> lines = FileUtility.readLines(file);
 			List<TempCorr> spedizioni = DDTSpedizione.parsaDDT(lines);
 			for (TempCorr spedizione : spedizioni) {
 				//Verifico se è stato passato il contrassegno
@@ -660,11 +636,9 @@ public class Import {
 				}
 			}
 			//Sposto il file nella cartella di storico
-			spostaFileNelloStorico(fileSpedizioni);
+			spostaFileNelloStorico(file);
 		} catch (Exception e) {
-			messaggiErrore.add(e.getMessage());
-			logger.error(e.getMessage(), e);
-			spostaFileConErrori(fileSpedizioni);
+			gestisciErrore(file, e);
 		}
 	}
 

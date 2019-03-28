@@ -21,9 +21,9 @@ public class UbicazioneOggettoDao extends CRUDDao<UbicazioneOggetto> {
 	
 	public UbicazioneOggetto trovaPezzoImballato(String numeroLista, String idUnivocoArticolo) {
 		List<CondizioneWhere> conditions = new LinkedList<>();
-		conditions.add(new CondizioneWhere("nrlista", numeroLista));
-		conditions.add(new CondizioneWhere("iduniarticolo", idUnivocoArticolo));
-		conditions.add(new CondizioneWhere("QtaImballata", 1));
+		conditions.add(new CondizioneWhere("numeroLista", numeroLista));
+		conditions.add(new CondizioneWhere("idUnivocoArticolo", idUnivocoArticolo));
+		conditions.add(new CondizioneWhere("quantitàImballata", 1));
 		UbicazioneOggetto entity = findJustOne(conditions);
 		return entity;
 	}

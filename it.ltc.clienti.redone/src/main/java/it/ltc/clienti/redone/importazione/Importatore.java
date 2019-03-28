@@ -3,6 +3,8 @@ package it.ltc.clienti.redone.importazione;
 import java.io.File;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import it.ltc.clienti.redone.ConfigurationUtility;
 import it.ltc.model.interfaces.importatore.ImportatoreFiles;
 import it.ltc.model.interfaces.importatore.RisultatoImportazione;
@@ -12,7 +14,7 @@ import it.ltc.utility.mail.MailMan;
 
 public class Importatore extends ImportatoreFiles {
 	
-	//private static final Logger logger = Logger.getLogger(Importatore.class);
+	private static final Logger logger = Logger.getLogger(Importatore.class);
 	
 	private static final String CSV_SEPARATOR = "\\|";
 	private static final String CSV_DATE_FORMAT = "yyyyddMM";
@@ -70,7 +72,7 @@ public class Importatore extends ImportatoreFiles {
 	}
 
 	@Override
-	protected void inviaReportImportazione() {
+	protected void inviaReportImportazione(List<RisultatoImportazione> risultati) {
 		boolean alert = false;
 		StringBuilder sb = new StringBuilder("Report importazione files\r\n");
 		for (RisultatoImportazione importazione : risultati) {
@@ -81,9 +83,14 @@ public class Importatore extends ImportatoreFiles {
 		}
 		String subject = "Riepilogo importazione ReDone";
 		MailMan postino = ConfigurationUtility.getInstance().getMailMan();
-		List<String> destinatari = alert ? ConfigurationUtility.getInstance().getIndirizziDestinatari() : ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
+		List<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
+		if (alert) {
+			destinatari.addAll(ConfigurationUtility.getInstance().getIndirizziDestinatariErrori());
+		}
 		Email mail = new Email(subject, sb.toString());
-		postino.invia(destinatari, mail);
+		boolean invio = postino.invia(destinatari, mail);
+		if (!invio)
+			logger.error("Impossibile inviare la mail di report sull'esportazione.");
 	}
 
 }

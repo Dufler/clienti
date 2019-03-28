@@ -35,7 +35,7 @@ public class ColliDao extends CRUDDao<Collo> {
 	}
 	
 	public List<Collo> trovaColliNonCancellati() {
-		List<Collo> entities = findAllEqualTo("Cancellato", "NO");
+		List<Collo> entities = findAllEqualTo("cancellato", "NO");
 		return entities;
 	}
 

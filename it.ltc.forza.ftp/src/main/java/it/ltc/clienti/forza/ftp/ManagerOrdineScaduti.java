@@ -31,7 +31,7 @@ public class ManagerOrdineScaduti extends ControllerOrdiniSQLServer {
 	public MOrdine creaOrdineDaProdotti(List<ColliPack> prodotti) {
 		//Creo la testata
 		Date now = new Date();
-		SimpleDateFormat sdf = new SimpleDateFormat("yy/MM/dd");
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 		String riferimento = "Scaduti " + sdf.format(now);
 		MOrdine ordine = new MOrdine();
 		ordine.setDataConsegna(now);

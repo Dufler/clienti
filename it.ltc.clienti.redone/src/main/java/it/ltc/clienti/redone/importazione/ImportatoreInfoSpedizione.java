@@ -5,6 +5,9 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import it.ltc.database.model.legacy.Destinatari;
+import it.ltc.database.model.legacy.TestaCorr;
+import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.model.interfaces.exception.ModelAlreadyExistentException;
 import it.ltc.model.interfaces.exception.ModelPersistenceException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
@@ -80,7 +83,7 @@ public class ImportatoreInfoSpedizione extends ControllerInfoSpedizioneSQLServer
 			Double valoreContrassegno = csv.getNumerico("codvalue");
 			if (valoreContrassegno != null && valoreContrassegno <= 0)
 				throw new RuntimeException("Il valore del contrassegno non è valido. (" + valoreContrassegno + ")");
-			String tipo = csv.getStringa("codtype");
+			String tipo = csv.getStringa("codtype") != null ? csv.getStringa("codtype") : "";
 			TipoContrassegno tipoContrassegno = TipoContrassegno.valueOf(tipo);
 			contrassegno = new MContrassegno();
 			contrassegno.setValore(valoreContrassegno);
@@ -113,6 +116,19 @@ public class ImportatoreInfoSpedizione extends ControllerInfoSpedizioneSQLServer
 			super(messaggi, nomeFile, totali, inseriti, giàPresenti, erroreValidazione, erroreGenerico);
 		}
 		
+	}
+	
+	protected void setInfoDestinatario(TestataOrdini ordine, TestaCorr spedizione) {
+		Destinatari destinatario = controllerIndirizzi.trovaDestinatario(ordine.getIdDestina());
+		if (destinatario == null)
+			throw new ModelPersistenceException("Il destinatario per la spedizione non è stato trovato!");
+		spedizione.setCap(destinatario.getCap());
+		spedizione.setIndirizzo(destinatario.getIndirizzo());
+		spedizione.setLocalita(destinatario.getLocalita());
+		spedizione.setNazione(destinatario.getCodNaz()); //ISO 2 per TNT.
+		spedizione.setProvincia(destinatario.getProvincia());
+		spedizione.setRagSocDest(destinatario.getRagSoc1());
+		spedizione.setRagSocEst(destinatario.getRagSoc2());
 	}
 
 }

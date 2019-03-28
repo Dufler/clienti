@@ -26,7 +26,7 @@ public class ManagerAssegnazioneScaduti extends ManagerAssegnazione {
 		for (RighiOrdine riga : righe) {
 			AssegnazioneProdotto assegnazione = new AssegnazioneProdotto(riga);
 			assegnazioneOrdine.aggiungiAssegnazione(assegnazione);
-			assegnaSuColliAPrelievo(prodotti, assegnazione, testata, riga);
+			assegnaSuColliSpecifici(prodotti, assegnazione, testata, riga);
 		}
 		if (!prodotti.isEmpty()) {
 			throw new RuntimeException("Non sono stati utilizzati tutti i colli pack!?");

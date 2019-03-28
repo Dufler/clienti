@@ -40,7 +40,7 @@ public class EsportatoreImballi extends EsportatoreImballoSQLServer {
 			//Accorpo i righiimballo perchè non riescono a gestirli sennò
 			HashMap<String, Integer> mappaImballi = new HashMap<>();
 			for (RighiImballo imballo : imballi) {
-				String key = imballo.getNrRigoOrdine() + "#" + imballo.getCodiceArticolo() + "#" + imballo.getKeyColloSpe();
+				String key = imballo.getNrRigoOrdine() + "#" + imballo.getCodBarre() + "#" + imballo.getKeyColloSpe();
 				int quantità = mappaImballi.containsKey(key) ? mappaImballi.get(key) : 0;
 				quantità += imballo.getQtaImballata();
 				mappaImballi.put(key, quantità);
@@ -52,7 +52,7 @@ public class EsportatoreImballi extends EsportatoreImballoSQLServer {
 				int quantità = mappaImballi.get(key);
 				String[] valori = key.split("#");
 				int rigaOrdine = Integer.parseInt(valori[0]);
-				String codiceArticolo = valori[1];
+				String codiceArticolo = valori[1]; //In realtà è il barcode perchè sono delle fave.
 				String keyColloSpe = valori[2];
 				//Preparo la riga csv
 				PickPack rigaCsv = new PickPack();

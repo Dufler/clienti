@@ -25,6 +25,7 @@ import it.ltc.clienti.ynap.model.MovimentoMagazzino;
 import it.ltc.clienti.ynap.model.Ordine;
 import it.ltc.clienti.ynap.model.SaldiMagazzino;
 import it.ltc.database.dao.Dao;
+import it.ltc.logic.GestoreSFTP.Strategy;
 import it.ltc.model.order.out.Item;
 import it.ltc.model.order.out.Order;
 import it.ltc.model.order.out.Orders;
@@ -54,10 +55,22 @@ public class ImportaOrdine extends Dao {
 			instance = new ImportaOrdine();
 		return instance;
 	}
+	
+	//Questo metodo è stato usato per fare test in locale senza SFTP.
+//	private List<String> getFileNamesToImport() {
+//		String folderPath = "C:\\Users\\Damiano\\Desktop\\ynap\\ordine\\";
+//		File folder = new File(folderPath);
+//		String[] array = folder.list();
+//		List<String> list = new LinkedList<>();
+//		for (String file : array) {
+//			list.add(folderPath + file);
+//		}
+//		return list;
+//	}
 
 	private List<String> getFileNamesToImport() {
 		logger.info("Recupero la lista di files da importare");
-		GestoreSFTP gestore = GestoreSFTP.getInstance(GestoreSFTP.STRATEGY_ORDINI);
+		GestoreSFTP gestore = new GestoreSFTP(Strategy.ORDINI);
 		List<String> localCopyNames = gestore.getNomiFiles();
 		return localCopyNames;
 	}
@@ -148,10 +161,13 @@ public class ImportaOrdine extends Dao {
 	}
 	
 	private int elaboraMarchio(EntityManager em, String marchio) {
+		//Eseguo una replace dei caratteri "scomodi" mettendolo tutto in uppercase.
+		marchio = marchio != null ? marchio.toUpperCase() : "";
+		marchio = utility.getVanilla(marchio);
 		CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Marchio> criteria = cb.createQuery(Marchio.class);
         Root<Marchio> member = criteria.from(Marchio.class);
-        criteria.select(member).where(cb.equal(member.get("Descrizione"), marchio));
+        criteria.select(member).where(cb.equal(member.get("nome"), marchio));
         List<Marchio> lista = em.createQuery(criteria).setMaxResults(1).getResultList();
         Marchio trovato = lista.isEmpty()? null : lista.get(0);
         //Se non l'ho trovato lo inserisco
@@ -189,7 +205,7 @@ public class ImportaOrdine extends Dao {
 		CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<AnagraficaOggetto> criteria = cb.createQuery(AnagraficaOggetto.class);
         Root<AnagraficaOggetto> member = criteria.from(AnagraficaOggetto.class);
-        criteria.select(member).where(cb.equal(member.get("CodArtStr"), oggetto.getITCodiceMatricola()));
+        criteria.select(member).where(cb.equal(member.get("codiceArticolo"), oggetto.getITCodiceMatricola()));
         List<AnagraficaOggetto> lista = em.createQuery(criteria).setMaxResults(1).getResultList();
         AnagraficaOggetto daAggiornare = lista.isEmpty()? null : lista.get(0);
 		//Se l'ho trovata vado ad aggiornarla integrando i possibili campi
@@ -201,6 +217,7 @@ public class ImportaOrdine extends Dao {
 		daAggiornare.setMarchio(elaboraMarchio(em, oggetto.getITMarchio()));
 		daAggiornare.setTaglia(getTaglia(oggetto));
 		daAggiornare.setColore(getColore(oggetto));
+		em.merge(daAggiornare);
         return daAggiornare.getIdUnivocoArticolo();
 	}
 	
@@ -210,14 +227,15 @@ public class ImportaOrdine extends Dao {
 		daInserire.setBarcodeEAN(oggetto.getITCodiceMatricola());
 		daInserire.setBarcodeUPC(oggetto.getITCodiceMatricola());
 		daInserire.setCodiceCliente(nuovoOrdine.getCodiceCliente());
+		daInserire.setIdDestinatario(nuovoOrdine.getIdDestinatario());
 		daInserire.setColore(getColore(oggetto));
 		daInserire.setDataOrdine(nuovoOrdine.getDataOrdine());
 		daInserire.setDescrizione(oggetto.getITArtSti());
-//		daInserire.setIdDestinatario(idDestinatarioDB);
 		daInserire.setIdUnivocoArticolo(codiceUnivocoArticolo);
 		daInserire.setNote(oggetto.getITNote());
 		daInserire.setNumeroLista(nuovoOrdine.getNumeroLista());
 		daInserire.setNumeroOrdine(nuovoOrdine.getNumeroOrdine());
+		daInserire.setIdTestataOrdine(nuovoOrdine.getId());
 		// daInserire.setNumeroRigaOrdine(rigaOrdine); questo valore o l'univoco?
 		daInserire.setNumeroRigaOrdine(oggetto.getITRMMID());
 		daInserire.setRaggruppamentoStampe(nuovoOrdine.getNumeroLista());
@@ -229,16 +247,27 @@ public class ImportaOrdine extends Dao {
 		return daInserire;
 	}
 	
-	private void aggiornaSaldi(EntityManager em, String codiceUnivocoArticolo) {
+	private void aggiornaSaldi(EntityManager em, String codiceUnivocoArticolo, String magazzino) {
 		CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<SaldiMagazzino> criteria = cb.createQuery(SaldiMagazzino.class);
         Root<SaldiMagazzino> member = criteria.from(SaldiMagazzino.class);
-        criteria.select(member).where(cb.and(cb.equal(member.get("IdUniArticolo"), codiceUnivocoArticolo), cb.equal(member.get("CodMaga"), "PU1")));
+        criteria.select(member).where(cb.and(cb.equal(member.get("idUnivocoArticolo"), codiceUnivocoArticolo), cb.equal(member.get("magazzino"), magazzino)));
         List<SaldiMagazzino> lista = em.createQuery(criteria).setMaxResults(1).getResultList();
         SaldiMagazzino daAggiornare = lista.isEmpty()? null : lista.get(0);
-        daAggiornare.setDisponibile(daAggiornare.getDisponibile() - 1);
-        daAggiornare.setImpegnato(daAggiornare.getImpegnato() + 1);
-        em.merge(daAggiornare);
+        if (daAggiornare != null) {
+        	 daAggiornare.setDisponibile(daAggiornare.getDisponibile() - 1);
+             daAggiornare.setImpegnato(daAggiornare.getImpegnato() + 1);
+             em.merge(daAggiornare);
+        } else {
+        	logger.warn("Nessun saldo di magazzino trovato per l'articolo '" + codiceUnivocoArticolo + "' sul magazzino " + magazzino + ", ne creo uno.");
+        	SaldiMagazzino nuovo = new SaldiMagazzino();
+        	nuovo.setDisponibile(-1);
+        	nuovo.setEsistenza(0);
+        	nuovo.setImpegnato(1);
+        	nuovo.setIdUnivocoArticolo(codiceUnivocoArticolo);
+        	nuovo.setMagazzino(magazzino);
+        	em.persist(nuovo);
+        }
 	}
 	
 	private MovimentoMagazzino getMovimento(Ordine nuovoOrdine, String codiceUnivocoArticolo) {
@@ -296,8 +325,8 @@ public class ImportaOrdine extends Dao {
 					// Inserisco l'oggetto
 					DettaglioOrdine daInserire = getDettaglio(nuovoOrdine, oggetto, codiceUnivocoArticolo);
 					em.persist(daInserire);
-					// Aggiorno i saldi di magazzino
-					aggiornaSaldi(em, codiceUnivocoArticolo);
+					// Aggiorno i saldi di magazzino, fisso il magazzino a PU1.
+					aggiornaSaldi(em, codiceUnivocoArticolo, "PU1");
 					// Aggiorno i movimenti di magazzino
 					MovimentoMagazzino movimento = getMovimento(nuovoOrdine, codiceUnivocoArticolo);
 					em.persist(movimento);
@@ -327,12 +356,9 @@ public class ImportaOrdine extends Dao {
 				JAXBContext jaxbContext = JAXBContext.newInstance(Orders.class);
 				Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 				Orders oggettiDaSpedire = (Orders) jaxbUnmarshaller.unmarshal(file);
-				boolean successo = scriviDB(nomeFile, oggettiDaSpedire);
+				boolean successo = scriviDB(file.getName(), oggettiDaSpedire);
 				if (successo) {
-					GestoreSFTP gestore = GestoreSFTP.getInstance(GestoreSFTP.STRATEGY_ORDINI);
-					boolean aggiornamentoStato = gestore.aggiornaFileSentinella(nomeFile);
-					if (!aggiornamentoStato)
-						logger.error("Impossibile aggiornare il file sentinella: " + nomeFile);
+					aggiornaFileSentinella(nomeFile);
 					importati += 1;
 				} else {
 					conErrori += 1;
@@ -342,10 +368,15 @@ public class ImportaOrdine extends Dao {
 				e.printStackTrace();
 			}
 		}
-		//Metodo inutile su SQL Server, il commit da parte del DB avviene troppo tardi.
-		//Gli ordini vengono ora già segnati in stato IMPO invece di INSE.
-		//segnaComeImportati();
+		//Invio della mail di riepilogo.
 		inviaResoconto(importati, conErrori);
+	}
+	
+	private void aggiornaFileSentinella(String nomeFile) {
+		GestoreSFTP gestore = new GestoreSFTP(Strategy.ORDINI);
+		boolean aggiornamentoStato = gestore.aggiornaFileSentinella(nomeFile);
+		if (!aggiornamentoStato)
+			logger.error("Impossibile aggiornare il file sentinella: " + nomeFile);
 	}
 
 	private void inviaResoconto(int importati, int conErrori) {

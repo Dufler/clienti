@@ -18,7 +18,7 @@ public class DettaglioOrdineDao extends CRUDDao<DettaglioOrdine> {
 	}
 	
 	public List<DettaglioOrdine> trovaDaNumeroLista(String numeroLista) {
-		List<DettaglioOrdine> entities = findAllEqualTo("NrLista", numeroLista);
+		List<DettaglioOrdine> entities = findAllEqualTo("numeroLista", numeroLista);
 		return entities;
 	}
 

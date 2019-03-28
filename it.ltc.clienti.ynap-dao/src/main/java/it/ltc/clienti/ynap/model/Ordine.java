@@ -13,7 +13,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name="TestataOrdini")
-@NamedQuery(name="TestataOrdini.progressivo", query="SELECT MAX(t.NrListaArrivato) FROM TestataOrdini t")
+@NamedQuery(name="TestataOrdini.progressivo", query="SELECT MAX(t.numeroListaNumerico) FROM Ordine t")
 public class Ordine implements Serializable {
 	
 	private static final long serialVersionUID = 1L;

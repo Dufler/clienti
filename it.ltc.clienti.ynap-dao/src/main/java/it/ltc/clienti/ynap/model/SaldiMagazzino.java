@@ -31,6 +31,9 @@ public class SaldiMagazzino implements Serializable {
 	
 	@Column(name="IdUniArticolo", length=15, columnDefinition="char(15)")
 	private String idUnivocoArticolo;
+	
+	@Column(name="CodMaga", length=3, columnDefinition="char(3)")
+	private String magazzino;
 
 	public SaldiMagazzino() {}
 
@@ -72,6 +75,14 @@ public class SaldiMagazzino implements Serializable {
 
 	public void setIdUnivocoArticolo(String idUnivocoArticolo) {
 		this.idUnivocoArticolo = idUnivocoArticolo;
+	}
+
+	public String getMagazzino() {
+		return magazzino;
+	}
+
+	public void setMagazzino(String magazzino) {
+		this.magazzino = magazzino;
 	}
 
 }

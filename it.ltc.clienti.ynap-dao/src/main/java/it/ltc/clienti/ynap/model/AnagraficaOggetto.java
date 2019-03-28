@@ -20,33 +20,36 @@ public class AnagraficaOggetto implements Serializable {
 	@Column(name="IdArticolo", unique=true, nullable=false)
 	private int id;
 	
+	@Column(name="IdUniArticolo", nullable=false, length=25, columnDefinition="varchar(25)")
 	private String idUnivocoArticolo;
+	
+	@Column(name="Descrizione", length=500, columnDefinition="varchar(500)")
 	private String descrizione;
+	
+	@Column(name="Stagione", length=30, columnDefinition="varchar(30)")
 	private String stagione;
+	
+	@Column(name="CatMercGruppo", nullable=false, length=50, columnDefinition="varchar(50)")
 	private String tipologiaMerce;
+	
+	@Column(name="CodArtStr", length=50, columnDefinition="varchar(50)")
 	private String codiceArticolo;
+	
+	@Column(name="Modello", length=40, columnDefinition="varchar(40)")
 	private String modello;
+	
+	@Column(name="Taglia", length=20, columnDefinition="varchar(20)")
 	private String taglia;
+	
+	@Column(name="Colore", length=40, columnDefinition="varchar(40)")
 	private String colore;
+	
+	@Column(name="DescAggiuntiva", columnDefinition="text")
 	private String descrizioneAggiuntiva;
+	
+	@Column(name="Marchio")
 	private Integer marchio;
 
-//	public ColumnList getVariabili() {
-//		if (variabili.isEmpty()) {
-//			variabili.addAutoincrement("IdArticolo", "id");
-//			variabili.addString("IdUniArticolo", "idUnivocoArticolo");
-//			variabili.addString("Descrizione", "descrizione");
-//			variabili.addString("Stagione", "stagione");
-//			variabili.addString("CatMercGruppo", "tipologiaMerce");
-//			variabili.addString("CodArtStr", "codiceArticolo");
-//			variabili.addString("Modello", "modello");
-//			variabili.addString("Taglia", "taglia");
-//			variabili.addString("Colore", "colore");
-//			variabili.addString("DescAggiuntiva", "descrizioneAggiuntiva");
-//			variabili.addInt("Marchio", "marchio");
-//		}
-//		return variabili;
-//	}
 //	
 //	public static String getNextIDUnivoArticolo() {
 //		if (progressivo == -1) {

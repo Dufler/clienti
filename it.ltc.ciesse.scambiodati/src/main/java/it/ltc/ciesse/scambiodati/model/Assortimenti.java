@@ -40,8 +40,8 @@ public class Assortimenti {
 						if (articolo == null)
 							throw new RuntimeException("Impossibile trovare l'anagrafica dell'articolo: '" + skuBase + "_" + counter + "'");
 						Casse cassa = new Casse();
-						cassa.setSkuBundle(kit.getIdUniArticolo());
-						cassa.setSkuProdotto(articolo.getIdUniArticolo());
+						cassa.setIdCassa(kit.getIdArticolo());
+						cassa.setIdProdotto(articolo.getIdArticolo());
 						cassa.setQuantitaProdotto(qta);
 						cassa.setTipo("STANDARD");
 						cassa.setModello(skuBase);

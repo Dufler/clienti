@@ -69,7 +69,7 @@ public class Colli {
 			collo.setCodiceCorriere(vettore);
 			collo.setDataDistinta(new Date(dataDocumento.getTime()));
 			collo.setKeyColloPre(numeroCollo);
-			collo.setNrColloCliente(0);
+			collo.setNrColloCliente(colloImballato.getNrIdCollo());
 			collo.setNrLista(colloImballato.getNrLista());
 			//collo.setPoNumber(riferimentoOrdine);
 			collo.setPoNumber(ddt);

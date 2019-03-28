@@ -230,11 +230,11 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 				 //Sembra che se si ordini 1 bundle la quantita' venga passata a 0.
 				int bundleOrdinati = riga.getQuantita();
 				if (bundleOrdinati > 0) {
-					HashMap<String, Integer> mappaProdotti = getBundleComposition(articolo.getIdUniArticolo());
-					for (String skuSingleUnit : mappaProdotti.keySet()) {
+					HashMap<Integer, Integer> mappaProdotti = getBundleComposition(articolo.getIdArticolo());
+					for (int idProdotto : mappaProdotti.keySet()) {
 						ProdottoOrdinato prodotto = new ProdottoOrdinato();
-						prodotto.setChiave(skuSingleUnit);
-						prodotto.setQuantita(bundleOrdinati * mappaProdotti.get(skuSingleUnit));
+						prodotto.setId(idProdotto);
+						prodotto.setQuantita(bundleOrdinati * mappaProdotti.get(idProdotto));
 						prodotto.setMagazzinoCliente(magazzinoDefault);
 						prodotto.setMagazzinoLTC(magazzinoDefault);
 						lista.add(prodotto);
@@ -258,25 +258,17 @@ public class ManagerImportazione extends ControllerOrdiniSQLServer {
 		return isBundle;
 	}
 	
-	private HashMap<String, Integer> getBundleComposition(String skuBundle) {
-		HashMap<String, Integer> prodotti = new HashMap<>();
+	private HashMap<Integer, Integer> getBundleComposition(int idCassa) {
+		HashMap<Integer, Integer> prodotti = new HashMap<>();
 		
-		List<Casse> list = daoCasse.trovaDaSKUBundle(skuBundle);
-				
-//		EntityManager em = getManager();
-//		CriteriaBuilder cb = em.getCriteriaBuilder();
-//		CriteriaQuery<Casse> criteria = cb.createQuery(Casse.class);
-//		Root<Casse> member = criteria.from(Casse.class);
-//		criteria.select(member).where(cb.equal(member.get("skuBundle"), skuBundle));
-//		List<Casse> list = em.createQuery(criteria).getResultList();
-//		em.close();
+		List<Casse> list = daoCasse.trovaDaCassa(idCassa);
 			
 		for (Casse prodotto : list) {
-			prodotti.put(prodotto.getSkuProdotto(), prodotto.getQuantitaProdotto());
+			prodotti.put(prodotto.getIdProdotto(), prodotto.getQuantitaProdotto());
 		}
 		//Controllo aggiuntivo
 		if (prodotti.isEmpty())
-			throw new ModelPersistenceException("Non è stato trovato un bundle per l'ID '" + skuBundle + "'.");
+			throw new ModelPersistenceException("Non è stato trovato un bundle per l'ID '" + idCassa + "'.");
 		return prodotti;
 	}
 

@@ -8,6 +8,8 @@ import org.apache.log4j.Logger;
 import it.ltc.clienti.redone.ConfigurationUtility;
 import it.ltc.model.interfaces.esportatore.EsportatoreFiles;
 import it.ltc.model.interfaces.esportatore.RisultatoEsportazione;
+import it.ltc.utility.mail.Email;
+import it.ltc.utility.mail.MailMan;
 
 public class Esportatore extends EsportatoreFiles {
 	
@@ -38,17 +40,28 @@ public class Esportatore extends EsportatoreFiles {
 	
 	public List<RisultatoEsportazione> getRisultatiEsportazione() {
 		List<RisultatoEsportazione> risultati = new LinkedList<>();
-		logger.info("Esporto i carichi pronti.");
 		controllerCarichi.esportaCarichi();
-		logger.info("Esporto gli ordini imballati.");
 		controllerImballi.esportaOrdiniImballati();
-		logger.info("Esporto gli ordini spediti.");
 		controllerInfoSpedizioni.esportaInfoSpedizioni();
 		return risultati;
 	}
 	
-	protected void inviaReportEsportazione(List<RisultatoEsportazione> risultatiEsportazione) {
-		//TODO
+	protected void inviaReportEsportazione(List<RisultatoEsportazione> risultati) {
+		boolean alert = false;
+		StringBuilder sb = new StringBuilder("Report esportazione files\r\n");
+		for (RisultatoEsportazione importazione : risultati) {
+			sb.append(importazione.getDescrizioneRisultato());
+			sb.append("\r\n");
+			if (importazione.isInErrore())
+				alert = true;
+		}
+		String subject = "Riepilogo esportazione ReDone";
+		MailMan postino = ConfigurationUtility.getInstance().getMailMan();
+		List<String> destinatari = alert ? ConfigurationUtility.getInstance().getIndirizziDestinatari() : ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
+		Email mail = new Email(subject, sb.toString());
+		boolean invio = postino.invia(destinatari, mail);
+		if (!invio)
+			logger.error("Impossibile inviare la mail di report sull'esportazione.");
 	}
 
 }

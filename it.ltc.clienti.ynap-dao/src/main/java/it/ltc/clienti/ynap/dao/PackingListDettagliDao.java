@@ -25,20 +25,20 @@ public class PackingListDettagliDao extends CRUDDao<PackingListDettaglio> {
 	}
 	
 	public List<PackingListDettaglio> trovaDaSeriale(String seriale) {
-		List<PackingListDettaglio> entities = findAllEqualTo("SerialeRFID", seriale);
+		List<PackingListDettaglio> entities = findAllEqualTo("codiceRFID", seriale);
 		return entities;
 	}
 	
 	public PackingListDettaglio trovaDaSerialeEStato(String seriale, String stato) {
 		List<CondizioneWhere> conditions = new LinkedList<>();
-		conditions.add(new CondizioneWhere("SerialeRFID", seriale));
-		conditions.add(new CondizioneWhere("Stato", stato));
+		conditions.add(new CondizioneWhere("codiceRFID", seriale));
+		conditions.add(new CondizioneWhere("stato", stato));
 		PackingListDettaglio entity = findOne(conditions);
 		return entity;
 	}
 	
 	public List<PackingListDettaglio> trovaDaCarico(int idCarico) {
-		List<PackingListDettaglio> entities = findAllEqualTo("IdPakiTesta", idCarico);
+		List<PackingListDettaglio> entities = findAllEqualTo("idPackingList", idCarico);
 		return entities;
 	}
 

@@ -12,7 +12,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name="Marchi")
-@NamedQuery(name="Marchi.progressivo", query="SELECT MAX(m.Codice) FROM Marchi m")
+@NamedQuery(name="Marchi.progressivo", query="SELECT MAX(m.codice) FROM Marchio m")
 public class Marchio implements Serializable {
 	
 	private static final long serialVersionUID = 1L;

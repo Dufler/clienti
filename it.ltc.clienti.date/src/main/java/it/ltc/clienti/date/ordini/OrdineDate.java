@@ -99,8 +99,14 @@ public class OrdineDate {
 	@Campo(start=853, length=6, type=TipoCampo.NUMERICO_INTERO)
 	public Integer quantità;
 	
+	@Campo(start=985, length=88, type=TipoCampo.STRINGA)
+	public String quantitàPerTaglia;
+	
 	@Campo(start=783, length=70)
 	public String noteRiga;
+	
+	@Campo(start=874, length=1)
+	public String tipoAssortimento;
 	
 	public String getNumeroOrdine() {
 		return numeroOrdine;
@@ -320,11 +326,27 @@ public class OrdineDate {
 		this.quantità = quantità;
 	}
 
+	public String getQuantitàPerTaglia() {
+		return quantitàPerTaglia;
+	}
+
+	public void setQuantitàPerTaglia(String quantitàPerTaglia) {
+		this.quantitàPerTaglia = quantitàPerTaglia;
+	}
+
 	public String getNoteRiga() {
 		return noteRiga;
 	}
 
 	public void setNoteRiga(String noteRiga) {
 		this.noteRiga = noteRiga;
+	}
+
+	public String getTipoAssortimento() {
+		return tipoAssortimento;
+	}
+
+	public void setTipoAssortimento(String tipoAssortimento) {
+		this.tipoAssortimento = tipoAssortimento;
 	}
 }
