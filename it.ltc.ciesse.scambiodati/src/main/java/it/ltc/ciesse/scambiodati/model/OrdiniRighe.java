@@ -40,7 +40,7 @@ public class OrdiniRighe {
 			if (ordine == null) 
 				throw new RuntimeException("Nessun ordine trovato con questo riferimento. (" + riferimento + ")");
 			int numeroRiga = parser.getIntero(21, 31);
-			String codificaMagazzino = parser.getStringa(140, 150);
+			String codificaMagazzino = parser.getStringa(136, 146); //Modificato, sembra avere un'allineamento a destra diversamente dagli altri campi.
 			Magazzini magazzino = daoMagazzini.trovaDaCodificaCliente(codificaMagazzino);
 			if (magazzino == null)
 				throw new RuntimeException("Nessun magazzino trovato con questo riferimento. (" + codificaMagazzino + ")");

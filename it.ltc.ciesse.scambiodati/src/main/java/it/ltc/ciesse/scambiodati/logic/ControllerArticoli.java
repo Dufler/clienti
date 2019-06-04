@@ -120,17 +120,6 @@ public class ControllerArticoli extends ControllerProdottoSQLServer {
 	 * Associa ogni prodotto corretto ad uno errato.<br>
 	 * Controllo che abbiano lo stesso numero di elementi e che per ogni elemento ci sia un compagno.
 	 */
-//	private HashMap<Articoli, Articoli> checkModelli(HashMap<String, Articoli> corretti, HashMap<String, Articoli> errati) {
-//		HashMap<Articoli, Articoli> mappaModelli = new HashMap<>();
-//		for (String taglia : corretti.keySet()) {
-//			if (errati.containsKey(taglia)) {
-//				mappaModelli.put(corretti.get(taglia), errati.get(taglia));
-//			} else {
-//				throw new RuntimeException("La taglia '" + taglia + "' trovata nel modello '" + corretti.get(taglia).getModello() + "' non è presente nel modello errato.");
-//			}
-//		}		
-//		return mappaModelli;
-//	}
 	private HashMap<Articoli, Articoli> checkModelli(HashMap<String, Articoli> corretti, HashMap<String, Articoli> errati) {
 		HashMap<Articoli, Articoli> mappaModelli = new HashMap<>();
 		for (String taglia : corretti.keySet()) {

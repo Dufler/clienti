@@ -98,6 +98,11 @@
 			<artifactId>interfaces</artifactId>
 			<version>1.0</version>
 		</dependency>
+		<dependency>
+			<groupId>it.ltc.utility</groupId>
+			<artifactId>configuration-extra</artifactId>
+			<version>1.0</version>
+		</dependency>
 	</dependencies>
 	
 </project>

@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -56,8 +57,8 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 	private final String folderPath;
 	
 	private final MailMan postino;
-	private final List<String> destinatari;
-	private final List<String> destinatariErroriGravi;
+	private final Set<String> destinatari;
+	private final Set<String> destinatariErroriGravi;
 	
 	public ImportatoreOrdini(String folderPath, String persistenceUnit) {
 		super(persistenceUnit);

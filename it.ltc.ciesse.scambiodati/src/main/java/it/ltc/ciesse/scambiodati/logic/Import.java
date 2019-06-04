@@ -5,10 +5,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import it.ltc.ciesse.scambiodati.ConfigurationUtility;
+import it.ltc.ciesse.scambiodati.logic.exception.CaricoNonAncoraInseritoException;
+import it.ltc.ciesse.scambiodati.logic.exception.NessunColloTrovatoException;
 import it.ltc.ciesse.scambiodati.model.Articolo;
 import it.ltc.ciesse.scambiodati.model.Assortimenti;
 import it.ltc.ciesse.scambiodati.model.ClasseTaglie;
@@ -170,7 +173,7 @@ public class Import {
 	private void inviaMailRiepilogo() {
 		//Vado a fare una mail di riepilogo solo se ci sono messaggi.
 		if (messaggiInfo.size() + messaggiErrore.size() > 0) {
-			List<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
+			Set<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
 			MailMan postino = ConfigurationUtility.getInstance().getMailMan();
 			String subject = "Riepilogo Scambio Dati Ciesse";
 			if (!messaggiErrore.isEmpty()) {
@@ -524,6 +527,9 @@ public class Import {
 			}
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(file);
+		} catch(CaricoNonAncoraInseritoException e) {
+			//DO NOTHING! Non ci hanno ancora mandato la testata corrispondente ma sperabilmente ce la manderanno dopo...
+			logger.error(e.getMessage(), e);
 		} catch (Exception e) {
 			gestisciErrore(file, e);
 		}
@@ -637,7 +643,10 @@ public class Import {
 			}
 			//Sposto il file nella cartella di storico
 			spostaFileNelloStorico(file);
-		} catch (Exception e) {
+		} catch (NessunColloTrovatoException e) {
+			//DO NOTHING! Lo lascio li sperando che ce lo mandino dopo...
+			logger.error(e.getMessage(), e);
+		}catch (Exception e) {
 			gestisciErrore(file, e);
 		}
 	}

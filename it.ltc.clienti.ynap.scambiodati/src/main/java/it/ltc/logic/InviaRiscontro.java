@@ -159,7 +159,7 @@ public class InviaRiscontro extends Dao {
 				String errorMessage = "Attenzione! Il documento " + documento.getFileID() + " ha generato errori.";
 				logger.error(errorMessage);
 				String oggettoMail = "Alert: eccezione nell'invio dell'evasione del carico YNAP";
-				List<String> destinatariDaAvvisare = ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
+				Set<String> destinatariDaAvvisare = ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
 				Email mail = new Email(oggettoMail, errorMessage);
 				MailMan postino = ConfigurationUtility.getInstance().getMailMan();
 				boolean invio = postino.invia(destinatariDaAvvisare, mail);

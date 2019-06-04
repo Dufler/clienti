@@ -1,8 +1,9 @@
 package it.ltc.clienti.artcraft.ftp;
 
 import java.io.File;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -19,8 +20,8 @@ public class ScambioFTP {
 	
 	private FTP client;
 	private MailMan mailer;
-	private List<String> regolari;
-	private List<String> supervisori;
+	private Set<String> regolari;
+	private Set<String> supervisori;
 	
 	private boolean verbose;
 	
@@ -324,7 +325,7 @@ public class ScambioFTP {
 		}
 		//Mail
 		if (/*erroriInDownload ||*/ erroriInUpload || erroriPDF || totaleDownload > 0 || totaleUpload > 0) {
-			List<String> destinatari = new LinkedList<>();
+			Set<String> destinatari = new HashSet<>();
 			destinatari.addAll(regolari);
 			//Aggiungo la mailing list support solo se ci sono stati problemi.
 			if (/*erroriInDownload ||*/ erroriInUpload || erroriPDF)

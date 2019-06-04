@@ -89,7 +89,7 @@ public class ImportatoreInfoSpedizione extends ControllerInfoSpedizioneSQLServer
 			contrassegno.setValore(valoreContrassegno);
 			contrassegno.setTipo(tipoContrassegno);
 		} catch (IllegalArgumentException e) {
-			logger.error("E' stato inserito un valore errato per il tipo di contrassegno. (" + csv.getStringa("codtype") + ")");
+			logger.warn("E' stato inserito un valore errato per il tipo di contrassegno. (" + csv.getStringa("codtype") + ")");
 			contrassegno = null;
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);

@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
@@ -249,7 +250,7 @@ public class InviaEvasioneOrdine extends Dao {
 			logger.error(e.getMessage(), e);
 			String oggettoMail = "Alert: eccezione nell'invio dell'evasione dell'ordine YNAP";
 			String corpoMail = "Errore riscontrato: " + e.getMessage();
-			List<String> destinatariDaAvvisare = ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
+			Set<String> destinatariDaAvvisare = ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
 			Email mail = new Email(oggettoMail, corpoMail);
 			MailMan postino = ConfigurationUtility.getInstance().getMailMan();
 			boolean invio = postino.invia(destinatariDaAvvisare, mail);

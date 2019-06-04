@@ -1,9 +1,11 @@
 package it.ltc.clienti.date.ordini;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -13,15 +15,21 @@ import javax.persistence.criteria.Root;
 
 import org.apache.log4j.Logger;
 
-import it.ltc.clienti.date.ConfigurationUtility;
 import it.ltc.database.dao.legacy.NazioniDao;
 import it.ltc.database.model.legacy.Nazioni;
 import it.ltc.database.model.legacy.TestataOrdini;
+import it.ltc.model.interfaces.exception.ModelAlreadyExistentException;
+import it.ltc.model.interfaces.exception.ModelPersistenceException;
 import it.ltc.model.interfaces.exception.ModelValidationException;
+import it.ltc.model.interfaces.importatore.ConfigurazioneMessaggiImportazioneStandard;
+import it.ltc.model.interfaces.importatore.RisultatoImportazione;
+import it.ltc.model.interfaces.importatore.RisultatoImportazioneStandard;
 import it.ltc.model.interfaces.indirizzo.MIndirizzo;
+import it.ltc.model.interfaces.ordine.MContrassegno;
 import it.ltc.model.interfaces.ordine.MInfoSpedizione;
 import it.ltc.model.interfaces.ordine.MOrdine;
 import it.ltc.model.interfaces.ordine.ProdottoOrdinato;
+import it.ltc.model.interfaces.ordine.TipoContrassegno;
 import it.ltc.model.interfaces.ordine.TipoIDProdotto;
 import it.ltc.model.persistence.ordine.ControllerOrdiniSQLServer;
 import it.ltc.utility.miscellanea.string.ObjectParser;
@@ -30,93 +38,132 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 	
 	private static final Logger logger = Logger.getLogger(ImportaOrdini.class);
 	
-	private final String folderImportPath;
-	private final String folderStoricoPath;
-	private final String folderErroriPath;
-	private final String regexNomeFileOrdini;
-	
 	private final NazioniDao daoNazioni;
 
 	public ImportaOrdini(String persistenceUnit) {
 		super(persistenceUnit);
-		ConfigurationUtility config = ConfigurationUtility.getInstance();
-		this.folderImportPath = config.getFolderPathImport();
-		this.folderStoricoPath = config.getFolderPathStorico();
-		this.folderErroriPath = config.getFolderPathErrori();
-		this.regexNomeFileOrdini = config.getRegexOrdini();
 		this.daoNazioni = new NazioniDao(persistenceUnit);
 	}
 	
-	public void importa() {
-		//recupero i files con gli ordini
-		File folder = new File(folderImportPath);
-		for (File file : folder.listFiles()) {
-			//Controllo ogni file per vedere se contiene ordini.
-			if (file.isFile() && file.getName().toUpperCase().matches(regexNomeFileOrdini)) {
-				try {
-					//parso il file.
-					//ArrayList<String> lines = FileUtility.readLines(file);
-					ObjectParser<OrdineDate> parser = new ObjectParser<>(OrdineDate.class, 1445);
-					List<OrdineDate> ordini = parser.parsaOggetto(file);
-					//genero i modelli.
-					HashMap<String, MOrdine> mappaOrdini = new HashMap<>();
-					for (OrdineDate ordine : ordini) {
-						//Inserisco le informazioni di testata se necessario
-						if (!mappaOrdini.containsKey(ordine.getNumeroOrdine())) {
-							MOrdine testata = new MOrdine();
-							testata.setDataDocumento(ordine.getDataOrdine());
-							testata.setDataOrdine(ordine.getDataOrdine());
-							testata.setDestinatario(getDestinatario(ordine));
-							testata.setMittente(getMittente(ordine));
-							testata.setNote(ordine.getNote());
-							testata.setRiferimentoDocumento(ordine.getNumeroOrdine());
-							testata.setRiferimentoOrdine(ordine.getNumeroOrdine());
-							testata.setTipo("ORD");
-							testata.setTipoDocumento("DDT");
-							testata.setTipoIdentificazioneProdotti(TipoIDProdotto.BARCODE);
-							testata.setNomeFile(file.getName());
-							//Aggiungo le info sulla spedizione
-							MInfoSpedizione spedizione = new MInfoSpedizione();
-							spedizione.setCorriere("DHL");
-							spedizione.setTipoDocumento("DDT");
-							spedizione.setDataDocumento(ordine.getDataOrdine());
-							spedizione.setRiferimentoDocumento(ordine.getNumeroOrdine());
-							testata.setInfoSpedizione(spedizione);
-							mappaOrdini.put(ordine.getNumeroOrdine(), testata);
-						}
-						//Aggiungo la riga se contiene oggetti
-						if (ordine.getTipoRiga() != 4) {
-							MOrdine testata = mappaOrdini.get(ordine.getNumeroOrdine());
-							ProdottoOrdinato prodotto = new ProdottoOrdinato();
-							prodotto.setBarcode(ordine.getBarcode());
-							prodotto.setMagazzinoLTC("PG1");
-							prodotto.setMagazzinoCliente("LP1");
-							prodotto.setNumeroRiga(ordine.getNumeroRiga());
-							//prodotto.setQuantita(ordine.getQuantità());
-							prodotto.setQuantita(parsaQuantità(ordine.getQuantitàPerTaglia(), ordine.getTipoAssortimento(), ordine.getQuantità()));
-							ordine.getQuantitàPerTaglia();
-							prodotto.setNote(ordine.getNoteRiga());
-							testata.aggiungiProdotto(prodotto);
-						}						
-					}
-					//importo gli ordini.
-					for (MOrdine ordine : mappaOrdini.values()) {
-						valida(ordine);
-						inserisci(ordine);
-					}
-					//sposto il file nello storico
-					spostaFile(file, folderStoricoPath);
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-					spostaFile(file, folderErroriPath);
-				}				
+	public RisultatoImportazione importa(File file) throws IOException {
+		String nomeFile = file.getName();
+		int totali = 0;
+		int inseriti = 0;
+		int giàPresenti = 0;
+		List<String> erroriValidazione = new LinkedList<>();
+		List<String> erroriGenerici = new LinkedList<>();
+		HashMap<String, MOrdine> mappaOrdini = new HashMap<>();
+		try {
+			ObjectParser<OrdineDate> parser = new ObjectParser<>(OrdineDate.class, 1445);
+			List<OrdineDate> ordini = parser.parsaOggetto(file);
+			//parse degli ordini contenuti nel file
+			for (OrdineDate ordine : ordini) {
+				//Inserisco le informazioni di testata se necessario
+				if (!mappaOrdini.containsKey(ordine.getNumeroOrdine())) {
+					MOrdine testata = new MOrdine();
+					//testata.setTipoImportazione(TipoImportazioneOrdine.SENZA_IMPEGNO);
+					testata.setDataDocumento(ordine.getDataOrdine());
+					testata.setDataOrdine(ordine.getDataOrdine());
+					testata.setDestinatario(getDestinatario(ordine));
+					testata.setMittente(getMittente(ordine));
+					testata.setNote(ordine.getNote());
+					testata.setRiferimentoDocumento(ordine.getNumeroOrdine());
+					testata.setRiferimentoOrdine(ordine.getSezioneDocumento() + "/" + ordine.getNumeroOrdine() + "/" + ordine.getAnno());
+					//Tipo d'ordine
+					String tipo = ordine.getTipoFFW().equals("FFW1") ? "SPREPACK" : "ORD";
+					testata.setTipo(tipo);
+					testata.setTipoDocumento("DDT");
+					testata.setTipoIdentificazioneProdotti(TipoIDProdotto.BARCODE);
+					testata.setNomeFile(file.getName());
+					//Aggiungo le info sulla spedizione
+					MInfoSpedizione spedizione = new MInfoSpedizione();
+					String corriere = testata.getDestinatario().getNazione().equals("ITA") ? "TNT" : "DHL";
+					spedizione.setCorriere(corriere);
+					spedizione.setTipoDocumento("DDT");
+					spedizione.setDataDocumento(ordine.getDataOrdine());
+					spedizione.setRiferimentoDocumento(ordine.getNumeroOrdine());
+					if (ordine.getValoreContrassegno() != null && ordine.getValoreContrassegno() > 0) {
+						MContrassegno contrassegno = new MContrassegno();
+						contrassegno.setValore(ordine.getValoreContrassegno());
+						contrassegno.setTipo(TipoContrassegno.valueOf(ordine.getTipoContrassegno()));
+						contrassegno.setValuta("EUR");
+						spedizione.setContrassegno(contrassegno);
+					}					
+					testata.setInfoSpedizione(spedizione);
+					mappaOrdini.put(ordine.getNumeroOrdine(), testata);
+				}
+				//Aggiungo la riga se contiene oggetti
+				if (ordine.getTipoRiga() != 4) {
+					MOrdine testata = mappaOrdini.get(ordine.getNumeroOrdine());
+					ProdottoOrdinato prodotto = new ProdottoOrdinato();
+					prodotto.setBarcode(ordine.getBarcode());
+					prodotto.setMagazzinoLTC("PG1");
+					prodotto.setMagazzinoCliente("LP1");
+					prodotto.setNumeroRiga(ordine.getNumeroRiga());
+					//prodotto.setQuantita(ordine.getQuantità());
+					prodotto.setQuantita(parsaQuantità(ordine.getQuantitàPerTaglia(), ordine.getTipoAssortimento(), ordine.getQuantitàCasse()));
+					ordine.getQuantitàPerTaglia();
+					prodotto.setNote(ordine.getNoteRiga());
+					testata.aggiungiProdotto(prodotto);
+				}						
 			}
-		}		
+			//validazione e inserimento.
+			for (String riferimento : mappaOrdini.keySet()) {
+				totali += 1;
+				MOrdine ordine = mappaOrdini.get(riferimento);
+				valida(ordine);
+				MOrdine inserito = inserisci(ordine);
+				if (inserito != null) {
+					//FIX: Aggiorno il campo nrdoc riportandoci l'ID affinchè sia univoco in fase di spedizione.
+					try {
+						TestataOrdini testata = daoOrdini.trovaDaID(inserito.getId());
+						testata.setNrDoc(Integer.toString(testata.getIdTestaSped()));
+						testata = daoOrdini.aggiorna(testata);
+						if (testata == null)
+							logger.error("Aggiornamento fallito del nrdoc sulla testata ID: " + inserito.getId());
+					} catch (Exception e) {
+						logger.error(e.getMessage(), e);
+					}
+					inseriti += 1;
+				}
+			}
+		} catch (ModelAlreadyExistentException e) {
+			giàPresenti += 1;
+			logger.warn(e.getMessage()); //Bisogna capire se loro riescono a mandarci riferimenti univoci per gli ordini.
+		} catch (ModelValidationException | ModelPersistenceException e) {
+			erroriValidazione.add(e.getMessage());
+			logger.error(e.getMessage(), e);
+		} catch (Exception e) {
+			erroriGenerici.add(e.getMessage());
+			logger.error(e.getMessage(), e);
+		}
+		ConfigurazioneMessaggiImportazioneStandard messaggi = getMessaggi();
+		RisultatoImportazioneOrdini risultato = new RisultatoImportazioneOrdini(messaggi, nomeFile, totali, inseriti, giàPresenti, erroriValidazione, erroriGenerici);
+		return risultato;
 	}
 	
-	private int parsaQuantità(String quantitàPerTaglia, String tipoAssortimento, int quantità) {
+//	private int parsaQuantità(String quantitàPerTaglia, String tipoAssortimento, int quantità) {
+//		int totale = 0;
+//		for (int index = 0; index < 88; index +=4) {
+//			try {
+//				totale += Integer.parseInt(quantitàPerTaglia.substring(index, index + 4));
+//			} catch (Exception e) { 
+//				logger.error(e.getMessage(), e);
+//				totale = -1;
+//				break;
+//			}
+//		}
+//		if (tipoAssortimento.equals("C")) {
+//			totale = totale / quantità;
+//		}
+//		return totale;
+//	}
+	
+	private int parsaQuantità(String quantitàPerTaglia, String tipoAssortimento, int quantitàCasse) {
 		int totale = 0;
-		for (int index = 0; index < 88; index +=4) {
+		if (tipoAssortimento.equals("C")) {
+			totale = quantitàCasse;
+		} else for (int index = 0; index < 88; index +=4) {
 			try {
 				totale += Integer.parseInt(quantitàPerTaglia.substring(index, index + 4));
 			} catch (Exception e) { 
@@ -124,10 +171,7 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 				totale = -1;
 				break;
 			}
-		}
-		if (tipoAssortimento.equals("C")) {
-			totale = totale / quantità;
-		}
+		}		
 		return totale;
 	}
 	
@@ -168,12 +212,19 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 			Nazioni nazione = daoNazioni.trovaDaCodificaCliente(ordine.getCodiceNazioneContabile());
 			if (nazione == null)
 				throw new ModelValidationException("La codifica di nazione indicata non esiste a sistema. (" + ordine.getCodiceNazioneContabile() + ")");
+			//recupero la provincia
+			String provincia = ordine.getProvinciaContabile();
+			if (provincia == null || provincia.isEmpty())
+				provincia = ordine.getProvincia();
+			if (provincia == null || provincia.isEmpty())
+				provincia = "XX";
+			//Compongo l'indirizzo
 			destinatario.setCap(ordine.getCapContabile());
 			destinatario.setCodice(ordine.getCodiceClienteParte1());
 			destinatario.setIndirizzo(ordine.getIndirizzoContabile());
 			destinatario.setLocalita(ordine.getCittaContabile());
 			destinatario.setNazione(nazione.getCodIso());
-			destinatario.setProvincia(ordine.getProvinciaContabile());
+			destinatario.setProvincia(provincia);
 			destinatario.setRagioneSociale(ordine.getRagioneSocialeContabile());
 			destinatario.setTelefono(ordine.getTelefonoContabile());
 		} else {
@@ -181,12 +232,19 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 			Nazioni nazione = daoNazioni.trovaDaCodificaCliente(ordine.getCodiceNazione());
 			if (nazione == null)
 				throw new ModelValidationException("La codifica di nazione indicata non esiste a sistema. (" + ordine.getCodiceNazione() + ")");
+			//recupero la provincia
+			String provincia = ordine.getProvincia();
+			if (provincia == null || provincia.isEmpty())
+				provincia = ordine.getProvinciaContabile();
+			if (provincia == null || provincia.isEmpty())
+				provincia = "XX";
+			//Compongo l'indirizzo
 			destinatario.setCap(ordine.getCap());
 			destinatario.setCodice(ordine.getCodiceClienteParte1());
 			destinatario.setIndirizzo(ordine.getIndirizzo());
 			destinatario.setLocalita(ordine.getCitta());
 			destinatario.setNazione(nazione.getCodIso());
-			destinatario.setProvincia(ordine.getProvincia());
+			destinatario.setProvincia(provincia);
 			destinatario.setRagioneSociale(ordine.getRagioneSociale());
 			destinatario.setTelefono(ordine.getTelefono());
 		}		
@@ -205,6 +263,26 @@ public class ImportaOrdini extends ControllerOrdiniSQLServer {
 		mittente.setRagioneSociale("DATE");
 		mittente.setTelefono("");
 		return mittente;
+	}
+	
+	public ConfigurazioneMessaggiImportazioneStandard getMessaggi() {
+		ConfigurazioneMessaggiImportazioneStandard messaggi = new ConfigurazioneMessaggiImportazioneStandard();
+		messaggi.setIntro("Risultato importazione ordini dal file: ");
+		messaggi.setTotali("Ordini contenuti nel file: ");
+		messaggi.setElementiInseriti("Nuovi ordini inseriti a sistema: ");
+		messaggi.setNessunNuovoElemento("Alert: nessun nuovo ordine inserito a sistema!");
+		messaggi.setElementiGiaPresenti("Ordini già presenti a sistema: ");
+		messaggi.setErroriValidazione("Ordini con errori in validazione: ");
+		messaggi.setErroriGenerici("Ordini con errori generici: ");	
+		return messaggi;
+	}
+	
+	private class RisultatoImportazioneOrdini extends RisultatoImportazioneStandard {
+		
+		RisultatoImportazioneOrdini(ConfigurazioneMessaggiImportazioneStandard messaggi, String nomeFile, int totali, int inseriti, int giàPresenti, List<String> erroreValidazione, List<String> erroreGenerico) {
+			super(messaggi, nomeFile, totali, inseriti, giàPresenti, erroreValidazione, erroreGenerico);
+		}
+		
 	}
 
 }

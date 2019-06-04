@@ -2,6 +2,7 @@ package it.ltc.clienti.redone.importazione;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -83,7 +84,7 @@ public class Importatore extends ImportatoreFiles {
 		}
 		String subject = "Riepilogo importazione ReDone";
 		MailMan postino = ConfigurationUtility.getInstance().getMailMan();
-		List<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
+		Set<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
 		if (alert) {
 			destinatari.addAll(ConfigurationUtility.getInstance().getIndirizziDestinatariErrori());
 		}

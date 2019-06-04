@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import it.ltc.ciesse.scambiodati.ConfigurationUtility;
+import it.ltc.ciesse.scambiodati.logic.exception.NessunColloTrovatoException;
 import it.ltc.database.dao.legacy.ColliImballoDao;
 import it.ltc.database.dao.legacy.ColliPrelevaDao;
 import it.ltc.database.dao.legacy.TestataOrdiniDao;
@@ -44,7 +45,7 @@ public class DDTSpedizione {
 			//Recupero i colli e l'ordine collegato.
 			List<ColliPreleva> colli = daoColli.trovaDaRiferimentoCliente(numeroDDT);
 			if (colli.isEmpty())
-				throw new RuntimeException("Nessun collo trovato per il riferimento: '" + numeroDDT + "'");
+				throw new NessunColloTrovatoException("Nessun collo trovato per il riferimento: '" + numeroDDT + "'");
 			String numeroDiLista = colli.get(0).getNrLista();
 			//Controllo che il numero di lista sia valido
 			if (numeroDiLista == null)

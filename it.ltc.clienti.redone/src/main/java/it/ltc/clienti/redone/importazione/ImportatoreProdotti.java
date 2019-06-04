@@ -19,9 +19,11 @@ import it.ltc.utility.csv.FileCSV;
 public class ImportatoreProdotti extends ControllerProdottoSQLServer {
 	
 	private static final Logger logger = Logger.getLogger(ImportatoreProdotti.class);
+	
+	private static final String REGEX_ONLY_DIGIT = "\\d+";
 
 	public ImportatoreProdotti(String persistenceUnit) {
-		super(persistenceUnit);
+		super(persistenceUnit, Mode.AGGIUNGI_BARCODE);
 	}
 	
 	public RisultatoImportazione importaArticoli(FileCSV csv) {
@@ -41,6 +43,7 @@ public class ImportatoreProdotti extends ControllerProdottoSQLServer {
 				if (inserito != null) 
 					inseriti += 1;
 			} catch (ModelAlreadyExistentException e) {
+				//Controllo se posso aggiungere solo il barcode
 				giàPresenti += 1;
 				logger.warn(e.getMessage());
 			} catch (ModelValidationException | ModelPersistenceException e) {
@@ -59,20 +62,27 @@ public class ImportatoreProdotti extends ControllerProdottoSQLServer {
 	}
 	
 	private MProdotto parsaProdotto(FileCSV csv) {
+		//check sullo sku: quei coglioni ci passano il barcode al posto dello sku, se fosse così vado a comporlo come modello più taglia.
+		String sku = csv.getStringa("sku");
+		String modello = csv.getStringa("model");
+		String taglia = csv.getStringa("size");
+		boolean skuNonValido = (sku == null || sku.matches(REGEX_ONLY_DIGIT));
+		String chiaveCliente = skuNonValido ? modello + "-" + taglia : sku;
+		//Elaboro le info sul prodotto
 		MProdotto model = new MProdotto();
 		model.setBarcode(csv.getStringa("barcode"));
 		model.setBrand(csv.getStringa("brand"));
 		model.setCassa(Cassa.NO);
 		model.setCategoria("STESO");
-		model.setChiaveCliente(csv.getStringa("sku"));
-		model.setCodiceModello(csv.getStringa("model"));
+		model.setChiaveCliente(chiaveCliente);
+		model.setCodiceModello(modello);
 		model.setColore(csv.getStringa("color"));
 		model.setComposizione(csv.getStringa("composition"));
 		model.setDescrizione(csv.getStringa("description"));
 		model.setDescrizioneAggiuntiva(csv.getStringa("description"));
 		model.setMadeIn(csv.getStringa("madein"));
 		model.setNote(csv.getStringa("notes"));
-		model.setTaglia(csv.getStringa("size"));
+		model.setTaglia(taglia);
 		return model;
 	}
 	

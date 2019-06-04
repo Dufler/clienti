@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
@@ -387,7 +388,7 @@ public class ImportaOrdine extends Dao {
 				messaggio += " " + conErrori + " non sono stati importati a causa di errori, controllare il file di log.";
 			Email mail = new Email(oggettoMail, messaggio);
 			ConfigurationUtility cu = ConfigurationUtility.getInstance();
-			List<String> destinatariDaAvvisare = conErrori > 0 ? cu.getIndirizziDestinatariErrori() : cu.getIndirizziDestinatari();
+			Set<String> destinatariDaAvvisare = conErrori > 0 ? cu.getIndirizziDestinatariErrori() : cu.getIndirizziDestinatari();
 			MailMan postino = ConfigurationUtility.getInstance().getMailMan();
 			boolean invio = postino.invia(destinatariDaAvvisare, mail);
 			if (invio)

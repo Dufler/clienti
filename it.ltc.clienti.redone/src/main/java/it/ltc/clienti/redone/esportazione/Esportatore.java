@@ -2,6 +2,7 @@ package it.ltc.clienti.redone.esportazione;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -57,7 +58,7 @@ public class Esportatore extends EsportatoreFiles {
 		}
 		String subject = "Riepilogo esportazione ReDone";
 		MailMan postino = ConfigurationUtility.getInstance().getMailMan();
-		List<String> destinatari = alert ? ConfigurationUtility.getInstance().getIndirizziDestinatari() : ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
+		Set<String> destinatari = alert ? ConfigurationUtility.getInstance().getIndirizziDestinatari() : ConfigurationUtility.getInstance().getIndirizziDestinatariErrori();
 		Email mail = new Email(subject, sb.toString());
 		boolean invio = postino.invia(destinatari, mail);
 		if (!invio)

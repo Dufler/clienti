@@ -126,8 +126,8 @@ public class ImportatoreOrdini extends ControllerOrdiniSQLServer {
 		ProdottoOrdinato riga = new ProdottoOrdinato();
 		riga.setBarcode(csv.getStringa("product"));
 		riga.setMagazzinoCliente(csv.getStringa("warehouse"));
-		riga.setNumeroRiga(csv.getIntero("row"));
-		riga.setQuantita(csv.getIntero("quantity"));
+		riga.setNumeroRiga(csv.getIntero("row") != null ? csv.getIntero("row") : 0);
+		riga.setQuantita(csv.getIntero("quantity") != null ? csv.getIntero("quantity") : 0);
 		riga.setRiferimentoCliente(csv.getStringa("reference"));
 		return riga;
 	}

@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import it.ltc.ciesse.scambiodati.ConfigurationUtility;
+import it.ltc.ciesse.scambiodati.logic.exception.CaricoNonAncoraInseritoException;
 import it.ltc.database.dao.legacy.ArticoliDao;
 import it.ltc.database.dao.legacy.MagazzinoDao;
 import it.ltc.database.dao.legacy.PakiArticoloDao;
@@ -39,7 +40,7 @@ public class DocumentiEntrataRighe {
 		String riferimentoTestata = parser.getStringa(1, 21);
 		PakiTesta testata = trovaTestata(riferimentoTestata);
 		if (testata == null) 
-			throw new RuntimeException("La testata non esiste, riferimento: '" + riferimentoTestata + "'");
+			throw new CaricoNonAncoraInseritoException("La testata non esiste, riferimento: '" + riferimentoTestata + "'");
 		List<PakiArticolo> righeGiaPresenti = daoRighe.trovaRigheDaCarico(testata.getIdTestaPaki());
 		if (!righeGiaPresenti.isEmpty()) {
 			throw new RuntimeException("Le righe sono già state inserite per il carico indicato, riferimento: '" + riferimentoTestata + "'");

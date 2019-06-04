@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
@@ -117,7 +118,7 @@ public class ImportaListaCarico extends Dao {
 	private void inviaMessaggioDiRiepilogo(String messaggio) {
 		String oggettoMail = "Riepilogo importazione del carico YNAP";
 		Email mail = new Email(oggettoMail, messaggio);
-		List<String> destinatariDaAvvisare = ConfigurationUtility.getInstance().getIndirizziDestinatari();
+		Set<String> destinatariDaAvvisare = ConfigurationUtility.getInstance().getIndirizziDestinatari();
 		MailMan postino = ConfigurationUtility.getInstance().getMailMan();
 		boolean invio = postino.invia(destinatariDaAvvisare, mail);
 		if (invio)
@@ -274,10 +275,8 @@ public class ImportaListaCarico extends Dao {
 		String qualita;
 		int to = movimento.getTo().getToID();
 		switch (to) {
-			case 8089 : qualita = PRIMA_SCELTA; break;
-			case 8090 : qualita = PRIMA_SCELTA; break;
-			case 9480 : qualita = SECONDA_SCELTA; break;
-			case 9481 : qualita = SECONDA_SCELTA; break;
+			case 8089 : case 8090 : case 15133 : qualita = PRIMA_SCELTA; break;
+			case 9480 : case 9481 : case 15134 : qualita = SECONDA_SCELTA; break;
 			default : qualita = ALTRA_SCELTA;
 		}
 		return qualita;

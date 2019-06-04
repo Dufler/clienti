@@ -93,11 +93,20 @@ public class OrdineDate {
 	@Campo(start=665, length=3, type=TipoCampo.NUMERICO_INTERO)
 	public Integer numeroRiga;
 	
+	@Campo(start=0, length=1)
+	public String sezioneDocumento;
+	
 	@Campo(start=1, length=6)
 	public String numeroOrdine;
 	
+	@Campo(start=7, length=4)
+	public Integer anno;
+	
 	@Campo(start=853, length=6, type=TipoCampo.NUMERICO_INTERO)
-	public Integer quantità;
+	public Integer quantitàSfuso;
+	
+	@Campo(start=859, length=5, type=TipoCampo.NUMERICO_INTERO)
+	public Integer quantitàCasse;
 	
 	@Campo(start=985, length=88, type=TipoCampo.STRINGA)
 	public String quantitàPerTaglia;
@@ -108,12 +117,39 @@ public class OrdineDate {
 	@Campo(start=874, length=1)
 	public String tipoAssortimento;
 	
+	@Campo(start=1437, length=4)
+	public String tipoFFW;
+	
+	public String getTipoFFW() {
+		return tipoFFW;
+	}
+
+	public void setTipoFFW(String tipoFFW) {
+		this.tipoFFW = tipoFFW;
+	}
+
 	public String getNumeroOrdine() {
 		return numeroOrdine;
 	}
 
 	public void setNumeroOrdine(String numeroOrdine) {
 		this.numeroOrdine = numeroOrdine;
+	}
+
+	public Integer getQuantitàSfuso() {
+		return quantitàSfuso;
+	}
+
+	public void setQuantitàSfuso(Integer quantitàSfuso) {
+		this.quantitàSfuso = quantitàSfuso;
+	}
+
+	public Integer getQuantitàCasse() {
+		return quantitàCasse;
+	}
+
+	public void setQuantitàCasse(Integer quantitàCasse) {
+		this.quantitàCasse = quantitàCasse;
 	}
 
 	public OrdineDate() {}
@@ -318,14 +354,6 @@ public class OrdineDate {
 		this.numeroRiga = numeroRiga;
 	}
 
-	public Integer getQuantità() {
-		return quantità;
-	}
-
-	public void setQuantità(Integer quantità) {
-		this.quantità = quantità;
-	}
-
 	public String getQuantitàPerTaglia() {
 		return quantitàPerTaglia;
 	}
@@ -348,5 +376,21 @@ public class OrdineDate {
 
 	public void setTipoAssortimento(String tipoAssortimento) {
 		this.tipoAssortimento = tipoAssortimento;
+	}
+
+	public String getSezioneDocumento() {
+		return sezioneDocumento;
+	}
+
+	public void setSezioneDocumento(String sezioneDocumento) {
+		this.sezioneDocumento = sezioneDocumento;
+	}
+
+	public Integer getAnno() {
+		return anno;
+	}
+
+	public void setAnno(Integer anno) {
+		this.anno = anno;
 	}
 }

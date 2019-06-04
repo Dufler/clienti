@@ -1,8 +1,8 @@
 package it.ltc.clienti.date;
 
-import it.ltc.utility.configuration.ConfigurationParser;
+import it.ltc.utility.configuration.ConfigurationParserWithUtils;
 
-public class ConfigurationUtility extends ConfigurationParser {
+public class ConfigurationUtility extends ConfigurationParserWithUtils {
 
 	private static final String configPath = "/configuration.properties";
 
@@ -13,8 +13,9 @@ public class ConfigurationUtility extends ConfigurationParser {
 	private final String folderPathStorico;
 	private final String folderPathErrori;
 	private final String folderPathExport;
-	private final String regexOrdini;
-	private final String regexArticoli;
+//	private final String regexOrdini;
+//	private final String regexArticoli;
+	private final String regex;
 	private final boolean verbose;
 
 	private ConfigurationUtility() {
@@ -25,8 +26,9 @@ public class ConfigurationUtility extends ConfigurationParser {
 		folderPathStorico = configuration.get("folder_path_storico");
 		folderPathErrori = configuration.get("folder_path_errori");
 		folderPathExport = configuration.get("folder_path_export");
-		regexOrdini = configuration.get("regex_nome_file_ordini");
-		regexArticoli = configuration.get("regex_nome_file_anagrafiche");
+//		regexOrdini = configuration.get("regex_nome_file_ordini");
+//		regexArticoli = configuration.get("regex_nome_file_anagrafiche");
+		regex = configuration.get("regex_file");
 	}
 
 	public static ConfigurationUtility getInstance() {
@@ -56,12 +58,16 @@ public class ConfigurationUtility extends ConfigurationParser {
 		return folderPathExport;
 	}
 
-	public String getRegexOrdini() {
-		return regexOrdini;
-	}
-
-	public String getRegexArticoli() {
-		return regexArticoli;
+//	public String getRegexOrdini() {
+//		return regexOrdini;
+//	}
+//
+//	public String getRegexArticoli() {
+//		return regexArticoli;
+//	}
+	
+	public String getRegexFile() {
+		return regex;
 	}
 
 	public boolean isVerbose() {

@@ -4,12 +4,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import it.ltc.ciesse.scambiodati.ConfigurationUtility;
 import it.ltc.ciesse.scambiodati.model.Colli;
 import it.ltc.ciesse.scambiodati.model.ContenutoColli;
+import it.ltc.ciesse.scambiodati.model.DataDDTSpedizione;
 import it.ltc.ciesse.scambiodati.model.DocumentiEntrataRighe;
 import it.ltc.ciesse.scambiodati.model.DocumentiEntrataTestata;
 import it.ltc.ciesse.scambiodati.model.Giacenza;
@@ -20,6 +22,7 @@ import it.ltc.database.dao.legacy.MagaSdDao;
 import it.ltc.database.dao.legacy.PakiArticoloDao;
 import it.ltc.database.dao.legacy.PakiTestaDao;
 import it.ltc.database.dao.legacy.RighiImballoDao;
+import it.ltc.database.dao.legacy.TestaCorrDao;
 import it.ltc.database.dao.legacy.TestataOrdiniDao;
 import it.ltc.database.model.legacy.ColliImballo;
 import it.ltc.database.model.legacy.MagaMov;
@@ -27,6 +30,7 @@ import it.ltc.database.model.legacy.MagaSd;
 import it.ltc.database.model.legacy.PakiArticolo;
 import it.ltc.database.model.legacy.PakiTesta;
 import it.ltc.database.model.legacy.RighiImballo;
+import it.ltc.database.model.legacy.TestaCorr;
 import it.ltc.database.model.legacy.TestataOrdini;
 import it.ltc.utility.mail.Email;
 import it.ltc.utility.mail.MailMan;
@@ -67,6 +71,7 @@ public class Export {
 		try {
 			esportaCarichi();
 			esportaOrdini();
+			esportaConfermaSpedizioni();
 		} catch (Exception e) {
 			messaggiErrore.add(e.getMessage());
 			logger.error(e.getMessage(), e);
@@ -77,7 +82,7 @@ public class Export {
 	private void inviaMailRiepilogo() {
 		//Vado a fare una mail di riepilogo solo se ci sono messaggi.
 		if (messaggiErrore.size() > 0) {
-			List<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
+			Set<String> destinatari = ConfigurationUtility.getInstance().getIndirizziDestinatari();
 			MailMan postino = ConfigurationUtility.getInstance().getMailMan();
 			String subject = "Riepilogo Scambio Dati Ciesse";
 			if (!messaggiErrore.isEmpty()) {
@@ -254,6 +259,37 @@ public class Export {
 		String pathDocumentoContenutoColliStorico = pathCartellaExportStorico + nomeFileDocumentoContenutoColli;
 		FileUtility.writeFile(pathDocumentoContenutoColliStorico, righeDocumentoContenutoColli);
 		return exportDocumentoTestate && exportDocumentoRighe;
+	}
+	
+	private void esportaConfermaSpedizioni() {
+		Date data = new Date();
+		TestaCorrDao daoSpedizioni = new TestaCorrDao(persistenceUnit);
+		List<TestaCorr> spedizioni = daoSpedizioni.trovaSpedizioniPartiteSenzaTrackingNumber();
+		List<String> datiSpedizioni = DataDDTSpedizione.esportaDataSpedizione(spedizioni, data);
+		boolean generazione = generaFileSpedizione(datiSpedizioni);
+		if (generazione) {
+			for (TestaCorr spedizione : spedizioni) {
+				spedizione.setTrackingNumber(sdf.format(data));
+				if (daoSpedizioni.aggiorna(spedizione) == null)
+					logger.error("Impossibile aggiornare lo stato di trasmissione della spedizione ID " + spedizione.getIdTestaCor());
+				else
+					logger.info("Generazione completata per l'ordine ID " + spedizione.getIdTestaCor());
+			}
+		}
+	}
+	
+	private boolean generaFileSpedizione(List<String> datiSpedizioni) {
+		Date now = new Date();
+		String nomeFileDocumento = "DataDDTSpedizione_" + sdf.format(now) + ".txt";
+		String pathDocumento = pathCartellaExport + nomeFileDocumento;
+		boolean exportDocumento = FileUtility.writeFile(pathDocumento, datiSpedizioni);
+		if (!exportDocumento)
+			logger.error("Impossibile esportare il documento date spedizioni: " + nomeFileDocumento);
+		generaFileCheck(now);
+		//Faccio delle copie da mettere nello storico dato che quei coioni di CiEsse non ce le mettono.
+		String pathDocumentoStorico = pathCartellaExportStorico + nomeFileDocumento;
+		FileUtility.writeFile(pathDocumentoStorico, datiSpedizioni);
+		return exportDocumento;
 	}
 
 }

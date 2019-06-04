@@ -18,7 +18,7 @@ public class ChioAnagraficheMain {
 	private static final Logger logger = Logger.getLogger(ChioAnagraficheMain.class);
 
 	public static void main(String[] args) {
-		File inputFile = new File("C:\\Users\\Damiano\\Documents\\LTC\\Chio\\anagrafiche2_2018.xls");
+		File inputFile = new File("C:\\Users\\Damiano\\Documents\\LTC\\Chio\\3RD DESCRIPTIONS.xls");
 		FileCSV csv = XLStoCSV.getCSV(inputFile);
 		List<MProdotto> prodotti = new LinkedList<>();
 		while (csv.prossimaRiga()) {
@@ -57,7 +57,8 @@ public class ChioAnagraficheMain {
 				if (inserito.getId() > 0)
 					nuoviProdotti++;
 			} catch (ModelValidationException e) {
-				//Esiste già, continuo...
+				//Anagrafica già presente, probabilmente...
+				logger.error(e.getMessage());
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}

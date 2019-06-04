@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -37,9 +39,9 @@ public class MainForza {
 	private static final String subjectAlertErroriRicezione = "Alert - Ricezione Ordini Forza Industries";
 	private static final String subjectAlertScadenze = "Alert - Prodotti in scadenza Forza Industries";
 	
-	private static List<String> destinatari;
-	private static List<String> destinatariAlert;
-	private static List<String> destinatariIT;
+	private static Set<String> destinatari;
+	private static Set<String> destinatariAlert;
+	private static Set<String> destinatariIT;
 	
 	//Dinamiche in base al file settings
 	public static String remoteFolder;
@@ -280,7 +282,7 @@ public class MainForza {
 		return orderDescription;
 	}
 
-	private static void sendEmail(String message, String subject, List<String> riceventi) {
+	private static void sendEmail(String message, String subject, Set<String> riceventi) {
 		//String subject = "Ricezione Ordini Forza Industries";
 		//if (alert)
 		//	subject = "ALERT - " + subject;
@@ -360,14 +362,14 @@ public class MainForza {
 		ftpClient = config.getFTPClient();
 		mailMan = config.getMailMan();
 		//Destinatari semplici, ricevono tutto
-		destinatari = new LinkedList<String>();
+		destinatari = new HashSet<String>();
 		destinatari.addAll(config.getIndirizziDestinatari());
 		//Destinatari alert, ricevono solo gli alert
-		destinatariAlert = new LinkedList<String>();
+		destinatariAlert = new HashSet<String>();
 		destinatariAlert.addAll(destinatari);
 		destinatariAlert.addAll(config.getIndirizziResponsabili());
 		//Destinatari IT, ricevono solo gli errori fatali della procedura
-		destinatariIT = new LinkedList<>();
+		destinatariIT = new HashSet<>();
 		destinatariIT.addAll(config.getIndirizziResponsabili());
 		remoteFolder = config.getRemoteFolder();
 		remoteFolderProcessed = config.getRemoteArchiveFolder();

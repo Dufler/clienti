@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -44,7 +45,7 @@ public class ImportatoreAnagraficaProdotti extends ControllerProdottoSQLServer {
 	private final String folderPath;
 	private final SimpleDateFormat sdf;
 	private final MailMan postino;
-	private final List<String> destinatari;
+	private final Set<String> destinatari;
 
 	public ImportatoreAnagraficaProdotti(String folderPath, String persistenceUnit) {
 		super(persistenceUnit);
